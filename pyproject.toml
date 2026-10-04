@@ -42,6 +42,11 @@ select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
 python_version = "3.12"
 strict = true
 
+[[tool.mypy.overrides]]
+# pyarrow ships no type stubs (used by tools/leakscan)
+module = ["pyarrow", "pyarrow.*"]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["packages", "tools"]
 addopts = "-ra --import-mode=importlib -m 'not integration'"

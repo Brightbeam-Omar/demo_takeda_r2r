@@ -5,6 +5,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from leakscan.load import Rule
+from leakscan.readers import SkippedFile, read_units
+
+__all__ = ["Finding", "Hit", "SkippedFile", "mask", "scan_file", "scan_path", "scan_text", "scan_value"]
 
 
 @dataclass(frozen=True)
@@ -50,7 +53,22 @@ def scan_text(text: str, rules: Sequence[Rule]) -> list[Hit]:
     return hits
 
 
+def _safe_location(location: str, rules: Sequence[Rule]) -> str:
+    """A location built from file content (sheet or column names) must not leak the term itself."""
+    return "[location masked]" if scan_value(location, rules, "") else location
+
+
 def scan_file(path: Path, display: str, rules: Sequence[Rule]) -> list[Finding]:
-    """Scan a text file. (Reader dispatch for other formats is added in T3.)"""
-    text = path.read_bytes().decode("utf-8", errors="replace")
-    return [Finding(display, hit.location, hit.matched, hit.rule) for hit in scan_text(text, rules)]
+    """Scan one file's contents. Raises ``SkippedFile`` for binary or unreadable files."""
+    hits: list[Hit] = []
+    for unit in read_units(path):
+        if unit.location is None:
+            hits.extend(scan_text(unit.text, rules))
+        else:
+            hits.extend(scan_value(unit.text, rules, unit.location))
+    return [Finding(display, _safe_location(h.location, rules), h.matched, h.rule) for h in hits]
+
+
+def scan_path(display: str, rules: Sequence[Rule]) -> list[Finding]:
+    """Scan a file path itself (the name can leak too)."""
+    return [Finding(display, "(path)", h.matched, h.rule) for h in scan_value(display, rules, "(path)")]
