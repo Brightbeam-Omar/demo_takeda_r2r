@@ -6,4 +6,7 @@
 - `RunContext`: `run_id` (the **Dagster run id** when run under Dagster; a uuid4 in plain unit tests), `profile`, `snapshot_date` = demo today, `lake_root`, `freshness` dict.
 - Golden tests use a tiny **hand-built fixture world** (about 20 rows) in addition to the seeded dataset test.
 
+- Dependencies for this package only: `duckdb`, `deltalake`, `pyarrow`, `jinja2`, `sqlglot`, `sqlalchemy`, `psycopg`.
+
 ## Deviations
+- **Extract reads Postgres with SQLAlchemy → arrow** (OQ-043), not DuckDB's Postgres extension: no extension download, works offline and on both architectures.
