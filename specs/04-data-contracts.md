@@ -12,12 +12,21 @@ All timestamps are `timestamptz` (UTC) and all dates are `date` (site-local). Co
 | `t001l` | `lgort` | `lgort` text · storage location (`0100`) · `lgobe` text · name · `zloctype` text · `onsite` / `3pl` |
 | `mcha` | `matnr, charg` | `charg` text · batch · `lifnr` · `licha` supplier batch · `hsdat` mfg date · `vfdat` expiry · `zstat` text · `''` or `'H'` (hold) · `updated_at` |
 | `mchb` | `matnr, charg, lgort` | current stock · `insme` numeric · QI qty · `speme` numeric · blocked qty · `clabs` numeric · unrestricted qty · `updated_at` |
-| `mseg` | `mblnr, zeile` | `bwart` text · `101` GR, `102` GR reversal, `311` transfer · `matnr` · `charg` · `lgort` from · `umlgo` to · `budat` date posting · `updated_at` |
+| `mseg` | `mblnr, zeile` | `bwart` text · `101` GR, `102` GR reversal, `311` transfer · `matnr` · `charg` · `lgort` · `umlgo` · `budat` date posting · `menge` numeric(13,3) quantity · `updated_at`. For `101`/`102`, `lgort` is the **receiving storage location** and `umlgo` is null. For `311`, `lgort` is the **source** and `umlgo` the **destination** |
 | `qals` | `prueflos` | `prueflos` text · inspection lot · `art` text · `01`/`09` (others excluded) · `matnr` · `charg` · `pastrterm` date start · `vcode` text · UD code · `vdatum` date · UD date · `updated_at` |
 | `zinbchk` | `prueflos` | inbound check · `status` text · `open`/`passed`/`failed` · `completed_on` date · `notes` text · `updated_at` |
 | `mdez` | `id` | MRP demand · `matnr` · `campaign` text · `bdter` date · requirement date · `bdmng` numeric · `is_open` bool · `updated_at` |
 
-Rules: a GR reversal (`102`) on the same day as a `101` cancels it (the extract must net them). `mchb` holds one current location per batch in Tier 1.
+Rules: a GR reversal (`102`) on the same day as a `101` for the same batch and quantity (`menge`) cancels it (the extract must net them). `mchb` holds one current location per batch in Tier 1.
+
+**Conventions (F04).**
+- **`updated_at`:** every table in the three simulators has `updated_at timestamptz not null`, indexed, stamped by service code from `r2r_core.clock.now()` on every insert and update (never by a DB trigger). That includes `deviation_link` and the helper table `counter`. `app.demo_clock` is the only exception (it is the clock).
+- **Types:** quantities are `numeric(13,3)`; keys and codes are `text`; dates are `date`.
+- **Foreign keys:** `mcha`→`mara`, `lfa1`; `mchb`→`mcha`, `t001l`; `mseg`→`mcha`, `t001l` (`lgort`, and `umlgo` when set); `qals`→`mcha`; `zinbchk`→`qals`; `mdez`→`mara`. `lims_sim.sample` has no FK (it refers to the ERP lot by number, across databases). `test_result`→`sample`; `deviation_link`→`deviation`.
+- **Indexes:** `updated_at` on every table, and `(matnr, charg)` / `(material_no, batch_no)` wherever those columns exist.
+- **Number formats** (allocated from per-database counters, so a reset restarts numbering): material document `mblnr` is 10 digits starting `49` (for example `4900001234`) with `zeile` `0001` (one line per document in Tier 1); inspection lot `prueflos` is 8 digits starting `1` (for example `10000042`); `mdez.id` is an integer; sample id `S-0000001`; deviation `DEV-000001`.
+- **Stock buckets (`mchb`)** per batch and storage location: `insme` quality inspection (QI), `speme` blocked, `clabs` unrestricted. A `101` puts the quantity in QI. A `102` takes it out of QI. A `311` moves the quantity to the destination location in the same buckets; the source row is deleted when it is empty. A usage decision `accept` moves QI to unrestricted, `reject` moves QI to blocked (so `erp_blocked` is also true for rejected lots), `cancel` leaves stock unchanged. `stock-block` / `stock-unblock` move quantity between QI and blocked without a usage decision.
+- **Lots:** the initial lot (`01`) is opened by the goods receipt together with an `open` inbound check. A re-evaluation lot (`09`) is opened on an existing batch by `reeval-lot`; its inbound check row exists only if the event asks for one. A goods receipt that is fully reversed leaves the batch, lot and check rows in place; the pipeline derives the `pending` stage from the netted receipt.
 
 ### 1.2 `lims_sim`
 | Table | Key | Columns |
@@ -25,14 +34,18 @@ Rules: a GR reversal (`102`) on the same day as a `101` cancels it (the extract 
 | `sample` | `sample_id` | `inspection_lot_no`, `material_no`, `batch_no`, `collected_date` date, `offsite_test` bool, `external_lab` text null, `shipped_date` date null, `status` text (`registered`,`in_progress`,`approved`,`rejected`), `approved_at` timestamptz null, `updated_at` |
 | `test_result` | `id` | `sample_id`, `test_code`, `test_name`, `result_value` text, `spec` text, `status` (`pending`,`pass`,`fail`,`oos`), `completed_at`, `updated_at` (used by Tier 2 release-readiness) |
 
+Sample ids are counter-allocated and zero-padded (`S-0000001`). A rejected sample is retested by a **new** sample for the same lot, so the **latest sample for a lot is the one with the maximum `sample_id`**. `test_result` is created empty in F04: the `approved` and `rejected` events do not write results (the generator may seed them; Tier 2 uses them). `sample` has `updated_at` as every table does.
+
 The REST API (`lims-sim`) exposes `GET /samples?batch_no=` and `GET /samples/{id}/results` for agents. The pipeline reads the DB directly.
 
 ### 1.3 `qms_sim`
 | Table | Key | Columns |
 |---|---|---|
 | `deviation` | `deviation_no` | `title`, `description`, `severity` (`minor`,`major`,`critical`), `status` (`open`,`closed`), `opened_on`, `closed_on`, `root_cause_category`, `owner`, `updated_at` |
-| `deviation_link` | `deviation_no, material_no, batch_no` | links a deviation to batches |
+| `deviation_link` | `deviation_no, material_no, batch_no` | links a deviation to batches · `updated_at` |
 | `capa`, `change_control` | n/a | Tier 2 |
+
+`deviation_no` is `DEV-000001`-style (counter-allocated). `root_cause_category` is free text from a short generic list used by the generator and `owner` is a role name such as `QA`; neither list is enforced.
 
 ## 2. Lakehouse layout (`./lakehouse`, Delta)
 ```
@@ -96,7 +109,7 @@ Derivations (non-obvious columns):
 | Table | Purpose / key columns |
 |---|---|
 | `app_user` | `user_key` PK, `display_name`, `role` (`planner`,`qc_lead`,`qa_release`,`viewer`,`admin`). Seed: `pat`/Pat/planner, `quinn`/Quinn/qc_lead, `alex`/Alex/qa_release, `sam`/Sam/viewer, `admin`/Admin/admin |
-| `demo_clock` | `id=1`, `now_utc`, `frozen`. **Owned by F04** (first app migration). The clock moves only via set/advance |
+| `demo_clock` | `id` int primary key with `CHECK (id = 1)`, `now_utc timestamptz not null`, `frozen boolean not null default false`. **Owned by F04** (first app migration, `0001_demo_clock`, in the `app_api` package). No `updated_at` (it is the clock). The `scenario` service inserts the row on first start from the profile's `demo.start_datetime` and never overwrites it. The clock moves only via set/advance |
 | `sync_event` | `id` PK, `source` (`webhook`,`poll`,`manual`), `run_id`, `status` (`pending`,`claimed`,`done`,`failed`), `received_at`, `claimed_at`, `finished_at`, `error`, `rows_upserted` |
 | `watermark` | `object_name` PK, `run_id`, `synced_at` |
 | `mirror_batch_pipeline`, `mirror_weekly_metrics`, `mirror_weekly_metric_rows`, `mirror_pipeline_status`, `mirror_stage_reference`, `mirror_metric_reference`, `mirror_reason_codes`, `mirror_deviations` | Same columns as the published object, plus `contract_run_id`, `mirrored_at`. Replaced wholesale per sync in one transaction |
