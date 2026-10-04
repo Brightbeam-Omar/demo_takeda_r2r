@@ -1,0 +1,23 @@
+[project]
+name = "datagen"
+version = "0.1.0"
+description = "Seeded synthetic data generator: replays a site history through the source simulators' event functions"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "r2r-core",
+    "erp-sim",
+    "lims-sim",
+    "qms-sim",
+    "pyyaml>=6",
+    "openpyxl>=3.1",
+]
+
+[dependency-groups]
+dev = ["types-openpyxl", "types-pyyaml"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/datagen"]

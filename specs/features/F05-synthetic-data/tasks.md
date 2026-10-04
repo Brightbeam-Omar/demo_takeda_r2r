@@ -1,5 +1,5 @@
 # F05 · Tasks
-- [ ] T1 Params file, seeded RNG plumbing, CLI skeleton
+- [x] T1 Params file, seeded RNG plumbing, CLI skeleton
 - [ ] T2 World builder (materials, suppliers, locations, campaigns, demand) (FR-02, FR-10)
 - [ ] T3 Timeline simulation through F04 event functions (FR-01, FR-04)
 - [ ] T4 [TDD] Quirk injectors (FR-05, AC-03)

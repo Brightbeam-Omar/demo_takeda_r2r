@@ -1,0 +1,76 @@
+# Every tuning number of the synthetic data generator (F05). Edit here, not in code.
+# Stage keys come from the site profile; the targets below are checked by the generator's report and tests.
+
+history:
+  weeks: 26                  # simulated history ending at demo.start_datetime
+  metric_weeks: 12           # complete weeks that M3 / M6 / M7 publish
+
+volumes:                     # F05-FR-02 (+-10%; may rise by up to 40% to meet the targets below)
+  materials: 300
+  suppliers: 40
+  batches: 650               # distinct batches
+  reeval_batches: 100        # batches that carry a current re-evaluation (09) lot
+  reeval_open_share: 0.60    # of those current 09 lots, the share still open at demo start
+  previous_reevals: {0: 0.60, 1: 0.30, 2: 0.10}   # earlier, released 09 lots per re-eval batch
+  deviations: 90
+  deviation_open_share: 0.20
+
+mix:
+  drug_substance_share: 0.85
+  molecule_types: {small_molecule: 0.55, large_molecule: 0.25, peptide: 0.20}
+  threepl_share: 0.30        # share of deliveries received into a 3PL location
+  offsite_share: 0.12        # share of tests done at an external lab
+
+# F05-FR-03: stage mix of OPEN rows (every lot, 01 and 09, not released) at demo start
+open_stage_mix: {pending: 0.03, receipt: 0.08, call_off: 0.12, sampling: 0.18, qc_ship: 0.03, qc_testing: 0.42, qa_release: 0.14}
+stage_tolerance_pp: 3
+# RAG among open rows that have one (not pending)
+rag_mix: {green: 0.55, amber: 0.25, red: 0.20}
+rag_tolerance_pp: 5
+
+# Age of an open row in its current stage: `within_sla` of rows are inside the SLA, the rest are backlog
+# beyond it (up to `backlog_max_days` past the SLA). A backlog is intended: it makes the exceptions view.
+stage_age:
+  pending: {within_sla: 1.0, backlog_max_days: 0}
+  receipt: {within_sla: 0.55, backlog_max_days: 35}
+  call_off: {within_sla: 0.35, backlog_max_days: 70}
+  sampling: {within_sla: 0.45, backlog_max_days: 70}
+  qc_ship: {within_sla: 0.45, backlog_max_days: 40}
+  qc_testing: {within_sla: 0.60, backlog_max_days: 84}
+  qa_release: {within_sla: 0.50, backlog_max_days: 45}
+
+completions:                 # released lots per week (usage decision date)
+  min_per_week: 10           # M3, M6 and M7 each need at least this many in every metric week
+  recent_release_per_week: [12, 16]   # the metric weeks
+  early_release_per_week: [7, 10]     # before them
+
+on_time:                     # weekly on-time share target per metric week, drawn from this range
+  weekly_min: 0.74
+  weekly_max: 0.89
+  default: 0.80              # stages without a weekly metric, and weeks outside the metric window
+
+durations:                   # stage durations: lognormal around the SLA, split into on-time and late draws
+  on_time_centre: 0.75       # share of the SLA at the centre of an on-time duration
+  sigma: 0.45
+  late_centre: 0.50          # extra days past the SLA, as a share of the SLA, at the centre of a late draw
+  late_sigma: 0.70
+
+demand:
+  need_by_max_days: 250      # candidate need-by dates are drawn between today and today + this
+  no_demand_share: 0.08      # materials with open lots but no open demand on or after today
+  extra_rows: {0: 0.5, 1: 0.35, 2: 0.15}          # further open demand rows per material
+  closed_history_share: 0.25
+  stale_open_share: 0.03     # open demand lines with a past requirement date
+
+deviations:
+  severity: {minor: 0.60, major: 0.30, critical: 0.10}
+  links: {1: 0.65, 2: 0.35}
+  open_on_qa_release: 6      # open deviations on lots waiting in QA release (B3150 is one)
+
+quirks:                      # F05-FR-05 (minimum is 3 of each; these are what the generator creates)
+  failed_inbound_checks: 5
+  rejected_uds: 6
+  on_hold_batches: 8
+  released_holds: 4          # batches held and released again (noise)
+  erp_blocked_batches: 8
+  quantities: [25, 50, 100, 200, 500, 1000, 2500]
