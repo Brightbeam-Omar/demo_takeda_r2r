@@ -47,12 +47,12 @@ ud_codes:
   accept:   ["A", "A4"]
   reject:   ["R"]
   cancel:   ["X"]
-metrics:  # see §7
-  - {id: M1, label: "Receipt On-Time",          stage: receipt,    computed_in: app,      tier: 2}
-  - {id: M2, label: "Transfer On-Time",         stage: call_off,   computed_in: app,      tier: 2}
+metrics:  # see §7. `null_reason` is optional, and required when computed_in is app
+  - {id: M1, label: "Receipt On-Time",          stage: receipt,    computed_in: app,      tier: 2, null_reason: "Physical receipt date comes from the 3PL feed, enabled in Tier 2"}
+  - {id: M2, label: "Transfer On-Time",         stage: call_off,   computed_in: app,      tier: 2, null_reason: "Physical transfer date comes from the 3PL feed, enabled in Tier 2"}
   - {id: M3, label: "Sampling On-Time",         stage: sampling,   computed_in: pipeline, tier: 1}
-  - {id: M4, label: "QC Ship On-Time",          stage: qc_ship,    computed_in: app,      tier: 2}
-  - {id: M5, label: "External Test On-Time",    stage: null, sla_days: 30, computed_in: app, tier: 2}
+  - {id: M4, label: "QC Ship On-Time",          stage: qc_ship,    computed_in: app,      tier: 2, null_reason: "Physical shipment date comes from the 3PL feed, enabled in Tier 2"}
+  - {id: M5, label: "External Test On-Time",    stage: null, sla_days: 30, computed_in: app, tier: 2, null_reason: "External lab result date comes from the lab feed, enabled in Tier 2"}
   - {id: M6, label: "Testing On-Time",          stage: qc_testing, computed_in: pipeline, tier: 1}
   - {id: M7, label: "QA Release On-Time",       stage: qa_release, computed_in: pipeline, tier: 1}
 metric_rag: {green_min_pct: 90, amber_min_pct: 80}
@@ -159,7 +159,10 @@ For metric `m` bound to stage `s`, week `w` (ISO week, Monday start, site timezo
 - `on_time(w)` = those with `exit − entry ≤ sla(s, lot_type)`
 - `pct = 100 × on_time / completed` (NULL if `completed = 0`)
 - The pipeline publishes the last 12 complete weeks plus the current week-to-date for metrics with `computed_in: pipeline`. It also publishes the contributing rows (`weekly_metric_rows_v`), so Explain never re-implements this maths.
-- For metrics with `computed_in: app`, `metric_reference_v.status = 'awaiting_signal'` with a human-readable `null_reason` (e.g. "Physical delivery date comes from 3PL feed, enabled in Tier 2").
+- For metrics with `computed_in: app`, `metric_reference_v.status = 'awaiting_signal'` with a human-readable `null_reason`. The text comes from the profile metric's `null_reason`, which is **required** when `computed_in: app` (the profile validator enforces it). Example: "Physical delivery date comes from 3PL feed, enabled in Tier 2".
+- The weekly views (`weekly_metrics_v`, `weekly_metric_rows_v`) contain only `computed_in: pipeline` metrics.
+- The SLA used for a row is its own entry for the stage in `applicable_sla_json` (re-evaluation and override aware). A row whose stage is not applicable is not counted.
+- Weeks are ISO weeks (Monday start) in the site timezone, relative to the snapshot date: the 12 weeks before the snapshot's week, plus the snapshot's week to date. A week with no completions is still emitted, with `completed = 0` and NULL `pct`.
 - The **headline value is the last complete week**. Week-to-date is shown as a secondary value, because at demo start (a Monday morning) week-to-date is empty.
 - UI colour from `metric_rag`: `pct ≥ green_min_pct` green, `pct ≥ amber_min_pct` amber, otherwise red.
 

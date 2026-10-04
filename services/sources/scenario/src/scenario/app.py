@@ -1,4 +1,4 @@
-"""Scenario service API (port 8100): the demo clock now; scenario steps later (F13)."""
+"""Scenario service API (port 8100): the demo clock and the pipeline trigger; scenario steps later (F13)."""
 
 import os
 from collections.abc import AsyncIterator
@@ -11,6 +11,7 @@ from r2r_core.web import health_router, install_error_handlers
 from sqlalchemy import Engine
 
 from scenario.clock_api import build_router, default_profile, seed_clock
+from scenario.pipeline_api import build_router as build_pipeline_router
 
 
 def create_app(engine: Engine | None = None, profile: SiteProfile | None = None) -> FastAPI:
@@ -30,6 +31,7 @@ def create_app(engine: Engine | None = None, profile: SiteProfile | None = None)
     install_error_handlers(app)
     app.include_router(health_router("scenario"))
     app.include_router(build_router(db_engine, site))
+    app.include_router(build_pipeline_router())
     return app
 
 

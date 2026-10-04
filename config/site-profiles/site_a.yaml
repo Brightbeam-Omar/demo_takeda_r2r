@@ -24,11 +24,11 @@ ud_codes:
   reject:   ["R"]
   cancel:   ["X"]
 metrics:  # see §7
-  - {id: M1, label: "Receipt On-Time",          stage: receipt,    computed_in: app,      tier: 2}
-  - {id: M2, label: "Transfer On-Time",         stage: call_off,   computed_in: app,      tier: 2}
+  - {id: M1, label: "Receipt On-Time",          stage: receipt,    computed_in: app,      tier: 2, null_reason: "Physical receipt date comes from the 3PL feed, enabled in Tier 2"}
+  - {id: M2, label: "Transfer On-Time",         stage: call_off,   computed_in: app,      tier: 2, null_reason: "Physical transfer date comes from the 3PL feed, enabled in Tier 2"}
   - {id: M3, label: "Sampling On-Time",         stage: sampling,   computed_in: pipeline, tier: 1}
-  - {id: M4, label: "QC Ship On-Time",          stage: qc_ship,    computed_in: app,      tier: 2}
-  - {id: M5, label: "External Test On-Time",    stage: null, sla_days: 30, computed_in: app, tier: 2}
+  - {id: M4, label: "QC Ship On-Time",          stage: qc_ship,    computed_in: app,      tier: 2, null_reason: "Physical shipment date comes from the 3PL feed, enabled in Tier 2"}
+  - {id: M5, label: "External Test On-Time",    stage: null, sla_days: 30, computed_in: app, tier: 2, null_reason: "External lab result date comes from the lab feed, enabled in Tier 2"}
   - {id: M6, label: "Testing On-Time",          stage: qc_testing, computed_in: pipeline, tier: 1}
   - {id: M7, label: "QA Release On-Time",       stage: qa_release, computed_in: pipeline, tier: 1}
 metric_rag: {green_min_pct: 90, amber_min_pct: 80}

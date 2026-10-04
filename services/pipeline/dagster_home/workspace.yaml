@@ -1,0 +1,2 @@
+load_from:
+  - python_module: r2r_pipeline.dagster_defs

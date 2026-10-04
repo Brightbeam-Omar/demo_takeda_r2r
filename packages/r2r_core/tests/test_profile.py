@@ -168,3 +168,16 @@ def test_f03_fr01_applies_if_is_validated_at_load_time(tmp_path: Path, expressio
     data["stages"][2]["applies_if"] = expression
     with pytest.raises(ProfileError, match=message):
         load_profile(_write(tmp_path, data))
+
+
+def test_f07_oq048_an_app_side_metric_needs_a_null_reason(tmp_path: Path) -> None:
+    data = _raw()
+    next(m for m in data["metrics"] if m["id"] == "M1").pop("null_reason")
+    with pytest.raises(ProfileError, match=r"M1.*null_reason"):
+        load_profile(_write(tmp_path, data))
+
+
+def test_f07_oq048_site_a_gives_every_app_side_metric_a_reason() -> None:
+    profile = load_profile("site_a")
+    assert {m.id for m in profile.metrics if m.null_reason} == {"M1", "M2", "M4", "M5"}
+    assert all(m.null_reason is None for m in profile.metrics if m.computed_in == "pipeline")

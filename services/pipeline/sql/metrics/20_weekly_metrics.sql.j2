@@ -1,0 +1,22 @@
+-- One row per pipeline-side metric and week, empty weeks included (completed = 0, pct NULL).
+CREATE OR REPLACE TABLE weekly_metrics AS
+WITH metric_list AS (
+{% for metric in metrics %}
+  SELECT '{{ metric.id }}' AS metric_id
+{% if not loop.last %}
+  UNION ALL
+{% endif %}
+{% endfor %}
+),
+counts AS (
+  SELECT m.metric_id, w.week_start, COUNT(r.row_key) AS completed,
+         SUM(CASE WHEN r.on_time THEN 1 ELSE 0 END) AS on_time
+  FROM metric_list m
+  CROSS JOIN metric_weeks w
+  LEFT JOIN metric_rows r ON r.metric_id = m.metric_id AND r.week_start = w.week_start
+  GROUP BY m.metric_id, w.week_start
+)
+SELECT metric_id, week_start, completed, COALESCE(on_time, 0) AS on_time,
+       CASE WHEN completed = 0 THEN NULL
+            ELSE CAST(100.0 * COALESCE(on_time, 0) / completed AS DECIMAL(5, 1)) END AS pct
+FROM counts;

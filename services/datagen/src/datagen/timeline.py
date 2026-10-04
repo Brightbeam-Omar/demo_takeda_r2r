@@ -81,12 +81,20 @@ class OnTimeBook:
     def __init__(self, calendar: Calendar, params: Params, rng: random.Random) -> None:
         self.calendar = calendar
         self.default = params.on_time.default
+        last = calendar.metric_week_starts[-1]
         self.targets = {
-            (stage, week): rng.uniform(params.on_time.weekly_min, params.on_time.weekly_max)
+            (stage, week): rng.uniform(*self._range(params, stage, week == last))
             for stage in METRIC_STAGES
             for week in calendar.metric_week_starts
         }
         self.counts: dict[tuple[str, date], list[int]] = {}
+
+    @staticmethod
+    def _range(params: Params, stage: str, is_last_week: bool) -> tuple[float, float]:
+        """The target range of a metric week: the shared one, or the stage's own for the last week."""
+        if is_last_week and stage in params.on_time.last_week:
+            return params.on_time.last_week[stage]
+        return params.on_time.weekly_min, params.on_time.weekly_max
 
     def wants_on_time(self, stage: str, exit_date: date, rng: random.Random) -> bool:
         key = (stage, self.calendar.monday(exit_date))

@@ -1,11 +1,11 @@
 # R2R Intelligence Demo: local stack. Variables are read from .env (`cp .env.example .env`).
 # Host ports can be overridden (POSTGRES_HOST_PORT, SCENARIO_HOST_PORT, ERP_HOST_PORT, LIMS_HOST_PORT,
-# QMS_HOST_PORT): `make stack-test` uses other ports and its own project so the demo stack is never touched.
-# Later features add services (pipeline, app, agents, frontend).
+# QMS_HOST_PORT, DAGSTER_HOST_PORT, LAKEHOUSE_HOST_DIR): `make stack-test` uses other ports and its own project so the demo stack is never touched.
+# Later features add services (app, agents, frontend).
 
 # Bind mount for the Delta lakehouse. Declared here so later services (Dagster, app-worker)
 # reuse the same anchor: `volumes: [*lakehouse]`. App-worker mounts it read-only (F08).
-x-lakehouse: &lakehouse ./lakehouse:/lakehouse
+x-lakehouse: &lakehouse ${LAKEHOUSE_HOST_DIR:-./lakehouse}:/lakehouse
 
 # One image recipe for every Python service; SERVICE_PATH picks the workspace member to install.
 x-python-service: &python-service
@@ -131,6 +131,49 @@ services:
       interval: 5s
       timeout: 5s
       retries: 12
+
+  # The data product (F07). One image for both Dagster processes; the lakehouse is mounted read-write here only.
+  # The pipeline reads the demo clock over HTTP from `scenario` (database fallback), like the simulators.
+  dagster-web:
+    <<: *python-service
+    image: r2r-pipeline
+    build:
+      context: .
+      dockerfile: docker/python.Dockerfile
+      args: {SERVICE_PATH: services/pipeline}
+    command: ["dagster-webserver", "-h", "0.0.0.0", "-p", "3001", "-w", "/app/services/pipeline/dagster_home/workspace.yaml"]
+    environment: &dagster-environment
+      DAGSTER_HOME: /app/services/pipeline/dagster_home
+      CLOCK_SOURCE: http
+      LAKEHOUSE_PATH: /lakehouse
+    volumes:
+      - *lakehouse
+    ports:
+      - "${DAGSTER_HOST_PORT:-3001}:3001"
+    depends_on:
+      postgres: {condition: service_healthy}
+      db-migrate: {condition: service_completed_successfully}
+      scenario: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:3001/server_info', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+
+  # Runs schedules (the 4-hourly one is defined but stopped). Starts after the web server has set up the instance.
+  dagster-daemon:
+    <<: *python-service
+    image: r2r-pipeline
+    build:
+      context: .
+      dockerfile: docker/python.Dockerfile
+      args: {SERVICE_PATH: services/pipeline}
+    command: ["dagster-daemon", "run", "-w", "/app/services/pipeline/dagster_home/workspace.yaml"]
+    environment: *dagster-environment
+    volumes:
+      - *lakehouse
+    depends_on:
+      dagster-web: {condition: service_healthy}
 
 volumes:
   pgdata:

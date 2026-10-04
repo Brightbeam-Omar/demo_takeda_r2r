@@ -27,7 +27,7 @@ Claude Code updates `in_progress` and `review`. Only the human sets `done`.
 | F04 | Source simulators & clock service | F03 | 1 | done |
 | F05 | Synthetic data generator & story batches | F04 | 1 | done |
 | F06 | Pipeline I: extract, flatten, stage engine | F05 | 1 | done |
-| F07 | Pipeline II: snapshot, metrics, publish, notify (Dagster) | F06 | 1 | ready |
+| F07 | Pipeline II: snapshot, metrics, publish, notify (Dagster) | F06 | 1 | review |
 | F08 | Sync layer: webhook, queue, drain, mirror | F07 | 1 | ready |
 | F09 | Application API: reads, overrides, audit, RBAC, explain | F08 | 1 | ready |
 | F10 | Frontend shell & Overview | F09 | 1 | ready |

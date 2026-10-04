@@ -51,7 +51,8 @@ STACK_PROJECT := r2r_stacktest
 stack-test: ## Start an isolated copy of the stack, run the acceptance tests against it, tear it down
 	@test -f .env || cp .env.example .env
 	@export COMPOSE_PROJECT_NAME=$(STACK_PROJECT) POSTGRES_HOST_PORT=15432 SCENARIO_HOST_PORT=18100 \
-		ERP_HOST_PORT=18101 LIMS_HOST_PORT=18102 QMS_HOST_PORT=18103; \
+		ERP_HOST_PORT=18101 LIMS_HOST_PORT=18102 QMS_HOST_PORT=18103 DAGSTER_HOST_PORT=13001 \
+		LAKEHOUSE_HOST_DIR=$(CURDIR)/.stacktest-lakehouse; \
 	trap 'docker compose -p $(STACK_PROJECT) down -v --remove-orphans' EXIT; \
 	docker compose -p $(STACK_PROJECT) up -d --build --wait && uv run pytest -m stack tests/stack
 
@@ -86,8 +87,12 @@ e2e-headed: ## Same as e2e, in a visible browser
 demo-reset: ## Wipe state, regenerate seed data, run the pipeline once, sync
 	@echo "demo-reset: not yet implemented (F13)"
 
-pipeline: ## Trigger one pipeline run now
-	@echo "pipeline: not yet implemented (F07)"
+# Runs the Dagster job through the scenario service and waits; a failed run fails the target (F07-FR-06).
+pipeline: ## Trigger one pipeline run now and wait for it
+	@test -f .env || { echo "Missing .env. Run: cp .env.example .env"; exit 1; }
+	@set -a; . ./.env; set +a; \
+		curl -sS --fail-with-body -X POST -H "X-Scenario-Token: $$SCENARIO_TOKEN" \
+		"http://localhost:$${SCENARIO_HOST_PORT:-8100}/pipeline/run?wait=true" && echo
 
 scenario: ## Apply a scripted scenario step: make scenario STEP=<id>
 	@echo "scenario (STEP=$(STEP)): not yet implemented (F13)"

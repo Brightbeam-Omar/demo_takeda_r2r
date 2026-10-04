@@ -83,3 +83,17 @@ def test_f05_fr04_overall_on_time_is_about_80_percent(stats) -> None:  # type: i
         weeks = stats.weekly[metric]
         overall = sum(w.on_time for w in weeks) / sum(w.completed for w in weeks)
         assert 0.75 <= overall <= 0.85, (metric, overall)
+
+
+def test_f05_fr04_the_last_complete_week_shows_one_green_one_amber_and_one_red_metric(
+    stats,  # type: ignore[no-untyped-def]
+    profile,  # type: ignore[no-untyped-def]
+) -> None:
+    """Demo mix: the headline values are M3 green, M6 amber, M7 red (metric_rag of the profile)."""
+    green, amber = profile.metric_rag.green_min_pct, profile.metric_rag.amber_min_pct
+    last = {metric: stats.weekly[metric][-1] for metric in ("M3", "M6", "M7")}
+    pct = {metric: 100 * w.on_time / w.completed for metric, w in last.items()}
+    assert pct["M3"] >= green, pct
+    assert amber <= pct["M6"] < green, pct
+    assert pct["M7"] < amber, pct
+    assert all(w.completed >= 10 for w in last.values())

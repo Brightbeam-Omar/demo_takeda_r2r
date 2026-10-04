@@ -105,6 +105,7 @@ class Metric(_Model):
     computed_in: Literal["app", "pipeline"]
     tier: int
     sla_days: NonNegativeInt | None = None
+    null_reason: str | None = None  # required when computed_in is app
 
 
 class MetricRag(_Model):
@@ -169,6 +170,8 @@ class SiteProfile(_Model):
             if metric.id in metric_ids:
                 raise ValueError(f"duplicate metric id {metric.id!r}")
             metric_ids.add(metric.id)
+            if metric.computed_in == "app" and not (metric.null_reason or "").strip():
+                raise ValueError(f"metric {metric.id} is computed in the app, so it needs a null_reason")
             if metric.stage is None:
                 if metric.sla_days is None:
                     raise ValueError(f"metric {metric.id} has no stage, so it needs an explicit sla_days")

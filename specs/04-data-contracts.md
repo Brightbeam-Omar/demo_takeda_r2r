@@ -52,12 +52,23 @@ The REST API (`lims-sim`) exposes `GET /samples?batch_no=` and `GET /samples/{id
 lakehouse/
   staging/        stg_mara, stg_lfa1, stg_t001l, stg_mcha, stg_mchb, stg_mseg, stg_qals, stg_zinbchk,
                   stg_mdez, stg_sample, stg_deviation, stg_deviation_link, batch_flat, batch_stage   (overwrite per run)
-  intelligence/   batch_snapshot (append/replace by snapshot_date), weekly_metrics, need_by_history,
+  intelligence/   batch_snapshot (append/replace by snapshot_date), weekly_metrics, weekly_metric_rows, need_by_history,
                   pipeline_run_log
   published/      batch_pipeline_v, weekly_metrics_v, weekly_metric_rows_v, pipeline_status_v,
                   stage_reference_v, metric_reference_v, reason_codes_v, deviations_v  (overwrite per run)
 ```
 Even though the published tables are suffixed `_v`, they are materialised Delta tables, not views.
+
+### 2.1 Intelligence tables (F07)
+| Table | Columns |
+|---|---|
+| `batch_snapshot` | `staging.batch_flat` joined to `staging.batch_stage` on `row_key` (every column of both), plus `snapshot_date`, `run_id`, `system_need_by_locked`. Partitioned by `snapshot_date`; a run replaces only its own date's partition |
+| `need_by_history` | `row_key`, `system_need_by_date`, `first_seen_date`, `run_id`. Holds the **first non-null** `system_need_by_date` per `row_key`; rows are only inserted, never updated. `system_need_by_locked` = this value, else NULL (a row released before it ever had demand stays NULL) |
+| `weekly_metrics` | the `weekly_metrics_v` columns (`metric_id, week_start, completed, on_time, pct`) plus `run_id`. Only metrics with `computed_in: pipeline`; the last 12 complete ISO weeks plus the current week to date, relative to the snapshot date; empty weeks have `completed = 0` and NULL `pct`. Replaced wholesale each run |
+| `weekly_metric_rows` | the `weekly_metric_rows_v` columns (`metric_id, week_start, row_key, entry_date, exit_date, duration_days, sla_days, on_time`) plus `run_id`: the rows behind every `weekly_metrics` figure. Replaced wholesale each run |
+| `pipeline_run_log` | `run_id, step, status ('success'/'failed'), started_at, finished_at, rows, error, notify_status ('ok'/'failed'/'skipped', notify row only), detail_json`. One row per step per run, appended. `detail_json` carries step details (the `extract` row holds the per-source freshness that `publish` reads for `source_freshness_json`) |
+
+Run order and publishing: the published objects are written one by one in the order of §4 (`batch_pipeline_v`, `weekly_metrics_v`, `weekly_metric_rows_v`, `stage_reference_v`, `metric_reference_v`, `reason_codes_v`, `deviations_v`) with `pipeline_status_v` **last**. Every object except the reference ones carries the `run_id`, so a reader can detect a mixed state after a crash inside `publish`.
 
 ## 3. `staging.batch_flat` (input to the stage engine)
 One row per `material_no, batch_no, inspection_lot_no` for lot types `01`/`09`, excluding cancelled UDs.
@@ -91,7 +102,7 @@ One row per `row_key`, built by the SQL steps `50`–`90` from `batch_flat`: `ro
 
 ### 4.1 `batch_pipeline_v`
 `row_key` (`material_no|batch_no|inspection_lot_no`), every `batch_flat` business column (including `erp_results_recorded_at`), plus:
-`stage_key, stage_rule_id, stage_sort, current_stage_entry_date, lims_rejected, receipt_entry, receipt_exit, call_off_entry, call_off_exit, sampling_entry, sampling_exit, qc_ship_entry, qc_ship_exit, qc_testing_entry, qc_testing_exit, qa_release_entry, qa_release_exit, applicable_sla_json, system_need_by_locked, on_hold, erp_blocked, re_eval, offsite, full_spec, ud_rejected, deviation_light, inbound_light, snapshot_date, run_id, published_at`
+`stage_key, stage_rule_id, stage_sort, current_stage_entry_date, lims_rejected, receipt_entry, receipt_exit, call_off_entry, call_off_exit, sampling_entry, sampling_exit, qc_ship_entry, qc_ship_exit, qc_testing_entry, qc_testing_exit, qa_release_entry, qa_release_exit, applicable_sla_json, source_refs_json, system_need_by_locked, on_hold, erp_blocked, re_eval, offsite, full_spec, ud_rejected, deviation_light, inbound_light, snapshot_date, run_id, published_at`
 
 ### 4.2 `weekly_metrics_v`
 `metric_id, week_start (date), completed (int), on_time (int), pct (decimal 5,1 null), run_id`
