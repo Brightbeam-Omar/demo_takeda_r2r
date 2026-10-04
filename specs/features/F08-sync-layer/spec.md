@@ -11,6 +11,7 @@ This is the glue between data product and app, following constitution P2 and ADR
 | F08-FR-03 | `POST /api/sync/trigger` (admin only) inserts `sync_event(source='manual')` |
 | F08-FR-04 | `app-worker` drain loop every `DRAIN_INTERVAL_SECONDS`: claim with `SELECT … FOR UPDATE SKIP LOCKED LIMIT 1` where `status='pending'`, or `status='claimed' AND claimed_at < now() − interval '5 minutes'` (stale reclaim) |
 | F08-FR-05 | For a claimed event: read **every** published object through `ContractReader` (`DeltaContractReader`). If `pipeline_status_v.last_run_id == watermark.run_id` for all objects, mark `done` with `rows_upserted=0` (no-op). Otherwise replace all `mirror_*` tables **in one transaction**, update the `watermark` rows and mark `done` with counts. On exception, mark `failed` with the error text, and roll back the mirror |
+| F08-FR-05b | Mixed-state check (OQ-047): the pipeline writes the published objects one by one with `pipeline_status_v` last. Before the transaction, the worker compares the `run_id` of every published object that carries one with `pipeline_status_v.last_run_id`. If they differ (a publish that crashed part-way, or one still in progress), the event is marked `failed` with a clear error and the mirror is untouched; the next webhook or manual trigger retries |
 | F08-FR-06 | The worker is the **only** code path that reads the lakehouse. Its container mounts `./lakehouse` read-only |
 | F08-FR-07 | `GET /api/sync/status`: last 50 events, watermark per object, `pipeline_status` (last_run_id, last_success_at, source_freshness), and computed `freshness_minutes = now − last_success_at` (demo clock) |
 | F08-FR-08 | Structured logs for claim/pull/upsert, with `event_id`, `run_id` and duration |
@@ -23,4 +24,5 @@ This is the glue between data product and app, following constitution P2 and ADR
 - **F08-AC-04** A worker killed after claiming (simulated by setting `claimed_at` 6 min ago with status `claimed`) is reclaimed and completed by the next drain.
 - **F08-AC-05** A duplicate webhook for the same run_id → second event completes as a no-op (`rows_upserted=0`).
 - **F08-AC-06** A failure mid-upsert (injected) leaves the previous mirror intact and marks the event `failed`.
+- **F08-AC-08** Published objects whose `run_id` values disagree with `pipeline_status_v` leave the mirror unchanged and mark the event `failed` (F08-FR-05b).
 - **F08-AC-07** The webhook endpoint never imports or calls the lakehouse reader (a test asserts module import graph / monkeypatch raises if called).
