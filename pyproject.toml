@@ -38,6 +38,10 @@ exclude = ["*.md"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
 
+[tool.ruff.lint.per-file-ignores]
+# Worked-example tables read better unwrapped.
+"**/tests/**" = ["E501"]
+
 
 [tool.mypy]
 python_version = "3.12"
