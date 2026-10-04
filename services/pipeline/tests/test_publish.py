@@ -11,7 +11,7 @@ from r2r_core.profile import SiteProfile
 from r2r_pipeline.context import RunContext
 from r2r_pipeline.lake import delta_exists, read_delta
 from r2r_pipeline.publish import PUBLISH_ORDER, publish
-from r2r_pipeline.runlog import StepResult, run_step
+from r2r_pipeline.runlog import StepResult, run_step, step_row
 from r2r_pipeline.setup import setup
 from r2r_pipeline.snapshot import snapshot_aggregate
 from r2r_pipeline.transform import transform
@@ -171,3 +171,54 @@ def test_f07_fr03_publish_refuses_a_run_that_did_not_build_its_snapshot(
     with pytest.raises(LookupError, match="transform"):
         publish(ctx)
     assert not delta_exists(tmp_path, "published.pipeline_status_v")
+
+
+@pytest.mark.usefixtures("demo_clock")
+def test_f07_oq046_the_status_takes_freshness_and_start_from_the_run_log(
+    world: World, tmp_path: Path, profile: SiteProfile
+) -> None:
+    run_all(world, tmp_path, profile)
+    [status] = table(tmp_path, "pipeline_status_v")
+    assert json.loads(status["source_freshness_json"]) == FRESHNESS  # the extract row's detail_json
+    assert status["started_at"] == step_row(_ctx(profile, tmp_path), "setup")["started_at"]
+
+
+@pytest.mark.usefixtures("demo_clock")
+def test_f07_fr03_published_column_types_follow_the_contract(
+    world: World, tmp_path: Path, profile: SiteProfile
+) -> None:
+    import pyarrow as pa
+
+    run_all(world, tmp_path, profile)
+    assert read_delta(tmp_path, "published.weekly_metrics_v").schema.field("pct").type == pa.decimal128(5, 1)
+    for name in ("stage_reference_v", "metric_reference_v", "reason_codes_v", "deviations_v"):
+        assert "run_id" not in read_delta(tmp_path, f"published.{name}").schema.names, name
+
+
+@pytest.mark.usefixtures("demo_clock")
+def test_f07_oq047_a_crash_inside_publish_leaves_the_status_unwritten(
+    world: World, tmp_path: Path, profile: SiteProfile, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import r2r_pipeline.publish as module
+
+    run_all(world, tmp_path, profile, "run-1")
+    real = module.write_delta
+
+    def crash_on_deviations(root: Path, name: str, data: object, mode: str = "overwrite") -> None:
+        if name.endswith("deviations_v"):
+            raise OSError("disk full")
+        real(root, name, data, mode)
+
+    monkeypatch.setattr(module, "write_delta", crash_on_deviations)
+    with pytest.raises(OSError, match="disk full"):
+        run_all(world, tmp_path, profile, "run-2")
+    assert table(tmp_path, "pipeline_status_v")[0]["last_run_id"] == "run-1"  # still the previous run
+    assert {r["run_id"] for r in table(tmp_path, "batch_pipeline_v")} == {
+        "run-2"
+    }  # the mix a reader can detect
+
+
+def _ctx(profile: SiteProfile, lake: Path) -> RunContext:
+    from r2r_pipeline.context import new_context
+
+    return new_context(profile, lake, run_id="run-1")
