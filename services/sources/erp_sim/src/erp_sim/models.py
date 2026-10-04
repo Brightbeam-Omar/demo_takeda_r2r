@@ -2,7 +2,7 @@
 audiences recognise the shape; each table carries a comment saying what it is.
 """
 
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 
 from r2r_core.db import CounterMixin, TimestampMixin
@@ -10,6 +10,7 @@ from sqlalchemy import (
     Boolean,
     CheckConstraint,
     Date,
+    DateTime,
     ForeignKey,
     ForeignKeyConstraint,
     Index,
@@ -118,6 +119,7 @@ class Qals(TimestampMixin, Base):
     pastrterm: Mapped[date] = mapped_column(Date)  # lot start date
     vcode: Mapped[str | None] = mapped_column(String)  # usage decision code
     vdatum: Mapped[date | None] = mapped_column(Date)  # usage decision date
+    zresrec: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))  # LIMS results recorded in ERP
     __table_args__ = (
         ForeignKeyConstraint(["matnr", "charg"], ["mcha.matnr", "mcha.charg"]),
         Index("ix_qals_matnr_charg", "matnr", "charg"),

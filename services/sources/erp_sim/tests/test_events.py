@@ -433,3 +433,39 @@ def test_f04_fr10_counters_are_kept_per_sequence(factory: sessionmaker[Session])
         session.commit()
         names = set(session.scalars(select(Counter.name)))
     assert names == {"mblnr", "prueflos"}
+
+
+def test_f05_oq039_results_recorded_sets_zresrec_without_a_usage_decision(
+    factory: sessionmaker[Session],
+) -> None:
+    with factory() as session:
+        prueflos = str(receive(session)["qals"]["prueflos"])  # type: ignore[index]
+        later = datetime(2026, 10, 12, 9, 30, tzinfo=UTC)
+        events.results_recorded(session, schemas.ResultsRecordedIn(prueflos=prueflos, at=later))
+        session.commit()
+        found = lot(session, prueflos)
+        assert (found.zresrec, found.vcode, found.vdatum) == (later, None, None)
+        with pytest.raises(Invalid, match="already recorded"):
+            events.results_recorded(session, schemas.ResultsRecordedIn(prueflos=prueflos))
+
+
+def test_f05_oq039_results_recorded_defaults_to_demo_now_and_checks_input(
+    factory: sessionmaker[Session],
+) -> None:
+    with factory() as session:
+        prueflos = str(receive(session)["qals"]["prueflos"])  # type: ignore[index]
+        with pytest.raises(Invalid, match="timezone"):
+            events.results_recorded(
+                session, schemas.ResultsRecordedIn(prueflos=prueflos, at=datetime(2026, 10, 12, 9, 0))
+            )
+        with pytest.raises(Invalid, match="lot"):
+            events.results_recorded(session, schemas.ResultsRecordedIn(prueflos="99999999"))
+        events.results_recorded(session, schemas.ResultsRecordedIn(prueflos=prueflos))
+        assert lot(session, prueflos).zresrec == DEMO_NOW
+
+
+def test_f05_oq039_a_usage_decision_does_not_record_results(factory: sessionmaker[Session]) -> None:
+    with factory() as session:
+        prueflos = str(receive(session)["qals"]["prueflos"])  # type: ignore[index]
+        events.usage_decision(session, schemas.UsageDecisionIn(prueflos=prueflos, vcode="A"))
+        assert lot(session, prueflos).zresrec is None

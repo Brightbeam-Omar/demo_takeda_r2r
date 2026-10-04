@@ -21,6 +21,7 @@ def test_f04_fr03_the_expected_write_endpoints_exist() -> None:
         "/events/hold",
         "/events/inbound-check",
         "/events/reeval-lot",
+        "/events/results-recorded",
         "/events/stock-block",
         "/events/stock-unblock",
         "/events/transfer",
