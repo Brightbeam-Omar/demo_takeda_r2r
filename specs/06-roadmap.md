@@ -21,7 +21,7 @@ Claude Code updates `in_progress` and `review`. Only the human sets `done`.
 
 | ID | Feature | Depends on | Tier | Status |
 |---|---|---|---|---|
-| F01 | Repo foundation & tooling | n/a | 1 | review |
+| F01 | Repo foundation & tooling | n/a | 1 | done |
 | F02 | Leak scanner | F01 | 1 | ready |
 | F03 | Core library: site profile, demo clock, SLA maths | F01 | 1 | ready |
 | F04 | Source simulators & clock service | F03 | 1 | ready |

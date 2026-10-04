@@ -3,7 +3,7 @@
 # SERVICE_PATH is the workspace member to install; the default is the shared core package.
 FROM python:3.12-slim
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.12.23 /uv /usr/local/bin/uv
 
 ARG SERVICE_PATH=packages/r2r_core
 
