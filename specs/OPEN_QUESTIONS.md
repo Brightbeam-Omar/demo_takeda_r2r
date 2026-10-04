@@ -203,3 +203,10 @@ Add entries as: `## OQ-NNN · <feature> · <date>` then context, question, optio
 **Question:** Confirm?
 **Proposal:** Connection from `POSTGRES_*` like the other services (host default `localhost` with published port 5432, or `postgres` in a container). `--seed` defaults to the profile's `demo.seed`. The wipe truncates source tables and resets the three counter tables; it never touches `app`. The determinism test (AC-01) compares a `pg_dump --data-only --inserts` of the three DBs, normalised by dropping `mdez.id` and `test_result.id` rows' id values, run twice with the same seed; the counter-allocated document numbers are deterministic and stay in the comparison. The performance check (AC-07) runs against the stack on the dev laptop, in-process.
 **Decision:** Accepted as proposed. The generator never touches the `app` DB.
+
+## OQ-039 · F05 (for F12) · 2026-10-04
+**Context:** The air-gap flag is read-time and covers every lot that LIMS approved at least 24 h ago and that has no usage decision (03 §6). The decided QA Release share (14% of open rows, OQ-031) with a backlog beyond SLA means ~60 lots are air gaps at demo start, not only the story batch B5003. F12-AC-01 expects the air-gap agent to create a proposal for B5003.
+**Question:** Should the air-gap agent propose for one lot per run (the story one, or the oldest) or for all? Alternatively, should the QA Release backlog be freshly approved so that only a few lots are air gaps?
+**Options:** (a) Leave the data as is; the F12 agent ranks air gaps (oldest first, or by need-by) and proposes one ticket per run. (b) Shorten QA Release ages in `params.yaml` (`stage_age.qa_release`) so only ~5–10 lots exceed 24 h. This breaks the "backlog beyond SLA" intent for that stage.
+**Proposal:** (a). F05 reports the count (`air_gap` row of `datagen_report.md`) and takes no further action; F12 decides how many proposals a run makes.
+**Decision:**
