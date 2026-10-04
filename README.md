@@ -19,12 +19,26 @@ The specs in [`specs/`](specs/) are the source of truth. Start with [`CLAUDE.md`
 ```bash
 cp .env.example .env   # local dev defaults; edit if you need to
 make install           # uv sync + npm ci
-make up                # starts Postgres (the only service in F01)
+make up                # builds and starts Postgres, the simulators and the scenario (clock) service
 make check             # lint, types, tests, leak scan (leak scan arrives with F02)
 ```
 
 Check the databases with `docker compose exec postgres psql -U r2r -d postgres -l`: you should see
 `erp_sim`, `lims_sim`, `qms_sim`, `app` and `dagster`.
+
+## Services
+
+| Service | Port | What it is |
+|---|---|---|
+| `postgres` | 5432 | One server, five databases |
+| `scenario` | 8100 | Owns the demo clock: `GET /clock`, `POST /clock/set`, `POST /clock/advance` |
+| `erp-sim` | 8101 | SAP-shaped ERP simulator |
+| `lims-sim` | 8102 | LIMS simulator |
+| `qms-sim` | 8103 | QMS simulator |
+
+Every service serves OpenAPI docs at `/docs`. Reads are open; every `POST` needs the header
+`X-Scenario-Token` (`SCENARIO_TOKEN` in `.env`). A one-shot `db-migrate` container migrates the `app`
+database; each simulator migrates its own database when it starts.
 
 ## Commands
 
@@ -37,6 +51,8 @@ delivers them.
 | `make logs` | Follow stack logs |
 | `make check` | ruff, mypy `--strict`, pytest, frontend lint/typecheck/test, leak scan |
 | `make fmt` / `make test` | Format Python / run all unit tests |
+| `make integration` | Tests that need Postgres (starts the compose Postgres) |
+| `make stack-test` | Build and start the whole stack, then run the acceptance tests against it |
 | `make coverage-core` | 100% branch-coverage gate on `r2r_core.sla` and `r2r_core.airgap` (part of `make check`) |
 | `make demo-reset` | Wipe state and rebuild the canonical opening state (F13) |
 | `make pipeline` | Trigger one pipeline run (F07) |

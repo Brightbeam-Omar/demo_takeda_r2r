@@ -17,7 +17,7 @@ install: ## Install Python and frontend dependencies
 # --- stack -------------------------------------------------------------------------------------
 up: ## Start the stack (needs .env: cp .env.example .env)
 	@test -f .env || { echo "Missing .env. Run: cp .env.example .env"; exit 1; }
-	docker compose up -d --wait
+	docker compose up -d --build --wait
 
 down: ## Stop the stack
 	docker compose down
@@ -43,6 +43,11 @@ check-python:
 integration: ## Run tests that need Postgres (starts the compose Postgres)
 	docker compose up -d --wait postgres
 	uv run pytest -m integration
+
+stack-test: ## Build and start the whole stack, then run the acceptance tests against it
+	@test -f .env || cp .env.example .env
+	docker compose up -d --build --wait
+	uv run pytest -m stack tests/stack
 
 # F03-FR-09: 100% branch coverage on the SLA maths and the air-gap check, independent of what else runs.
 coverage-core:
