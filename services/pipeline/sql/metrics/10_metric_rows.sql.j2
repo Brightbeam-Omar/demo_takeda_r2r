@@ -1,0 +1,19 @@
+-- The rows behind every weekly figure (03-domain-model section 7): one row per metric, week and row whose
+-- stage finished in that week. The SLA is the row's own entry in applicable_sla_json (re-evaluation aware).
+CREATE OR REPLACE TABLE metric_rows AS
+{% for metric in metrics %}
+SELECT '{{ metric.id }}' AS metric_id, w.week_start, s.row_key,
+       s.{{ metric.stage }}_entry AS entry_date, s.{{ metric.stage }}_exit AS exit_date,
+       date_diff_days(s.{{ metric.stage }}_exit, s.{{ metric.stage }}_entry) AS duration_days,
+       r.sla_days AS sla_days,
+       CASE WHEN date_diff_days(s.{{ metric.stage }}_exit, s.{{ metric.stage }}_entry) <= r.sla_days
+            THEN TRUE ELSE FALSE END AS on_time
+FROM snapshot s
+JOIN row_sla r ON r.row_key = s.row_key AND r.stage_key = '{{ metric.stage }}'
+JOIN metric_weeks w ON s.{{ metric.stage }}_exit >= w.week_start AND s.{{ metric.stage }}_exit < w.week_end
+WHERE s.{{ metric.stage }}_entry IS NOT NULL
+{% if not loop.last %}
+UNION ALL
+{% endif %}
+{% endfor %}
+;

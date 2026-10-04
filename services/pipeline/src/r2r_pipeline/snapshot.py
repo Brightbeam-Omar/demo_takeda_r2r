@@ -3,7 +3,8 @@
 ``batch_snapshot`` is ``batch_flat`` joined to ``batch_stage`` for one snapshot date. A run replaces only
 its own date's partition, so running twice on the same demo day gives the same rows. ``need_by_history``
 remembers the first non-null ``system_need_by_date`` of every row and never changes it;
-``system_need_by_locked`` is that value (OQ-045).
+``system_need_by_locked`` is that value (OQ-045). The weekly metrics are computed from the snapshot in the
+same step (``metrics.py``).
 """
 
 import pyarrow as pa
@@ -11,9 +12,12 @@ import pyarrow.compute as pc
 
 from r2r_pipeline.context import RunContext
 from r2r_pipeline.lake import delta_exists, read_delta, replace_partition, write_delta
+from r2r_pipeline.metrics import compute_weekly_metrics
 from r2r_pipeline.runlog import StepResult
 
 BATCH_SNAPSHOT = "intelligence.batch_snapshot"
+WEEKLY_METRICS = "intelligence.weekly_metrics"
+WEEKLY_METRIC_ROWS = "intelligence.weekly_metric_rows"
 NEED_BY_HISTORY = "intelligence.need_by_history"
 
 NEED_BY_HISTORY_SCHEMA = pa.schema(
@@ -77,4 +81,14 @@ def snapshot_aggregate(ctx: RunContext) -> StepResult:
     history, inserted = lock_need_by(ctx, flat)
     snapshot = build_snapshot(ctx, flat, stage, history)
     replace_partition(ctx.lake_root, BATCH_SNAPSHOT, snapshot, "snapshot_date", ctx.snapshot_date)
-    return StepResult(rows=snapshot.num_rows, detail={"need_by_locked_new": inserted})
+    weekly, contributing = compute_weekly_metrics(ctx, snapshot)
+    write_delta(ctx.lake_root, WEEKLY_METRICS, weekly)  # replaced wholesale each run
+    write_delta(ctx.lake_root, WEEKLY_METRIC_ROWS, contributing)
+    return StepResult(
+        rows=snapshot.num_rows,
+        detail={
+            "need_by_locked_new": inserted,
+            "weekly_metrics": weekly.num_rows,
+            "metric_rows": contributing.num_rows,
+        },
+    )
