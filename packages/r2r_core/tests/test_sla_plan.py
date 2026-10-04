@@ -399,3 +399,31 @@ def test_f03_oq020_stage_not_applicable_to_the_row_is_an_error(
 def test_f03_oq020_unknown_stage_is_an_error(profile: SiteProfile, facts: FactsFactory) -> None:
     with pytest.raises(KeyError):
         run(profile, facts, stage_key=StageKey("nowhere"))
+
+
+# --- story batch B2077 (act 5 of the demo) -----------------------------------------------------
+
+
+def test_f03_story_b2077_pull_forward(profile: SiteProfile, facts: FactsFactory) -> None:
+    """Golden test for the act-5 moment: a planner pulls the campaign forward and the row compresses.
+
+    Onsite, at sampling since 2026-10-08, locked need-by 2026-12-03, today 2026-10-12.
+    """
+    row = {
+        "row_key": "RM10031|B2077|10002077",
+        "current_stage_entry_date": d("2026-10-08"),
+        "system_need_by_locked": d("2026-12-03"),
+    }
+
+    before = run(profile, facts, **row)
+    assert before.compressed is False
+    assert before.expected_completion == d("2026-10-15")
+    assert (before.days_remaining, before.rag, before.late) == (3, Rag.GREEN, False)
+
+    pulled = run(profile, facts, AdjustedNeedBy(d("2026-11-26"), "CAMPAIGN_PULLED_FORWARD"), **row)
+    assert pulled.compressed is True
+    assert pulled.compression_ratio == Decimal(49) / Decimal(56)
+    assert list(pulled.effective_slas.values()) == [6, 37, 6]
+    assert pulled.expected_completion == d("2026-10-14")
+    assert (pulled.days_remaining, pulled.rag, pulled.late) == (2, Rag.AMBER, False)
+    assert pulled.late_reason_auto is None  # not late, so the pull-forward is not offered as an excuse
