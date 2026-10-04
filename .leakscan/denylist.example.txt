@@ -1,0 +1,17 @@
+# Example denylist. Copy to .leakscan/denylist.txt (gitignored) and replace these fake entries with the
+# real client terms: company, site, system, campaign, supplier and people names, internal platform
+# names and email domains. Keep the real list off any shared drive that prospects can see.
+#
+# One entry per line.
+#   - A plain term is matched case-insensitively and must not touch letters or digits on either side
+#     (so hyphens, dots and @ work inside a term).
+#   - A line starting with re: is a regular expression, used as written, case-insensitive.
+#   - Lines starting with # and blank lines are ignored.
+#
+# In CI the same list goes in the GitHub secret LEAKSCAN_DENYLIST (the content, not a path).
+#
+# False positives: add "<repo-relative path>:<sha256 of the lowercased matched text>" to the committed
+# .leakscan/allow.txt. See tools/leakscan/src/leakscan/allow.py for how to compute the hash.
+
+acme-real-client
+re:\bsecretsite\b

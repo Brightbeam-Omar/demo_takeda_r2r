@@ -45,9 +45,15 @@ check-frontend:
 	cd frontend && npm run typecheck
 	cd frontend && npm test -- --run
 
-# No-op until F02 (leak scanner) lands.
+# Scans the git file set, then commit messages on unpushed commits (skipped without an upstream).
+# Warns and passes when no denylist is configured, except in CI (see tools/leakscan).
 leakscan:
-	@echo "leakscan: not yet implemented (F02)"
+	uv run python -m leakscan
+	@if git rev-parse --abbrev-ref '@{u}' >/dev/null 2>&1; then \
+		uv run python -m leakscan --commits '@{u}..HEAD'; \
+	else \
+		echo "leakscan: no upstream branch, skipping commit message scan"; \
+	fi
 
 check: check-python check-frontend leakscan ## Lint, types, tests, leak scan: one verdict
 

@@ -8,8 +8,14 @@ jobs:
   check:
     name: make check
     runs-on: ubuntu-latest
+    env:
+      CI: "true"
+      # The denylist content (newline-separated terms). A missing secret fails the leak scan by design.
+      LEAKSCAN_DENYLIST: ${{ secrets.LEAKSCAN_DENYLIST }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
@@ -20,6 +26,16 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: make install
       - run: make check
+      - name: Leak scan commit messages and authors
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            RANGE="origin/${{ github.base_ref }}..${{ github.event.pull_request.head.sha }}"
+          elif [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
+            RANGE="origin/main..${{ github.sha }}"
+          else
+            RANGE="${{ github.event.before }}..${{ github.sha }}"
+          fi
+          uv run python -m leakscan --commits "$RANGE"
 
   integration:
     name: integration (postgres)
