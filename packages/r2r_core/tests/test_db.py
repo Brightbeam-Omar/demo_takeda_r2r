@@ -157,3 +157,24 @@ def test_f04_fr09_postgres_dsn_is_built_from_the_environment_and_quotes_the_pass
 def test_f04_fr09_session_factory_is_bound_to_the_engine(factory: sessionmaker[Session]) -> None:
     with factory() as session:
         assert isinstance(session, Session)
+
+
+def test_f04_fr10_a_reused_session_restamps_after_each_commit_and_rollback(
+    factory: sessionmaker[Session],
+) -> None:
+    """The generator reuses one session across simulated days: each transaction takes the clock afresh."""
+    clock.set_clock_source(FixedClock(T1))
+    with factory() as session:
+        session.add(Thing(id=1))
+        session.commit()
+        clock.set_clock_source(FixedClock(T2))
+        session.add(Thing(id=2))
+        session.commit()
+        session.add(Thing(id=3))
+        session.flush()
+        session.rollback()
+        clock.set_clock_source(FixedClock(T1.replace(day=20)))
+        session.add(Thing(id=4))
+        session.commit()
+        stamps = {t.id: as_utc(t.updated_at) for t in session.scalars(select(Thing))}
+    assert stamps == {1: T1, 2: T2, 4: T1.replace(day=20)}

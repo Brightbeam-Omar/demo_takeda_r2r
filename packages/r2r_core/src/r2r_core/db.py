@@ -62,7 +62,7 @@ def stamp[T: TimestampMixin](obj: T) -> T:
 
 
 def make_session_factory(engine: Engine) -> sessionmaker[Session]:
-    """Sessions that stamp ``updated_at`` on every new or modified row (one timestamp per session)."""
+    """Sessions that stamp ``updated_at`` on every new or modified row (one timestamp per transaction)."""
     factory = sessionmaker(engine, expire_on_commit=False)
 
     @event.listens_for(factory, "before_flush")
@@ -71,6 +71,12 @@ def make_session_factory(engine: Engine) -> sessionmaker[Session]:
         for obj in list(session.new) + list(session.dirty):
             if isinstance(obj, TimestampMixin) and (obj in session.new or session.is_modified(obj)):
                 obj.updated_at = now
+
+    @event.listens_for(factory, "after_commit")
+    @event.listens_for(factory, "after_rollback")
+    def _forget(session: Session) -> None:
+        # A long-lived session (the generator reuses one across simulated days) must re-read the clock.
+        session.info.pop("stamp_now", None)
 
     return factory
 

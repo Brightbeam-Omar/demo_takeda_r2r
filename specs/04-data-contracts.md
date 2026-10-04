@@ -21,7 +21,7 @@ Rules: a GR reversal (`102`) on the same day as a `101` for the same batch and q
 
 **Conventions (F04).**
 - **`updated_at`:** every table in the three simulators has `updated_at timestamptz not null`, indexed, stamped by service code from `r2r_core.clock.now()` on every insert and update (never by a DB trigger). That includes `deviation_link` and the helper table `counter`. `app.demo_clock` is the only exception (it is the clock).
-- **Types:** quantities are `numeric(13,3)`; keys and codes are `text`; dates are `date`.
+- **Types:** quantities are `numeric(13,3)`; keys and codes are `text`; dates are `date`. The simulators' JSON APIs return `numeric` values as **strings** (`"100.000"`) so no precision is lost; the pipeline reads the databases directly.
 - **Foreign keys:** `mcha`→`mara`, `lfa1`; `mchb`→`mcha`, `t001l`; `mseg`→`mcha`, `t001l` (`lgort`, and `umlgo` when set); `qals`→`mcha`; `zinbchk`→`qals`; `mdez`→`mara`. `lims_sim.sample` has no FK (it refers to the ERP lot by number, across databases). `test_result`→`sample`; `deviation_link`→`deviation`.
 - **Indexes:** `updated_at` on every table, and `(matnr, charg)` / `(material_no, batch_no)` wherever those columns exist.
 - **Number formats** (allocated from per-database counters, so a reset restarts numbering): material document `mblnr` is 10 digits starting `49` (for example `4900001234`) with `zeile` `0001` (one line per document in Tier 1); inspection lot `prueflos` is 8 digits starting `1` (for example `10000042`); `mdez.id` is an integer; sample id `S-0000001`; deviation `DEV-000001`.

@@ -8,7 +8,6 @@ throwaway stack; `make demo-reset` (F13) wipes it.
 
 import os
 import subprocess
-import time
 import uuid
 from collections.abc import Iterator
 from datetime import UTC, datetime, timedelta
@@ -121,31 +120,51 @@ def test_f04_ac03_writes_without_the_token_return_401_on_every_service() -> None
         ), url
 
 
+WATCH_CLOCK = """
+import time
+from r2r_core import clock
+
+old = clock.now()
+print("ready", old.isoformat(), flush=True)
+start = time.monotonic()
+while time.monotonic() - start < 4:
+    seen = clock.now()
+    if seen != old:
+        print("changed", seen.isoformat(), round(time.monotonic() - start, 3), flush=True)
+        break
+    time.sleep(0.05)
+"""
+
+
 def test_f04_ac04_advance_one_day_moves_the_clock_24h_and_another_container_sees_it_within_2s(
     restore_clock: None,
 ) -> None:
-    """F04-AC-04: the clock moves exactly 24 h, and r2r_core.clock.now() inside the erp-sim container follows."""
-    before = demo_now()
-    response = httpx.post(f"{SCENARIO}/clock/advance", json={"days": 1}, headers=TOKEN, timeout=5)
-    assert response.status_code == 200
-    started = time.monotonic()
-    expected = before + timedelta(hours=24)
-    assert demo_now() == expected
+    """F04-AC-04: the clock moves exactly 24 h, and r2r_core.clock.now() in a running erp-sim process follows.
 
-    seen = ""
-    for _ in range(4):
-        result = subprocess.run(
-            ["docker", "compose", "exec", "-T", "erp-sim", "python", "-c", READ_CLOCK],
-            cwd=REPO_ROOT,
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        seen = result.stdout.strip()
-        if datetime.fromisoformat(seen) == expected:
-            break
-    assert datetime.fromisoformat(seen) == expected
-    assert time.monotonic() - started < 2.0, "the other container took longer than 2 s to see the new time"
+    The watcher reads the clock once (and so caches it), signals it is ready, then polls; the test advances the
+    clock and the watcher reports how long it took to see the new time.
+    """
+    before = demo_now()
+    expected = before + timedelta(hours=24)
+    watcher = subprocess.Popen(
+        ["docker", "compose", "exec", "-T", "erp-sim", "python", "-u", "-c", WATCH_CLOCK],
+        cwd=REPO_ROOT,
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+    assert watcher.stdout is not None
+    try:
+        ready = watcher.stdout.readline().split()
+        assert ready[0] == "ready" and datetime.fromisoformat(ready[1]) == before
+        response = httpx.post(f"{SCENARIO}/clock/advance", json={"days": 1}, headers=TOKEN, timeout=5)
+        assert response.status_code == 200
+        assert demo_now() == expected
+        changed = watcher.stdout.readline().split()
+    finally:
+        watcher.kill()
+    assert changed[0] == "changed", "the other container never saw the new time"
+    assert datetime.fromisoformat(changed[1]) == expected
+    assert float(changed[2]) < 2.0, f"the other container took {changed[2]} s to see the new time"
 
 
 def test_f04_ac02_goods_receipt_writes_consistent_rows_stamped_with_the_demo_now(master_data: None) -> None:
