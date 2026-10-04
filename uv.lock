@@ -7,6 +7,7 @@ members = [
     "erp-sim",
     "leakscan",
     "lims-sim",
+    "qms-sim",
     "r2r-core",
     "r2r-demo",
 ]
@@ -650,6 +651,29 @@ wheels = [
 ]
 
 [[package]]
+name = "qms-sim"
+version = "0.1.0"
+source = { editable = "services/sources/qms_sim" }
+dependencies = [
+    { name = "alembic" },
+    { name = "fastapi" },
+    { name = "psycopg", extra = ["binary"] },
+    { name = "r2r-core" },
+    { name = "sqlalchemy" },
+    { name = "uvicorn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "alembic", specifier = ">=1.13" },
+    { name = "fastapi", specifier = ">=0.110" },
+    { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
+    { name = "r2r-core", editable = "packages/r2r_core" },
+    { name = "sqlalchemy", specifier = ">=2" },
+    { name = "uvicorn", specifier = ">=0.29" },
+]
+
+[[package]]
 name = "r2r-core"
 version = "0.1.0"
 source = { editable = "packages/r2r_core" }
@@ -684,6 +708,7 @@ dependencies = [
     { name = "erp-sim" },
     { name = "leakscan" },
     { name = "lims-sim" },
+    { name = "qms-sim" },
     { name = "r2r-core" },
 ]
 
@@ -703,6 +728,7 @@ requires-dist = [
     { name = "erp-sim", editable = "services/sources/erp_sim" },
     { name = "leakscan", editable = "tools/leakscan" },
     { name = "lims-sim", editable = "services/sources/lims_sim" },
+    { name = "qms-sim", editable = "services/sources/qms_sim" },
     { name = "r2r-core", editable = "packages/r2r_core" },
 ]
 
