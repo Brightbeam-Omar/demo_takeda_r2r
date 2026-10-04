@@ -4,7 +4,7 @@
 SHELL := /bin/bash
 SRC_DIRS := $(shell find packages services tools -type d -name src -not -path '*/node_modules/*' -not -path '*/.venv/*' 2>/dev/null)
 
-.PHONY: help install up down logs fmt test check check-python check-frontend coverage-core leakscan \
+.PHONY: help install up down logs fmt test check check-python check-frontend coverage-core leakscan integration stack-test \
         e2e e2e-headed demo-reset pipeline scenario record-agents record-video doctor
 
 help:
@@ -17,7 +17,7 @@ install: ## Install Python and frontend dependencies
 # --- stack -------------------------------------------------------------------------------------
 up: ## Start the stack (needs .env: cp .env.example .env)
 	@test -f .env || { echo "Missing .env. Run: cp .env.example .env"; exit 1; }
-	docker compose up -d --wait
+	docker compose up -d --build --wait
 
 down: ## Stop the stack
 	docker compose down
@@ -39,6 +39,21 @@ check-python:
 	uv run ruff format --check .
 	uv run mypy --strict $(SRC_DIRS)
 	uv run pytest
+
+integration: ## Run tests that need Postgres (starts the compose Postgres)
+	docker compose up -d --wait postgres
+	uv run pytest -m integration
+
+STACK_PROJECT := r2r_stacktest
+
+# Runs on its own compose project (own network, containers and Postgres volume) and other host ports, then
+# removes all of it, so the demo stack can keep running untouched.
+stack-test: ## Start an isolated copy of the stack, run the acceptance tests against it, tear it down
+	@test -f .env || cp .env.example .env
+	@export COMPOSE_PROJECT_NAME=$(STACK_PROJECT) POSTGRES_HOST_PORT=15432 SCENARIO_HOST_PORT=18100 \
+		ERP_HOST_PORT=18101 LIMS_HOST_PORT=18102 QMS_HOST_PORT=18103; \
+	trap 'docker compose -p $(STACK_PROJECT) down -v --remove-orphans' EXIT; \
+	docker compose -p $(STACK_PROJECT) up -d --build --wait && uv run pytest -m stack tests/stack
 
 # F03-FR-09: 100% branch coverage on the SLA maths and the air-gap check, independent of what else runs.
 coverage-core:

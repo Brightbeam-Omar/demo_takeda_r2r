@@ -65,7 +65,7 @@ jobs:
       - name: Create R2R databases
         run: psql -h localhost -U r2r -d postgres -f docker/postgres/init/01-create-dbs.sql
       - name: Integration tests
-        run: uv run pytest tests/integration -m integration
+        run: uv run pytest -m integration
 
   docker-build:
     name: docker build (linux/amd64)
@@ -79,3 +79,20 @@ jobs:
           file: docker/python.Dockerfile
           platforms: linux/amd64
           push: false
+
+  # Builds every image and starts an isolated compose project, runs the acceptance tests, tears it down.
+  # Pull requests only, to keep push feedback fast.
+  stack:
+    name: stack acceptance (docker compose)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync
+      - run: make stack-test
+      - name: Compose logs on failure
+        if: failure()
+        run: docker compose logs --no-color --tail=200

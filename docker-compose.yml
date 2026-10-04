@@ -1,9 +1,16 @@
-# R2R Intelligence Demo: local stack. F01 ships Postgres only; later features add services.
-# Host-side variables (POSTGRES_*) are read from .env (`cp .env.example .env`).
+# R2R Intelligence Demo: local stack. Variables are read from .env (`cp .env.example .env`).
+# Host ports can be overridden (POSTGRES_HOST_PORT, SCENARIO_HOST_PORT, ERP_HOST_PORT, LIMS_HOST_PORT,
+# QMS_HOST_PORT): `make stack-test` uses other ports and its own project so the demo stack is never touched.
+# Later features add services (pipeline, app, agents, frontend).
 
 # Bind mount for the Delta lakehouse. Declared here so later services (Dagster, app-worker)
 # reuse the same anchor: `volumes: [*lakehouse]`. App-worker mounts it read-only (F08).
 x-lakehouse: &lakehouse ./lakehouse:/lakehouse
+
+# One image recipe for every Python service; SERVICE_PATH picks the workspace member to install.
+x-python-service: &python-service
+  env_file: .env
+  restart: unless-stopped
 
 services:
   postgres:
@@ -13,7 +20,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
@@ -22,6 +29,108 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  # One-shot: migrates the `app` database (F04: demo_clock; F08 adds more). Others wait for it.
+  db-migrate:
+    <<: *python-service
+    restart: "no"
+    image: r2r-app-api
+    build:
+      context: .
+      dockerfile: docker/python.Dockerfile
+      args: {SERVICE_PATH: services/app_api}
+    command: ["python", "-m", "app_api.migrate"]
+    depends_on:
+      postgres: {condition: service_healthy}
+
+  # Owns the demo clock. Reads and writes it straight from the database (never over HTTP: that would be itself).
+  scenario:
+    <<: *python-service
+    image: r2r-scenario
+    build:
+      context: .
+      dockerfile: docker/python.Dockerfile
+      args: {SERVICE_PATH: services/sources/scenario}
+    command: ["uvicorn", "scenario.app:app", "--host", "0.0.0.0", "--port", "8100"]
+    environment:
+      CLOCK_SOURCE: db
+    ports:
+      - "${SCENARIO_HOST_PORT:-8100}:8100"
+    depends_on:
+      postgres: {condition: service_healthy}
+      db-migrate: {condition: service_completed_successfully}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8100/health', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  # The simulators migrate their own database, then start. Clock: scenario service over HTTP, DB as fallback.
+  erp-sim:
+    <<: *python-service
+    image: r2r-erp-sim
+    build:
+      context: .
+      dockerfile: docker/python.Dockerfile
+      args: {SERVICE_PATH: services/sources/erp_sim}
+    command: ["sh", "-c", "python -m erp_sim.migrate && exec uvicorn erp_sim.app:app --host 0.0.0.0 --port 8101"]
+    environment:
+      CLOCK_SOURCE: http
+    ports:
+      - "${ERP_HOST_PORT:-8101}:8101"
+    depends_on:
+      postgres: {condition: service_healthy}
+      db-migrate: {condition: service_completed_successfully}
+      scenario: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8101/health', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  lims-sim:
+    <<: *python-service
+    image: r2r-lims-sim
+    build:
+      context: .
+      dockerfile: docker/python.Dockerfile
+      args: {SERVICE_PATH: services/sources/lims_sim}
+    command: ["sh", "-c", "python -m lims_sim.migrate && exec uvicorn lims_sim.app:app --host 0.0.0.0 --port 8102"]
+    environment:
+      CLOCK_SOURCE: http
+    ports:
+      - "${LIMS_HOST_PORT:-8102}:8102"
+    depends_on:
+      postgres: {condition: service_healthy}
+      db-migrate: {condition: service_completed_successfully}
+      scenario: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8102/health', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  qms-sim:
+    <<: *python-service
+    image: r2r-qms-sim
+    build:
+      context: .
+      dockerfile: docker/python.Dockerfile
+      args: {SERVICE_PATH: services/sources/qms_sim}
+    command: ["sh", "-c", "python -m qms_sim.migrate && exec uvicorn qms_sim.app:app --host 0.0.0.0 --port 8103"]
+    environment:
+      CLOCK_SOURCE: http
+    ports:
+      - "${QMS_HOST_PORT:-8103}:8103"
+    depends_on:
+      postgres: {condition: service_healthy}
+      db-migrate: {condition: service_completed_successfully}
+      scenario: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8103/health', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
 
 volumes:
   pgdata:

@@ -37,7 +37,7 @@ The work is **spec-driven**. The specs in `specs/` are the source of truth. Do n
 | LLM | `ModelGateway` abstraction. Providers: `anthropic` (default for local), `bedrock` (later on AWS), `replay` (offline/deterministic) |
 | E2E tests | Playwright |
 
-Target hardware: a 32 GB Apple Silicon laptop. All images must build for `linux/arm64` and `linux/amd64`.
+Target hardware: an Apple Silicon laptop with 16 GB available to Docker. All images must build for `linux/arm64` and `linux/amd64`.
 
 ## Repository layout
 

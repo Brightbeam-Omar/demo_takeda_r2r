@@ -7,7 +7,7 @@
 | F14-FR-02 | `make e2e` = `make demo-reset` then Playwright headless, with an HTML report in `artifacts/e2e/`. `make e2e-headed` for watching it |
 | F14-FR-03 | `docs/demo-script.md`: presenter script per act with exact clicks, talk track, the "why it matters" line, timings, and recovery moves (e.g. use the `pull-forward-B2077` fallback step) |
 | F14-FR-04 | `docs/architecture-overview.md`: a one-page generic architecture diagram (Mermaid) and a "how this maps to a customer stack" table (lakehouse → Databricks, ERP sim → SAP ECC/S4, LIMS/QMS sims → customer systems, auth → SSO) |
-| F14-FR-05 | `make doctor`: checks Docker running, ≥ 24 GB allocated to Docker, ports free, `.env` present, denylist present, replay recordings present. Prints fixes |
+| F14-FR-05 | `make doctor`: checks Docker running, ≥ 12 GB allocated to Docker, ports free, `.env` present, denylist present, replay recordings present. Prints fixes |
 | F14-FR-06 | README completed: quickstart (≤ 6 commands), presenter checklist (night before / 30 min before), troubleshooting (top 10 issues), offline mode note |
 | F14-FR-07 | `make record-video`: runs the Playwright run-of-show with video recording to `artifacts/video/` as a backup asset |
 
