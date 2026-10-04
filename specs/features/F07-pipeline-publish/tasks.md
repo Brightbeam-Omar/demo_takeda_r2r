@@ -6,4 +6,4 @@
 - [x] T5 [TDD] Notify with HMAC and retry (FR-04, AC-06)
 - [x] T6 Failure semantics (FR-07, AC-07)
 - [x] T7 Dagster job, schedule (stopped), compose services `dagster-web`/`dagster-daemon`, `make pipeline`, scenario trigger endpoint (FR-06, AC-08)
-- [ ] T8 Performance check (FR-08)
+- [x] T8 Performance check (FR-08)
