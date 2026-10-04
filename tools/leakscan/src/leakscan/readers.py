@@ -51,15 +51,7 @@ def read_units(path: Path) -> Iterator[Unit]:
             yield from _text(path)
     except SkippedFile:
         raise
-    except (
-        OSError,
-        ValueError,
-        KeyError,
-        zipfile.BadZipFile,
-        ET.ParseError,
-        InvalidFileException,
-        pa.ArrowException,
-    ) as error:
+    except UNREADABLE as error:
         raise SkippedFile(f"unreadable ({type(error).__name__})") from error
 
 

@@ -23,3 +23,14 @@ def test_f02_fr06_example_denylist_has_only_fake_entries() -> None:
     lines = (REPO_ROOT / ".leakscan" / "denylist.example.txt").read_text().splitlines()
     entries = [ln for ln in lines if ln.strip() and not ln.startswith("#")]
     assert entries == ["acme-real-client", r"re:\bsecretsite\b"]
+
+
+def test_f02_fr07_make_check_runs_leakscan_and_ci_wires_the_secret() -> None:
+    """F02-FR-07: `make check` depends on the leakscan target; CI maps the secret and scans commits."""
+    makefile = (REPO_ROOT / "Makefile").read_text()
+    assert "check: check-python check-frontend leakscan" in makefile
+    assert "python -m leakscan --commits" in makefile
+    workflow = (REPO_ROOT / ".github" / "workflows" / "ci.yml").read_text()
+    assert "LEAKSCAN_DENYLIST: ${{ secrets.LEAKSCAN_DENYLIST }}" in workflow
+    assert 'CI: "true"' in workflow
+    assert "python -m leakscan --commits" in workflow

@@ -166,3 +166,12 @@ def test_f02_oq014_commits_scans_author_names(repo: Path, capsys: pytest.Capture
 def test_f02_oq014_clean_commit_range_passes_and_bad_range_exits_2(repo: Path) -> None:
     assert main(["--commits", "HEAD~0..HEAD"], DENY, repo) == 0
     assert main(["--commits", "nope..HEAD"], DENY, repo) == 2
+
+
+def test_f02_oq013_large_file_warns_on_stderr_but_is_still_scanned(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("leakscan.cli.LARGE_FILE_BYTES", 5)
+    (tmp_path / "big.txt").write_text("FooBarCo and more text\n")
+    assert main(["."], DENY, tmp_path) == 1
+    assert "over 200 MB" in capsys.readouterr().err
