@@ -1,5 +1,6 @@
 """Delta tables on the lakehouse volume: ``<root>/<layer>/<table>``, addressed as ``layer.table``."""
 
+import shutil
 from datetime import date
 from pathlib import Path
 
@@ -52,3 +53,22 @@ def replace_partition(root: Path, name: str, table: pa.Table, column: str, value
         partition_by=[column],
         predicate=f"{column} = '{value.isoformat()}'",
     )
+
+
+LAYERS = ("staging", "intelligence", "published")
+
+
+def reset_lakehouse(root: Path) -> list[str]:
+    """Remove every table directory under the three layers and keep the layer folders (F07-FR-06).
+
+    Returns the names (``layer.table``) of the tables removed. A missing published table is what a reader
+    treats as "no data yet".
+    """
+    removed: list[str] = []
+    for layer in LAYERS:
+        folder = root / layer
+        folder.mkdir(parents=True, exist_ok=True)
+        for table in sorted(p for p in folder.iterdir() if p.is_dir()):
+            shutil.rmtree(table)
+            removed.append(f"{layer}.{table.name}")
+    return removed

@@ -197,9 +197,13 @@ def test_f06_fr04_a_profile_stage_with_an_sla_but_no_date_rule_is_an_error(profi
 
 
 def test_f06_fr09_the_pipeline_steps_do_not_depend_on_dagster() -> None:
-    import importlib
+    """Checked in a fresh interpreter: other tests (the Dagster job) import dagster into this process."""
+    import subprocess
     import sys
 
-    for name in ("r2r_pipeline.extract", "r2r_pipeline.transform"):
-        importlib.import_module(name)
-    assert not [m for m in sys.modules if m == "dagster" or m.startswith("dagster.")]
+    code = (
+        "import sys, r2r_pipeline.extract, r2r_pipeline.transform, r2r_pipeline.pipeline;"
+        "print([m for m in sys.modules if m == 'dagster' or m.startswith('dagster.')])"
+    )
+    result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True)
+    assert result.stdout.strip() == "[]"

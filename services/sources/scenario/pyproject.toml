@@ -1,12 +1,13 @@
 [project]
 name = "scenario"
 version = "0.1.0"
-description = "Scenario service: owns the demo clock (set and advance); scenario steps arrive in F13"
+description = "Scenario service: owns the demo clock (set and advance), triggers the pipeline; scenario steps arrive in F13"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "r2r-core",
     "fastapi>=0.110",
     "uvicorn>=0.29",
+    "httpx>=0.27",
     "sqlalchemy>=2",
     "psycopg[binary]>=3.2",
 ]

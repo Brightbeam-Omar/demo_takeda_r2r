@@ -1,0 +1,16 @@
+# Dagster instance for the demo stack: run, event and schedule storage in the `dagster` Postgres database.
+storage:
+  postgres:
+    postgres_db:
+      username:
+        env: POSTGRES_USER
+      password:
+        env: POSTGRES_PASSWORD
+      hostname:
+        env: POSTGRES_HOST
+      port:
+        env: POSTGRES_PORT
+      db_name: dagster
+
+telemetry:
+  enabled: false
