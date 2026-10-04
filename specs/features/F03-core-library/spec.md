@@ -14,10 +14,10 @@
 | F03-FR-06 | `sla.py`: `exception_sort_key(row, plan, flags)` implementing `03-domain-model` §5.5 |
 | F03-FR-07 | `sla.py`: `in_period(plan, stage_terminal, period)` implementing §5.6 |
 | F03-FR-08 | `airgap.py`: `air_gap(lims_status, ud_code, lims_approved_at, now, threshold_hours) -> (bool, hours)`. True only when `ud_code IS NULL` |
-| F03-FR-09 | 100% branch coverage on `sla.py` and `airgap.py` (enforced by a `pytest --cov-fail-under` on those modules) |
+| F03-FR-09 | 100% branch coverage on `sla.py` and `airgap.py` (enforced by `make coverage-core`, which runs `pytest --cov-branch --cov-fail-under=100` on those two modules only and is called from `make check`) |
 
 ## Acceptance criteria
-Each case is a parametrised test named `test_ac_<id>`. The profile is `site_a`, and today is `2026-10-12` unless stated otherwise.
+Each case is covered by a test named `test_f03_acNN_<what>` (parametrised where useful), consistent with F01 and F02. The profile is `site_a`, and today is `2026-10-12` unless stated otherwise.
 - **F03-AC-01** Forward, no need-by: onsite row at `sampling`, entry 2026-10-08 → expected 2026-10-15, days_remaining 3, RAG green.
 - **F03-AC-02** Backward, ample budget: onsite, offsite=false, stage `sampling`, entry 2026-10-01, need-by 2027-01-31 → remaining stages sampling(7), qc_testing(42), qa_release(7), B=56, A=122 → no compression. Must-complete-by: qa 2027-01-31, qc 2027-01-24, sampling 2026-12-13 → expected 2026-12-13.
 - **F03-AC-03** Compression: stage `qc_testing`, entry 2026-10-01, need-by 2026-11-05 → B=49 (42+7), A=35, ratio=0.714… → compressed qc=30, qa=5 → expected = 2026-11-05 − 5 = 2026-10-31, compressed=true.
