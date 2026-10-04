@@ -4,6 +4,6 @@
 - [x] T3 [TDD] Weekly metrics SQL (FR-02, AC-04)
 - [x] T4 Publish all objects. Reference objects from the profile (FR-03, AC-01, AC-05)
 - [x] T5 [TDD] Notify with HMAC and retry (FR-04, AC-06)
-- [ ] T6 Failure semantics (FR-07, AC-07)
+- [x] T6 Failure semantics (FR-07, AC-07)
 - [ ] T7 Dagster job, schedule (stopped), compose services `dagster-web`/`dagster-daemon`, `make pipeline`, scenario trigger endpoint (FR-06, AC-08)
 - [ ] T8 Performance check (FR-08)
