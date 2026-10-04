@@ -4,7 +4,7 @@
 SHELL := /bin/bash
 SRC_DIRS := $(shell find packages services tools -type d -name src -not -path '*/node_modules/*' -not -path '*/.venv/*' 2>/dev/null)
 
-.PHONY: help install up down logs fmt test check check-python check-frontend leakscan \
+.PHONY: help install up down logs fmt test check check-python check-frontend coverage-core leakscan \
         e2e e2e-headed demo-reset pipeline scenario record-agents record-video doctor
 
 help:
@@ -40,6 +40,10 @@ check-python:
 	uv run mypy --strict $(SRC_DIRS)
 	uv run pytest
 
+# F03-FR-09: 100% branch coverage on the SLA maths and the air-gap check, independent of what else runs.
+coverage-core:
+	uv run pytest packages/r2r_core --cov=r2r_core.sla --cov=r2r_core.airgap --cov-branch --cov-report=term-missing --cov-fail-under=100
+
 check-frontend:
 	cd frontend && npm run lint
 	cd frontend && npm run typecheck
@@ -55,7 +59,7 @@ leakscan:
 		echo "leakscan: no upstream branch, skipping commit message scan"; \
 	fi
 
-check: check-python check-frontend leakscan ## Lint, types, tests, leak scan: one verdict
+check: check-python coverage-core check-frontend leakscan ## Lint, types, tests, leak scan: one verdict
 
 # --- demo placeholders (implemented by the feature named in each message) --------------------
 e2e: ## Demo reset, then Playwright run-of-show

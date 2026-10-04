@@ -1,0 +1,42 @@
+site:
+  code: SITE_A
+  name: "Site A – Harbourview"
+  timezone: Europe/Dublin
+demo:
+  start_datetime: "2026-10-12T08:00:00+01:00"   # canonical opening: a Monday morning
+  seed: 4242
+stages:            # sort order = list order; key is stable and used in code/data
+  - {key: pending,     label: "Pending",      sla_days: 0,  team: "Logistics",     action: "Awaiting goods receipt"}
+  - {key: receipt,     label: "Receipt",      sla_days: 10, team: "Warehouse",     action: "Complete inbound check"}
+  - {key: call_off,    label: "Call Off",     sla_days: 5,  team: "Warehouse",     action: "Call off from 3PL to site", applies_if: "received_location_type == '3pl'"}
+  - {key: sampling,    label: "Sampling",     sla_days: 7,  team: "Manufacturing", action: "Collect QC sample"}
+  - {key: qc_ship,     label: "QC Ship",      sla_days: 10, team: "QC Lab",        action: "Ship sample to external lab", applies_if: "offsite_test"}
+  - {key: qc_testing,  label: "QC Testing",   sla_days: 42, team: "QC Lab",        action: "Complete and approve testing"}
+  - {key: qa_release,  label: "QA Release",   sla_days: 7,  team: "QA",            action: "Post usage decision"}
+  - {key: released,    label: "Released",     sla_days: 0,  team: "QA",            action: "None", terminal: true}
+reeval_sla_overrides:   # lot_type 09 uses these where given
+  call_off: 5
+  sampling: 5
+  qc_testing: 27
+  qa_release: 3
+ud_codes:
+  accept:   ["A", "A4"]
+  reject:   ["R"]
+  cancel:   ["X"]
+metrics:  # see §7
+  - {id: M1, label: "Receipt On-Time",          stage: receipt,    computed_in: app,      tier: 2}
+  - {id: M2, label: "Transfer On-Time",         stage: call_off,   computed_in: app,      tier: 2}
+  - {id: M3, label: "Sampling On-Time",         stage: sampling,   computed_in: pipeline, tier: 1}
+  - {id: M4, label: "QC Ship On-Time",          stage: qc_ship,    computed_in: app,      tier: 2}
+  - {id: M5, label: "External Test On-Time",    stage: null, sla_days: 30, computed_in: app, tier: 2}
+  - {id: M6, label: "Testing On-Time",          stage: qc_testing, computed_in: pipeline, tier: 1}
+  - {id: M7, label: "QA Release On-Time",       stage: qa_release, computed_in: pipeline, tier: 1}
+metric_rag: {green_min_pct: 90, amber_min_pct: 80}
+rag:        {amber_days_remaining_lt: 3}
+air_gap:    {threshold_hours: 24}
+molecule_types: [small_molecule, large_molecule, peptide]
+material_classes: [drug_substance, consumable]
+full_spec_pairs: [{material: RM10031, supplier: SUP007}]   # material+supplier needing full-spec testing
+reason_codes: [CAMPAIGN_PULLED_FORWARD, CAMPAIGN_PUSHED_OUT, CONSOLIDATED_TESTING, EXPEDITE_PRODUCTION,
+               EXPEDITE_SHIPPING, SUPPLIER_DELAY, LAB_CAPACITY, DOCUMENTATION_ISSUE, OTHER]
+adapters: {erp: ecc_like}       # Tier 2 adds s4_like and spreadsheet

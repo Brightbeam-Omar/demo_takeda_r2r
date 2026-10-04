@@ -13,6 +13,7 @@ dev = [
     "ruff>=0.5",
     "psycopg[binary]>=3.2",
     "types-openpyxl",
+    "types-pyyaml",
 ]
 
 [tool.uv]
@@ -36,6 +37,10 @@ exclude = ["*.md"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
+
+[tool.ruff.lint.per-file-ignores]
+# Worked-example tables read better unwrapped.
+"**/tests/**" = ["E501"]
 
 
 [tool.mypy]
