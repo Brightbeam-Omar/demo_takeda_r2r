@@ -47,6 +47,10 @@ completions:                 # released lots per week (usage decision date)
 on_time:                     # weekly on-time share target per metric week, drawn from this range
   weekly_min: 0.74
   weekly_max: 0.89
+  last_week:                 # the last complete week before demo start, per stage (headline value of M3 / M6 / M7)
+    sampling: [0.92, 0.94]     # M3 green  (>= 90%)
+    qc_testing: [0.83, 0.86]   # M6 amber  (80-89%)
+    qa_release: [0.70, 0.75]   # M7 red    (< 80%)
   default: 0.80              # stages without a weekly metric, and weeks outside the metric window
 
 durations:                   # stage durations: lognormal around the SLA, split into on-time and late draws

@@ -50,6 +50,7 @@ class OnTime(_Model):
     weekly_min: float
     weekly_max: float
     default: float
+    last_week: dict[str, tuple[float, float]] = {}  # stage key -> (min, max) for the last metric week only
 
 
 class Durations(_Model):
