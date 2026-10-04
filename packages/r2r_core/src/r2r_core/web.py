@@ -2,10 +2,13 @@
 
 import hmac
 import os
-from typing import Annotated
+from collections.abc import Callable, Iterator, Sequence
+from typing import Annotated, Any
 
-from fastapi import APIRouter, FastAPI, Header, HTTPException, Request
+from fastapi import APIRouter, Depends, FastAPI, Header, HTTPException, Request
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
 from r2r_core.errors import Conflict, Invalid
 
@@ -41,3 +44,28 @@ def health_router(service: str) -> APIRouter:
         return {"status": "ok", "service": service}
 
     return router
+
+
+EventFunction = Callable[[Session, Any], dict[str, Any]]
+
+
+def add_event_routes(
+    router: APIRouter,
+    events: Sequence[tuple[str, type[BaseModel], EventFunction]],
+    get_session: Callable[[], Iterator[Session]],
+) -> None:
+    """Register ``POST <path>`` for each ``(path, body model, event function)``.
+
+    Each request gets one session from ``get_session``, which commits on success and rolls back on any error,
+    so one event is one transaction.
+    """
+
+    def make(function: EventFunction, body_type: type[BaseModel]) -> Callable[..., dict[str, Any]]:
+        def endpoint(body: Any, session: Annotated[Session, Depends(get_session)]) -> dict[str, Any]:
+            return function(session, body)
+
+        endpoint.__annotations__["body"] = body_type
+        return endpoint
+
+    for path, body_type, function in events:
+        router.add_api_route(path, make(function, body_type), methods=["POST"], name=function.__name__)

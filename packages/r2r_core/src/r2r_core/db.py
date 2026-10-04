@@ -50,6 +50,11 @@ def make_engine(dsn: str) -> Engine:
     return create_engine(dsn, pool_pre_ping=True)
 
 
+def row_dict(obj: Any) -> dict[str, Any]:
+    """A mapped object's columns as a dict (what the read and event endpoints return)."""
+    return {attr.key: getattr(obj, attr.key) for attr in obj.__mapper__.column_attrs}
+
+
 def stamp[T: TimestampMixin](obj: T) -> T:
     """Set ``updated_at`` to the demo clock's now and return the object."""
     obj.updated_at = clock.now()

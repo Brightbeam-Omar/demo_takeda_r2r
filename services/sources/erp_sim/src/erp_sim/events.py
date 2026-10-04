@@ -17,7 +17,7 @@ from decimal import Decimal
 from typing import Any
 
 from r2r_core import clock
-from r2r_core.db import allocate_number
+from r2r_core.db import allocate_number, row_dict
 from r2r_core.errors import Conflict, Invalid
 from r2r_core.profile import UdCodes, load_profile
 from sqlalchemy import select
@@ -31,10 +31,6 @@ ZERO = Decimal(0)
 
 def _today(value: date | None) -> date:
     return value if value is not None else clock.today()
-
-
-def row_dict(obj: Any) -> dict[str, Any]:
-    return {attr.key: getattr(obj, attr.key) for attr in obj.__mapper__.column_attrs}
 
 
 @functools.cache
