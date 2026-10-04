@@ -23,3 +23,26 @@ members = ["packages/r2r_core"]
 
 [tool.uv.sources]
 r2r-core = { workspace = true }
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+extend-exclude = ["frontend", "lakehouse", "artifacts", "specs"]
+
+[tool.ruff.format]
+exclude = ["*.md"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
+
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+
+[tool.pytest.ini_options]
+testpaths = ["packages", "tools"]
+addopts = "-ra --import-mode=importlib -m 'not integration'"
+markers = [
+    "integration: needs running services such as Postgres (skipped by `make check`, run in the CI integration job)",
+]
