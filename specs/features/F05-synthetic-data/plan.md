@@ -14,3 +14,4 @@
 - **Campaigns** are listed in `world.py` (the site profile has no campaigns key).
 - **Re-eval lots on onsite batches only.** A re-evaluation lot of a batch first received at a 3PL would have a call-off exit earlier than its entry, so re-eval batches are received onsite.
 - **Volumes.** 650 batches, 800 lots (150 of them re-eval, which is 120 x 1.25, inside the allowed uplift of up to 40%). The report states the actual counts.
+- **Determinism check without `pg_dump`.** The AC-01 test reads every table of the three databases in a stable order and compares the two runs (the only column excluded is the serial `test_result.id`). This is the same comparison as a normalised data-only dump, with no dependency on a `pg_dump` binary on the host.

@@ -224,3 +224,28 @@ def weekdays_between(first: date, last: date) -> list[date]:
     """Business days from ``first`` to ``last``, both included."""
     days = (first + timedelta(days=n) for n in range((last - first).days + 1))
     return [day for day in days if day.weekday() < 5]
+
+
+def stage_dates(batch: BatchPlan, lot: LotPlan) -> dict[str, tuple[date | None, date | None]]:
+    """Entry and exit date of every stage the lot has reached (03 section 4, stage entry and exit table)."""
+    if lot.reversed_same_day:
+        return {}
+    latest = lot.latest
+    threepl = lot.lot_type == "01" and batch.received_location_type == "3pl"
+    receipt_exit = (
+        lot.check_done if lot.check_done is not None else (lot.start if lot.check == "none" else None)
+    )
+    out: dict[str, tuple[date | None, date | None]] = {"receipt": (lot.start, receipt_exit)}
+    if threepl:
+        out["call_off"] = (receipt_exit, lot.transfer)
+    out["sampling"] = (lot.transfer if threepl else receipt_exit, latest.collected if latest else None)
+    if latest is not None and latest.offsite:
+        out["qc_ship"] = (latest.collected, latest.shipped)
+    if latest is not None:
+        entry = latest.shipped if latest.offsite else latest.collected
+        approved = latest.closed_on if latest.outcome == "approved" else None
+        released = lot.ud_date if lot.ud_code in ACCEPT_CODES else None
+        out["qc_testing"] = (entry, approved)
+        if approved is not None:
+            out["qa_release"] = (approved, released)
+    return out
