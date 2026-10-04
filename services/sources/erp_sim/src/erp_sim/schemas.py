@@ -1,6 +1,6 @@
 """Request bodies of the ERP event endpoints (F04-FR-03). Business dates default to the demo's today."""
 
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Literal
 
@@ -58,6 +58,11 @@ class UsageDecisionIn(Body):
     prueflos: str
     vcode: str  # must be one of the profile's accept, reject or cancel codes
     vdatum: date | None = None
+
+
+class ResultsRecordedIn(Body):
+    prueflos: str
+    at: datetime | None = None  # when the interface recorded the LIMS results (default: demo now)
 
 
 class ReevalLotIn(Body):

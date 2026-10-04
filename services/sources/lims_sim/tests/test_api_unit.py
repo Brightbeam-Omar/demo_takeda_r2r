@@ -19,6 +19,7 @@ def test_f04_fr04_the_expected_write_endpoints_exist() -> None:
         "/events/rejected",
         "/events/sample-collected",
         "/events/sample-shipped",
+        "/events/test-result",
         "/events/testing-started",
     ]
 

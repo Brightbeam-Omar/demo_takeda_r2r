@@ -1,7 +1,7 @@
 """T7: air-gap detection [F03-FR-08, F03-AC-12].
 
-03-domain-model section 6: lims_status = 'approved' AND ud_code IS NULL AND now - lims_approved_at >=
-threshold_hours. A rejected lot is never an air gap.
+03-domain-model section 6: lims_status = 'approved' AND ud_code IS NULL AND erp_results_recorded_at IS NULL AND
+now - lims_approved_at >= threshold_hours. A rejected lot is never an air gap.
 """
 
 from datetime import UTC, datetime, timedelta
@@ -58,3 +58,9 @@ def test_f03_fr08_an_approval_in_the_future_never_counts() -> None:
 def test_f03_fr08_threshold_comes_from_the_caller() -> None:
     assert air_gap("approved", None, ago(hours=5), NOW, 4) == (True, 5)
     assert air_gap("approved", None, ago(hours=5), NOW, 6) == (False, 5)
+
+
+def test_f03_ac12_results_recorded_in_the_erp_means_no_air_gap() -> None:
+    """F03-AC-12 (extra case): approved 25 h ago, no UD, but the interface recorded the results: not an air gap."""
+    assert air_gap("approved", None, ago(hours=25), NOW, THRESHOLD, ago(hours=20)) == (False, 25)
+    assert air_gap("approved", None, ago(hours=25), NOW, THRESHOLD, None) == (True, 25)

@@ -71,6 +71,7 @@ add_event_routes(
         ("/inbound-check", schemas.InboundCheckIn, events.inbound_check),
         ("/usage-decision", schemas.UsageDecisionIn, events.usage_decision),
         ("/reeval-lot", schemas.ReevalLotIn, events.reeval_lot),
+        ("/results-recorded", schemas.ResultsRecordedIn, events.results_recorded),
         ("/stock-block", schemas.StockMoveIn, events.stock_block),
         ("/stock-unblock", schemas.StockMoveIn, events.stock_unblock),
         ("/hold", schemas.HoldIn, events.hold),

@@ -13,7 +13,7 @@
 | F03-FR-05 | `sla.py` pure functions: `applicable_stages(row, profile)`, `sla_for(stage, lot_type, profile)`, `operative_need_by(row, adjusted)`, `plan(row, profile, today, adjusted: AdjustedNeedBy | None) -> PlanResult` (`AdjustedNeedBy(date, reason_code)`) returning `expected_completion`, `must_complete_by` per remaining stage, `compressed: bool`, `compression_ratio`, `effective_slas`, `days_in_stage`, `days_remaining`, `rag`, `late`, `late_reason_auto` |
 | F03-FR-06 | `sla.py`: `exception_sort_key(row, plan, flags)` implementing `03-domain-model` §5.5 |
 | F03-FR-07 | `sla.py`: `in_period(plan, stage_terminal, period)` implementing §5.6 |
-| F03-FR-08 | `airgap.py`: `air_gap(lims_status, ud_code, lims_approved_at, now, threshold_hours) -> (bool, hours)`. True only when `ud_code IS NULL` |
+| F03-FR-08 | `airgap.py`: `air_gap(lims_status, ud_code, lims_approved_at, now, threshold_hours, erp_results_recorded_at=None) -> (bool, hours)`. True only when `ud_code IS NULL` and `erp_results_recorded_at` is None |
 | F03-FR-09 | 100% branch coverage on `sla.py` and `airgap.py` (enforced by `make coverage-core`, which runs `pytest --cov-branch --cov-fail-under=100` on those two modules only and is called from `make check`) |
 
 ## Acceptance criteria
@@ -29,7 +29,7 @@ Each case is covered by a test named `test_f03_acNN_<what>` (parametrised where 
 - **F03-AC-09** RAG boundaries: days_remaining −1 → red, 0 → amber, 2 → amber, 3 → green.
 - **F03-AC-10** Exceptions sort: late rows (most overdue first) < ud_rejected < on_hold < air_gap < rest by expected (NULL last).
 - **F03-AC-11** Period: overdue row is in the "this week" window; a row with expected next month is not; terminal rows are never in a period.
-- **F03-AC-12** Air gap: approved 25 h ago, no UD → (true, 25). Approved 23 h ago → false. UD effective → false. UD rejected (`R`) → false.
+- **F03-AC-12** Air gap: approved 25 h ago, no UD → (true, 25). Approved 23 h ago → false. UD effective → false. UD rejected (`R`) → false. Approved 25 h ago, no UD, `erp_results_recorded_at` set → false (hours still 25).
 - **F03-AC-13** An invalid profile (duplicate stage key) raises `ProfileError` naming the key.
 - **F03-AC-14** `FixedClock` drives `now()`/`today()`. `HttpClock` falls back to `DbClock` when the scenario service is down (mocked).
 

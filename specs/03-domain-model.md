@@ -16,7 +16,7 @@ This is the single source of truth for R2R business logic. Every value below tha
 | Usage decision (UD) | ERP quality decision closing the lot: accept (release), reject or cancel |
 | Need-by date | Date the material is needed by production (from ERP MRP demand) |
 | Campaign | Production campaign that consumes the material (from demand) |
-| Air gap | LIMS approved but no effective UD in ERP after the threshold. Release is stuck between systems |
+| Air gap | LIMS approved but the result never transferred to the ERP (no interface record, no usage decision) after the threshold. Release is stuck between systems. A normal QA Release lot, whose results were recorded in the ERP, is not an air gap |
 
 ## 2. Site profile (YAML)
 Loaded by `r2r_core.profile.load_profile()`. It is validated with Pydantic, and an invalid profile fails startup.
@@ -151,7 +151,7 @@ Forward with no need-by. Backward with ample budget. Compression ratio 0.5 with 
 | `expedite` | app override | planner ticks EXPEDITE |
 | `ud_rejected` | ERP | UD code in reject codes |
 | `lims_rejected` | LIMS | `lims_status = 'rejected'` |
-| `air_gap` | read-time | `lims_status='approved' AND ud_code IS NULL AND now − lims_approved_at ≥ threshold_hours` (rejected lots are never air gaps) |
+| `air_gap` | read-time | `lims_status='approved' AND ud_code IS NULL AND erp_results_recorded_at IS NULL AND now − lims_approved_at ≥ threshold_hours` (rejected lots are never air gaps) |
 
 ## 7. Metrics M1–M7
 For metric `m` bound to stage `s`, week `w` (ISO week, Monday start, site timezone):

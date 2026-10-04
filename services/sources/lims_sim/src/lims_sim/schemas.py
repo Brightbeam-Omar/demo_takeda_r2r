@@ -1,6 +1,7 @@
 """Request bodies of the LIMS event endpoints (F04-FR-04). Business dates default to the demo's today."""
 
 from datetime import date
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
@@ -26,3 +27,14 @@ class SampleShippedIn(Body):
 
 class SampleRef(Body):
     sample_id: str
+
+
+class TestResultIn(Body):
+    __test__ = False  # not a pytest class
+    sample_id: str
+    test_code: str
+    test_name: str
+    result_value: str
+    spec: str
+    status: Literal["pending", "pass", "fail", "oos"] = "pass"
+    completed_on: date | None = None  # default: today when the status is not pending

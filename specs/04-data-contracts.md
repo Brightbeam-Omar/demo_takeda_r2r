@@ -13,7 +13,7 @@ All timestamps are `timestamptz` (UTC) and all dates are `date` (site-local). Co
 | `mcha` | `matnr, charg` | `charg` text · batch · `lifnr` · `licha` supplier batch · `hsdat` mfg date · `vfdat` expiry · `zstat` text · `''` or `'H'` (hold) · `updated_at` |
 | `mchb` | `matnr, charg, lgort` | current stock · `insme` numeric · QI qty · `speme` numeric · blocked qty · `clabs` numeric · unrestricted qty · `updated_at` |
 | `mseg` | `mblnr, zeile` | `bwart` text · `101` GR, `102` GR reversal, `311` transfer · `matnr` · `charg` · `lgort` · `umlgo` · `budat` date posting · `menge` numeric(13,3) quantity · `updated_at`. For `101`/`102`, `lgort` is the **receiving storage location** and `umlgo` is null. For `311`, `lgort` is the **source** and `umlgo` the **destination** |
-| `qals` | `prueflos` | `prueflos` text · inspection lot · `art` text · `01`/`09` (others excluded) · `matnr` · `charg` · `pastrterm` date start · `vcode` text · UD code · `vdatum` date · UD date · `updated_at` |
+| `qals` | `prueflos` | `prueflos` text · inspection lot · `art` text · `01`/`09` (others excluded) · `matnr` · `charg` · `pastrterm` date start · `vcode` text · UD code · `vdatum` date · UD date · `zresrec` timestamptz null · LIMS results recorded in ERP via interface (set by the `results-recorded` event; a usage decision does not set it) · `updated_at` |
 | `zinbchk` | `prueflos` | inbound check · `status` text · `open`/`passed`/`failed` · `completed_on` date · `notes` text · `updated_at` |
 | `mdez` | `id` | MRP demand · `matnr` · `campaign` text · `bdter` date · requirement date · `bdmng` numeric · `is_open` bool · `updated_at` |
 
@@ -62,7 +62,7 @@ Even though the published tables are suffixed `_v`, they are materialised Delta 
 ## 3. `staging.batch_flat` (input to the stage engine)
 One row per `material_no, batch_no, inspection_lot_no` for lot types `01`/`09`, excluding cancelled UDs.
 
-`material_no, material_desc, material_class, molecule_type, supplier_id, supplier_name, supplier_batch, batch_no, batch_status_code, inspection_lot_no, lot_type, lot_start_date, storage_location, location_type, received_location_type, stock_category, gr_date, transfer_to_site_date, inbound_check_status ('none' if absent), inbound_check_completed_date, sample_id, sample_collected_date, offsite_test, external_lab, sample_shipped_date, lims_status ('none' if no sample), lims_approved_date, lims_approved_at, ud_code, ud_date, campaign, system_need_by_date, open_deviation_count, closed_deviation_count, source_refs_json`
+`material_no, material_desc, material_class, molecule_type, supplier_id, supplier_name, supplier_batch, batch_no, batch_status_code, inspection_lot_no, lot_type, lot_start_date, storage_location, location_type, received_location_type, stock_category, gr_date, transfer_to_site_date, inbound_check_status ('none' if absent), inbound_check_completed_date, sample_id, sample_collected_date, offsite_test, external_lab, sample_shipped_date, lims_status ('none' if no sample), lims_approved_date, lims_approved_at, ud_code, ud_date, erp_results_recorded_at, campaign, system_need_by_date, open_deviation_count, closed_deviation_count, source_refs_json`
 
 Derivations (non-obvious columns):
 
@@ -76,6 +76,7 @@ Derivations (non-obvious columns):
 | `lot_start_date` | `qals.pastrterm` |
 | `inbound_check_status` | `zinbchk.status` for the lot, else `'none'` |
 | `lims_status` | Latest `sample.status` for the lot: `registered`/`in_progress` → `in_progress`, `approved`, `rejected`. `'none'` if there is no sample |
+| `erp_results_recorded_at` | `qals.zresrec` for the lot (NULL if never recorded) |
 | `lims_approved_date` | `lims_approved_at` converted to the site timezone (profile) and truncated to date |
 | `system_need_by_date`, `campaign` | From the single `mdez` row chosen as the earliest open `bdter ≥ snapshot_date` for the material (tie-break: lowest `id`). `campaign` is that row's campaign |
 | `open_/closed_deviation_count` | Via `deviation_link` on `(material_no, batch_no)` |
@@ -85,7 +86,7 @@ Derivations (non-obvious columns):
 ## 4. Published contract (what the app mirrors)
 
 ### 4.1 `batch_pipeline_v`
-`row_key` (`material_no|batch_no|inspection_lot_no`), every `batch_flat` business column, plus:
+`row_key` (`material_no|batch_no|inspection_lot_no`), every `batch_flat` business column (including `erp_results_recorded_at`), plus:
 `stage_key, stage_rule_id, stage_sort, current_stage_entry_date, lims_rejected, receipt_entry, receipt_exit, call_off_entry, call_off_exit, sampling_entry, sampling_exit, qc_ship_entry, qc_ship_exit, qc_testing_entry, qc_testing_exit, qa_release_entry, qa_release_exit, applicable_sla_json, system_need_by_locked, on_hold, erp_blocked, re_eval, offsite, full_spec, ud_rejected, deviation_light, inbound_light, snapshot_date, run_id, published_at`
 
 ### 4.2 `weekly_metrics_v`

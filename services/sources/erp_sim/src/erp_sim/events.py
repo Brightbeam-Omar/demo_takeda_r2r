@@ -304,6 +304,19 @@ def usage_decision(session: Session, body: schemas.UsageDecisionIn) -> dict[str,
     return {"qals": row_dict(lot), "mchb": [row_dict(s) for s in rows]}
 
 
+def results_recorded(session: Session, body: schemas.ResultsRecordedIn) -> dict[str, Any]:
+    """The interface recorded the LIMS results of a lot in the ERP (``qals.zresrec``). No usage decision."""
+    lot = _lot(session, body.prueflos)
+    if lot.zresrec is not None:
+        raise Invalid(f"results of inspection lot {body.prueflos} were already recorded")
+    recorded = body.at if body.at is not None else clock.now()
+    if recorded.tzinfo is None:
+        raise Invalid("at must include a timezone offset")
+    lot.zresrec = recorded
+    session.flush()
+    return {"qals": row_dict(lot)}
+
+
 def reeval_lot(session: Session, body: schemas.ReevalLotIn) -> dict[str, Any]:
     """Open a re-evaluation lot (09) on an existing batch. An inbound check row exists only if asked for."""
     _batch(session, body.matnr, body.charg)
