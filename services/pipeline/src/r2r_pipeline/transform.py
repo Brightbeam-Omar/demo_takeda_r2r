@@ -6,12 +6,15 @@ from pathlib import Path
 from typing import Any
 
 import duckdb
+import pyarrow as pa
 from r2r_core.profile import SiteProfile
 
 from r2r_pipeline.context import RunContext
 from r2r_pipeline.lake import register, write_delta
 from r2r_pipeline.schemas import STAGING_SCHEMAS
+from r2r_pipeline.source_refs import build_source_refs
 from r2r_pipeline.sql_shim import render_file
+from r2r_pipeline.stage_engine import engine_variables
 
 _PACKAGE_SQL = Path(__file__).parent / "sql"
 SQL_DIR = (
@@ -27,6 +30,7 @@ def transform_files() -> list[Path]:
 def template_variables(profile: SiteProfile, snapshot_date: date) -> dict[str, Any]:
     """What the SQL templates may use: the snapshot date and everything that comes from the profile."""
     return {
+        **engine_variables(profile),
         "snapshot_date": snapshot_date,
         "accept_codes": list(profile.ud_codes.accept),
         "reject_codes": list(profile.ud_codes.reject),
@@ -53,12 +57,19 @@ def run_files(
 
 
 def transform(ctx: RunContext) -> None:
-    """Build ``staging.batch_flat`` from the staging tables."""
+    """Build ``staging.batch_flat`` (input of the stage engine) and ``staging.batch_stage`` (its output)."""
     connection = duckdb.connect()
     load_staging(connection, ctx)
-    run_files(connection, ctx, lambda path: path.name[:2] < "50")
-    write_delta(
-        ctx.lake_root,
-        "staging.batch_flat",
-        connection.execute("SELECT * FROM batch_flat").to_arrow_table(),
+    run_files(connection, ctx)
+    flat = connection.execute("SELECT * FROM batch_flat ORDER BY row_key").to_arrow_table()
+    write_delta(ctx.lake_root, "staging.batch_flat", flat)
+    stage = connection.execute("SELECT * FROM batch_stage_sql ORDER BY row_key").to_arrow_table()
+    refs = build_source_refs(
+        flat,
+        connection.execute("SELECT * FROM stg_mseg").to_arrow_table(),
+        connection.execute("SELECT * FROM stg_deviation_link").to_arrow_table(),
     )
+    stage = stage.append_column(
+        "source_refs_json", pa.array([refs[key] for key in stage["row_key"].to_pylist()])
+    )
+    write_delta(ctx.lake_root, "staging.batch_stage", stage)

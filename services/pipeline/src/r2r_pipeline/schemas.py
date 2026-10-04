@@ -109,3 +109,18 @@ STAGING: dict[str, dict[str, tuple[str, pa.Schema]]] = {
 STAGING_SCHEMAS: dict[str, pa.Schema] = {
     name: schema for tables in STAGING.values() for name, (_, schema) in tables.items()
 }
+
+
+_FLAT_COLUMNS: dict[str, pa.DataType] = dict(
+    row_key=TEXT, material_no=TEXT, material_desc=TEXT, material_class=TEXT, molecule_type=TEXT,
+    supplier_id=TEXT, supplier_name=TEXT, supplier_batch=TEXT, batch_no=TEXT, batch_status_code=TEXT,
+    inspection_lot_no=TEXT, lot_type=TEXT, lot_start_date=DATE, storage_location=TEXT, location_type=TEXT,
+    received_location_type=TEXT, stock_category=TEXT, gr_date=DATE, transfer_to_site_date=DATE,
+    inbound_check_status=TEXT, inbound_check_completed_date=DATE, sample_id=TEXT, sample_collected_date=DATE,
+    offsite_test=BOOL, external_lab=TEXT, sample_shipped_date=DATE, lims_status=TEXT, lims_approved_date=DATE,
+    lims_approved_at=STAMP, ud_code=TEXT, ud_date=DATE, erp_results_recorded_at=STAMP, campaign=TEXT,
+    system_need_by_date=DATE, open_deviation_count=INT, closed_deviation_count=INT,
+)  # fmt: skip
+
+# ``staging.batch_flat`` (04-data-contracts section 3): the stage engine's input.
+BATCH_FLAT_SCHEMA = pa.schema(list(_FLAT_COLUMNS.items()))

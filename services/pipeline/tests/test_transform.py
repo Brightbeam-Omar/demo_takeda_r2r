@@ -40,7 +40,9 @@ def test_f06_fr03_the_expected_sql_steps_exist() -> None:
         "40_quality.sql",
         "45_demand.sql",
         "48_batch_flat.sql",
+        "50_stage.sql.j2",
         "60_flags.sql",
+        "90_batch_stage.sql",
     ]
 
 

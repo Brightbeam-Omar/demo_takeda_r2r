@@ -1,0 +1,44 @@
+-- The stage engine, generated from r2r_core.stage_rules and the profile (F06-FR-04). First matching rule wins.
+CREATE OR REPLACE TABLE t_stage AS
+WITH base AS (
+  SELECT f.*,
+         CASE WHEN lot_type = '09' THEN lot_start_date ELSE gr_date END AS cycle_start_date,
+         COALESCE(ud_code IN {{ accept_codes | sql }}, FALSE) AS ud_effective
+  FROM batch_flat f
+),
+ruled AS (
+  SELECT base.*,
+         CASE
+{% for rule in rules %}
+           WHEN {{ rule.condition }} THEN {{ rule.id | sql }}
+{% endfor %}
+         END AS stage_rule_id,
+         CASE
+{% for rule in rules %}
+           WHEN {{ rule.condition }} THEN {{ rule.stage_key | sql }}
+{% endfor %}
+         END AS stage_key
+  FROM base
+){% for stage in dated_stages %},
+dated_{{ loop.index }} AS (
+  SELECT {{ 'ruled' if loop.first else 'dated_' ~ (loop.index - 1) }}.*,
+         {{ stage.entry }} AS {{ stage.key }}_entry,
+         {{ stage.exit }} AS {{ stage.key }}_exit
+  FROM {{ 'ruled' if loop.first else 'dated_' ~ (loop.index - 1) }}
+){% endfor %}
+
+SELECT row_key, stage_key, stage_rule_id,
+       CASE stage_key
+{% for key, number in stage_sort %}
+         WHEN {{ key | sql }} THEN {{ number }}
+{% endfor %}
+       END AS stage_sort,
+       CASE stage_key
+{% for stage in dated_stages %}
+         WHEN {{ stage.key | sql }} THEN {{ stage.key }}_entry
+{% endfor %}
+       END AS current_stage_entry_date,
+{% for stage in dated_stages %}
+       {{ stage.key }}_entry, {{ stage.key }}_exit{{ "," if not loop.last }}
+{% endfor %}
+FROM dated_{{ dated_stages | length }};
