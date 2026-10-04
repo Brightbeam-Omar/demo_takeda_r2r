@@ -9,6 +9,7 @@ import duckdb
 import pyarrow as pa
 from r2r_core.profile import SiteProfile
 
+from r2r_pipeline.applicable_sla import build_applicable_sla
 from r2r_pipeline.context import RunContext
 from r2r_pipeline.lake import register, write_delta
 from r2r_pipeline.schemas import STAGING_SCHEMAS
@@ -69,7 +70,9 @@ def transform(ctx: RunContext) -> None:
         connection.execute("SELECT * FROM stg_mseg").to_arrow_table(),
         connection.execute("SELECT * FROM stg_deviation_link").to_arrow_table(),
     )
-    stage = stage.append_column(
-        "source_refs_json", pa.array([refs[key] for key in stage["row_key"].to_pylist()])
-    )
+    keys = stage["row_key"].to_pylist()
+    slas = build_applicable_sla(flat, stage, ctx.profile)
+    position = stage.column_names.index("on_hold")
+    stage = stage.add_column(position, "applicable_sla_json", pa.array([slas[key] for key in keys]))
+    stage = stage.append_column("source_refs_json", pa.array([refs[key] for key in keys]))
     write_delta(ctx.lake_root, "staging.batch_stage", stage)
