@@ -26,3 +26,7 @@ These are realistic stand-ins for ERP, LIMS and QMS, each with its own database 
 
 ## Out of scope
 Spreadsheet/3PL sources (T2-01, T2-07) and an S/4-like view set (T2-07).
+
+## Notes from other features
+- **Clock contract needed by F03 (`HttpClock`, OQ-018):** `GET /clock` must return JSON that includes `now_utc` (ISO 8601, timezone-aware) and `frozen` (bool), for example `{"now_utc": "2026-10-12T07:00:00+00:00", "frozen": false}`. Extra fields such as `today_local` (F04-FR-07) are fine. `r2r_core.clock.HttpClock` reads only `now_utc`.
+
