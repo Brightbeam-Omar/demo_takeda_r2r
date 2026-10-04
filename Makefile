@@ -4,7 +4,11 @@
 SHELL := /bin/bash
 SRC_DIRS := $(shell find packages services tools -type d -name src -not -path '*/node_modules/*' -not -path '*/.venv/*' 2>/dev/null)
 
-.PHONY: fmt check check-python
+.PHONY: install fmt check check-python check-frontend leakscan
+
+install:
+	uv sync
+	cd frontend && npm ci
 
 fmt:
 	uv run ruff check --fix .
@@ -16,4 +20,13 @@ check-python:
 	uv run mypy --strict $(SRC_DIRS)
 	uv run pytest
 
-check: check-python
+check-frontend:
+	cd frontend && npm run lint
+	cd frontend && npm run typecheck
+	cd frontend && npm test -- --run
+
+# No-op until F02 (leak scanner) lands.
+leakscan:
+	@echo "leakscan: not yet implemented (F02)"
+
+check: check-python check-frontend leakscan
