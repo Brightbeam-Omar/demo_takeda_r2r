@@ -69,3 +69,33 @@ def test_f05_oracle_is_a_sidecar_and_not_loaded_into_any_source_database(source_
     for dsn in (source_databases.erp, source_databases.lims, source_databases.qms):
         tables = set(inspect(create_engine(dsn)).get_table_names())
         assert not any("expected" in name or "oracle" in name for name in tables)
+
+
+def test_f05_ac03_ac04_quirks_and_stories_reach_the_databases(
+    source_databases: Databases, tmp_path: Path
+) -> None:
+    from datetime import UTC, datetime
+
+    from erp_sim.models import Mchb
+    from lims_sim.models import TestResult
+    from qms_sim.models import Deviation, DeviationLink
+
+    generate(load_profile("site_a"), load_params(), 4242, source_databases, tmp_path)
+    erp, lims, qms = (
+        create_engine(d) for d in (source_databases.erp, source_databases.lims, source_databases.qms)
+    )
+    with Session(erp) as session:
+        assert session.scalar(select(func.count()).select_from(Mcha).where(Mcha.zstat == "H")) >= 3
+        assert session.scalar(select(func.count()).select_from(Mchb).where(Mchb.speme > 0)) >= 3
+        assert session.scalar(select(func.count()).select_from(Qals).where(Qals.vcode == "R")) >= 3
+    with Session(lims) as session:
+        sample = session.scalars(select(Sample).where(Sample.batch_no == "B5003")).one()
+        assert sample.approved_at == datetime(2026, 10, 11, 1, 0, tzinfo=UTC)
+        assert count(source_databases.lims, TestResult) == 5
+    with Session(qms) as session:
+        linked = session.scalars(select(DeviationLink).where(DeviationLink.batch_no == "B3150")).all()
+        deviation = session.get(Deviation, linked[0].deviation_no)
+        assert deviation is not None and (deviation.severity, deviation.status) == ("major", "open")
+    report = (tmp_path / "datagen_report.md").read_text(encoding="utf-8")
+    for text in ("M3 sampling done", "Batches (distinct)", "Inspection lots (rows)"):
+        assert text in report or text.replace("Tier 1 pipeline", "In Tier 1 the pipeline") in report
