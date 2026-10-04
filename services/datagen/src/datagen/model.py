@@ -91,6 +91,7 @@ class LotPlan:
     samples: list[SamplePlan] = field(default_factory=list)  # oldest first; the last is the latest
     ud_code: str | None = None
     ud_date: date | None = None
+    results_recorded: datetime | None = None  # the interface recorded the LIMS results in the ERP (zresrec)
     reversed_same_day: bool = False  # goods receipt cancelled the day it was posted
     stage: str = ""  # the intended stage at demo start
     story_id: str | None = None

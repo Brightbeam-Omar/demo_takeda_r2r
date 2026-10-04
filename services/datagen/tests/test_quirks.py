@@ -91,3 +91,30 @@ def test_f05_fr01_no_business_event_is_dated_after_the_last_business_day(plan: P
 @pytest.mark.parametrize("tag", ["lims_retest", "lims_rejected"])
 def test_f05_realism_lims_retests_exist(plan: Plan, tag: str) -> None:
     assert sum(1 for _, lot in plan.lots() if tag in lot.tags) >= 3
+
+
+def test_f05_oq039_the_air_gap_count_is_three_to_five_and_is_exactly_the_withheld_transfers(
+    plan: Plan, profile: SiteProfile
+) -> None:
+    from datetime import UTC, datetime, time
+
+    assert 3 <= quirk_counts(plan, profile)["air_gap"] <= 5
+    now = profile.demo.start_datetime
+    missing = []
+    for batch, lot in plan.lots():
+        sample = lot.latest
+        if sample is None or sample.outcome != "approved" or sample.closed_on is None:
+            continue
+        approved = sample.approved_at or datetime.combine(sample.closed_on, time(6), tzinfo=UTC)
+        if (
+            lot.ud_code is None
+            and lot.results_recorded is None
+            and (now - approved).total_seconds() >= 24 * 3600
+        ):
+            missing.append(batch.charg)
+        if lot.results_recorded is not None:
+            delay = (lot.results_recorded - approved).total_seconds() / 3600
+            assert 1 <= delay <= 7, (batch.charg, delay)
+    air_gaps = [b.charg for b, lot in plan.lots() if "air_gap" in lot.tags]
+    assert sorted(missing) == sorted(air_gaps)
+    assert "B5003" in air_gaps

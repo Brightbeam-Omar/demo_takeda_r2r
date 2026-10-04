@@ -67,6 +67,7 @@ def apply_quirks(plan: Plan, params: Params) -> None:
     _rejected_uds(plan, params, rng, used)
     _holds_and_blocks(plan, params, rng, used)
     _lims_retests(plan, rng, used)
+    _results_recorded(plan, params, rng)
     _deviations(plan, params, rng)
 
 
@@ -193,6 +194,43 @@ def _lims_retests(plan: Plan, rng: random.Random, used: set[int]) -> None:
         lot.tags.append("lims_retest")
 
 
+def _results_recorded(plan: Plan, params: Params, rng: random.Random) -> None:
+    """The interface records a lot's LIMS results in the ERP 1-6 hours after approval, except air gaps.
+
+    The air-gap quirk withholds the transfer on a few lots that have waited at least a day; B5003, fixed
+    by the story at 30 hours, is one of them. No other approved lot lacks the record.
+    """
+    cal = plan.calendar
+    pool = [
+        lot
+        for b, lot in _in_flight(plan)
+        if lot.stage == "qa_release"
+        and lot.ud_code is None
+        and lot.latest is not None
+        and lot.latest.closed_on is not None
+        and (cal.today - lot.latest.closed_on).days >= 2
+    ]
+    fixed = sum(1 for _, lot in plan.lots() if "air_gap" in lot.tags)
+    for lot in rng.sample(pool, max(0, params.quirks.air_gap_lots - fixed)):
+        lot.tags.append("air_gap")
+    for _, lot in plan.lots():
+        sample = lot.latest
+        if (
+            sample is None
+            or sample.outcome != "approved"
+            or sample.closed_on is None
+            or "air_gap" in lot.tags
+        ):
+            continue
+        base = datetime.combine(sample.closed_on, time(6), tzinfo=UTC)
+        delay = (
+            timedelta(hours=3)
+            if lot.story_id
+            else timedelta(hours=rng.randint(1, 6), minutes=rng.randint(0, 59))
+        )
+        lot.results_recorded = base + delay
+
+
 def _deviations(plan: Plan, params: Params, rng: random.Random) -> None:
     cal = plan.calendar
     lots_by_batch = {(b.matnr, b.charg): b.lots for b in plan.batches}
@@ -304,7 +342,7 @@ def quirk_counts(plan: Plan, profile: SiteProfile) -> dict[str, int]:
             1
             for _, lot in lots
             if (when := approved_at(lot)) is not None
-            and air_gap("approved", lot.ud_code, when, now, threshold)[0]
+            and air_gap("approved", lot.ud_code, when, now, threshold, lot.results_recorded)[0]
         ),
         "open_deviation_in_qa_release": sum(
             1 for d in plan.deviations if d.closed_on is None and any(link in qa_batches for link in d.links)

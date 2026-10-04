@@ -125,7 +125,7 @@ def build_stories(builder: Builder) -> StoryResult:
 
     # B5003: LIMS approved 30 hours before the opening instant and no usage decision: an air gap.
     approved_at = builder.profile.demo.start_datetime.astimezone(UTC) - timedelta(hours=30)
-    lot = LotPlan("", "01", at(-55), "passed", check_done=at(-53), stage="qa_release")
+    lot = LotPlan("", "01", at(-55), "passed", check_done=at(-53), stage="qa_release", tags=["air_gap"])
     sample = approved_sample(at(-48), approved_at.astimezone(builder.profile.site.tz).date())
     sample.approved_at = approved_at
     lot.samples = [sample]

@@ -104,6 +104,9 @@ def _lot_events(batch: BatchPlan, lot: LotPlan) -> list[Event]:
         if sample.outcome != "open" and sample.closed_on is not None:
             kind = "approved" if sample.outcome == "approved" else "rejected"
             out.append(Event(sample.closed_on, "lims", kind, {"sample_id": ref}, at=sample.approved_at))
+        if sample is lot.latest and lot.results_recorded is not None and sample.closed_on is not None:
+            body = {"prueflos": lot_ref(lot), "at": lot.results_recorded}
+            out.append(Event(sample.closed_on, "erp", "results_recorded", body, at=lot.results_recorded))
     if lot.ud_code is not None and lot.ud_date is not None:
         body = {"prueflos": lot_ref(lot), "vcode": lot.ud_code, "vdatum": lot.ud_date}
         out.append(Event(lot.ud_date, "erp", "usage_decision", body))

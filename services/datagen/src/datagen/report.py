@@ -159,9 +159,11 @@ def render_report(
         "  and open demand for two campaigns. In Tier 1 the pipeline gives all batches of a material",
         "  the campaign of its earliest open demand line (04 section 3): the second campaign shows in",
         "  the ERP demand, not per batch.",
-        "- `air_gap` counts every lot that LIMS approved at least 24 hours ago and that has no usage",
-        "  decision (03 section 6). That covers most of the QA Release backlog, not only B5003.",
+        "- `air_gap`: LIMS approved at least 24 hours ago, no usage decision and no ERP record of the",
+        "  results (03 section 6). Normal approvals have their results recorded 1-6 hours later.",
     ]
+    gaps = counts["air_gap"]
+    out += ["", f"Air gaps at demo start: {gaps} (target 3 to 5): {_mark(3 <= gaps <= 5)}."]
     out += ["", "## Story batches", ""]
     story_rows: list[list[object]] = []
     for batch in plan.batches:
