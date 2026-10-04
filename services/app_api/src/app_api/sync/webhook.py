@@ -59,6 +59,9 @@ async def webhook(
     session: Annotated[Session, Depends(get_session)],
     x_signature: Annotated[str | None, Header()] = None,
 ) -> JSONResponse:
+    declared = request.headers.get("content-length", "")
+    if declared.isdigit() and int(declared) > MAX_BODY_BYTES:
+        return _reject(session, 413, "body_too_large")  # refused before the body is read
     body = await request.body()
     if len(body) > MAX_BODY_BYTES:
         return _reject(session, 413, "body_too_large")

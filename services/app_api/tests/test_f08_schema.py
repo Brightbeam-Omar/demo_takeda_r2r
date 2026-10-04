@@ -40,7 +40,36 @@ def test_f08_fr01_migration_creates_tables_and_seeds_users(make_test_database: C
             ("quinn", "Quinn", "qc_lead"),
             ("sam", "Sam", "viewer"),
         ]
-        assert "uq_override_value_current" in indexes
+        with engine.connect() as connection:
+            partial = connection.execute(
+                text("SELECT indexdef FROM pg_indexes WHERE indexname = 'uq_override_value_current'")
+            ).scalar_one()
+            jsonb = {
+                (r[0], r[1])
+                for r in connection.execute(
+                    text(
+                        "SELECT table_name, column_name FROM information_schema.columns WHERE data_type = 'jsonb'"
+                    )
+                )
+            }
+            keys = {
+                r[0]: r[1]
+                for r in connection.execute(
+                    text(
+                        "SELECT tc.table_name, string_agg(k.column_name, ',' ORDER BY k.ordinal_position) "
+                        "FROM information_schema.table_constraints tc JOIN information_schema.key_column_usage k "
+                        "USING (constraint_name, table_name) WHERE tc.constraint_type = 'PRIMARY KEY' GROUP BY 1"
+                    )
+                )
+            }
+        assert "UNIQUE" in partial
+        assert "WHERE is_current" in partial
+        assert ("mirror_batch_pipeline", "applicable_sla_json") in jsonb
+        assert ("mirror_pipeline_status", "source_freshness_json") in jsonb
+        assert keys["mirror_batch_pipeline"] == "row_key"
+        assert keys["mirror_weekly_metric_rows"] == "metric_id,week_start,row_key"
+        assert keys["mirror_deviations"] == "deviation_no,material_no,batch_no"
+        assert keys["watermark"] == "object_name"
         assert "ix_mirror_batch_pipeline_stage_key" in indexes
     finally:
         engine.dispose()
