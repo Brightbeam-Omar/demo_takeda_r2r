@@ -145,3 +145,18 @@ def test_f08_fr02_p95_latency_is_under_100_ms(client: TestClient) -> None:
         durations.append(time.perf_counter() - began)
     durations.sort()
     assert durations[int(len(durations) * 0.95)] < 0.1
+
+
+@pytest.mark.integration
+def test_f08_ac07_webhook_never_calls_the_lakehouse_reader(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from r2r_core import contract
+
+    def boom(*args: object, **kwargs: object) -> None:
+        raise AssertionError("the webhook must not touch the lakehouse")
+
+    monkeypatch.setattr(contract.DeltaContractReader, "__init__", boom)
+    monkeypatch.setattr(contract.DeltaContractReader, "read", boom)
+    monkeypatch.setattr(contract.DeltaContractReader, "status", boom)
+    assert post(client, BODY, sign(BODY)).status_code == 202

@@ -6,10 +6,14 @@ once, so a locked or already claimed event is never handed out twice. A crash af
 (Postgres ``now()``, OQ-003 and OQ-054), never the demo clock.
 """
 
-from sqlalchemy import text
-from sqlalchemy.orm import Session
+from r2r_core.contract import ContractReader
+from sqlalchemy import func, text, update
+from sqlalchemy.orm import Session, sessionmaker
 
 from app_api.models import SyncEvent
+from app_api.sync.mirror import sync_mirror
+
+MAX_ERROR_CHARS = 2000
 
 STALE_CLAIM_MINUTES = 5
 
@@ -36,3 +40,42 @@ def claim_next(session: Session) -> SyncEvent | None:
     if event_id is None:
         return None
     return session.get(SyncEvent, event_id, populate_existing=True)
+
+
+def process_event(factory: sessionmaker[Session], reader: ContractReader, event_id: int) -> None:
+    """Mirror the published contract for a claimed event and mark it ``done`` or ``failed`` (F08-FR-05).
+
+    The mirror and the ``done`` mark share one transaction. Any error rolls the mirror back and marks the
+    event ``failed`` with the error text; the next webhook or manual trigger retries.
+    """
+    try:
+        with factory() as session:
+            result = sync_mirror(session, reader)
+            session.execute(
+                update(SyncEvent)
+                .where(SyncEvent.id == event_id)
+                .values(status="done", finished_at=func.now(), rows_upserted=result.rows_upserted, error=None)
+            )
+            session.commit()
+    except Exception as error:
+        message = f"{type(error).__name__}: {error}"[:MAX_ERROR_CHARS]
+        with factory() as session:
+            session.execute(
+                update(SyncEvent)
+                .where(SyncEvent.id == event_id)
+                .values(status="failed", finished_at=func.now(), error=message)
+            )
+            session.commit()
+
+
+def drain_once(factory: sessionmaker[Session], reader: ContractReader) -> int:
+    """Claim and process events one at a time until none is claimable. Returns how many were processed."""
+    processed = 0
+    while True:
+        with factory() as session:
+            event = claim_next(session)
+            event_id = None if event is None else event.id
+        if event_id is None:
+            return processed
+        process_event(factory, reader, event_id)
+        processed += 1

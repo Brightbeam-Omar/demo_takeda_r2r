@@ -1,10 +1,10 @@
 [project]
 name = "app-api"
 version = "0.1.0"
-description = "Application: skeleton owning the app database migrations (F04: demo_clock); API and sync arrive in F08-F09"
+description = "Application: app database, sync layer (F08: webhook, queue, drain worker, mirror) and API (F09)"
 requires-python = ">=3.12,<3.13"
 dependencies = [
-    "r2r-core",
+    "r2r-core[delta]",
     "fastapi>=0.110",
     "uvicorn>=0.29",
     "sqlalchemy>=2",
