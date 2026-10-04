@@ -22,7 +22,7 @@ This feature lays the skeleton every later feature builds on: monorepo layout, P
 | F01-FR-09 | GitHub Actions workflow `ci.yml` running `make check` on push/PR (ubuntu-latest, uv cache, npm cache) |
 | F01-FR-10 | `.env.example` with every variable in `02-architecture` §6, commented. `.gitignore` covers `.env`, `lakehouse/`, `node_modules`, `.venv`, `.leakscan/denylist.txt` |
 | F01-FR-11 | `specs/` folder from this package is committed into the repo unchanged |
-| F01-FR-12 | `README.md` with prerequisites (Docker Desktop, uv, Node 20, 32 GB RAM), quickstart and command list |
+| F01-FR-12 | `README.md` with prerequisites (Docker Desktop, uv, Node 20, an Apple Silicon laptop with 16 GB available to Docker), quickstart and command list |
 
 ## Acceptance criteria
 - **F01-AC-01** Given a clean clone and a copied `.env`, when I run `make up`, then `postgres` becomes healthy and `psql -l` lists the 5 databases.

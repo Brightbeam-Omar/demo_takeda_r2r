@@ -12,7 +12,7 @@
 | F14-FR-07 | `make record-video`: runs the Playwright run-of-show with video recording to `artifacts/video/` as a backup asset |
 
 ## Acceptance criteria
-- **F14-AC-01** On a clean clone on a 32 GB Apple Silicon Mac with Wi-Fi off (after images are pulled), `make doctor && make e2e` passes.
+- **F14-AC-01** On a clean clone on an Apple Silicon Mac with 16 GB available to Docker with Wi-Fi off (after images are pulled), `make doctor && make e2e` passes.
 - **F14-AC-02** The run-of-show test completes in < 6 min.
 - **F14-AC-03** Someone new follows the README and runs the demo in < 15 min (manual check by a second person, noted in the PR).
 - **F14-AC-04** The leak scan is clean on the entire repo, including `artifacts/`.

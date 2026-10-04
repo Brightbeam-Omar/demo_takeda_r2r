@@ -54,7 +54,7 @@ Real integrations with any customer system. Real SSO. Writes to any source syste
 | 8 | Your world | (Tier 2) Profile switch, value calculator |
 
 ## 7. Success criteria (Tier 1)
-- `make demo-reset && make e2e` passes on a clean 32 GB Mac, offline, with `LLM_PROVIDER=replay`.
+- `make demo-reset && make e2e` passes on a clean Apple Silicon Mac with 16 GB available to Docker, offline, with `LLM_PROVIDER=replay`.
 - Acts 2, 3, 5 and 6 run in under 25 minutes total, with no manual database edits.
 - Leak scanner reports zero findings.
 - A new engineer can run the demo from the README in under 15 minutes.
