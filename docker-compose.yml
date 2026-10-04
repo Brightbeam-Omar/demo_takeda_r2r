@@ -1,0 +1,27 @@
+# R2R Intelligence Demo: local stack. F01 ships Postgres only; later features add services.
+# Host-side variables (POSTGRES_*) are read from .env (`cp .env.example .env`).
+
+# Bind mount for the Delta lakehouse. Declared here so later services (Dagster, app-worker)
+# reuse the same anchor: `volumes: [*lakehouse]`. App-worker mounts it read-only (F08).
+x-lakehouse: &lakehouse ./lakehouse:/lakehouse
+
+services:
+  postgres:
+    image: postgres:16
+    env_file: .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:
