@@ -14,3 +14,6 @@
 - **`source_refs_json` moved out of `batch_flat`** (04 §3 column list) into `batch_stage`, as 04 §3b says; it is built in Python (`source_refs.py`).
 - **Intermediate SQL tables** (`t_*`) live in the DuckDB session; only `batch_flat` and `batch_stage` are written to Delta.
 - **Template variables.** All SQL files, not only `50_stage.sql.j2`, are rendered with Jinja (snapshot date, UD codes, full-spec pairs come from the profile).
+- **Stage names in the rule table.** `r2r_core/stage_rules.py` (the rules) and `r2r_pipeline/stage_engine.py` (the per-stage entry and exit expressions) necessarily name stages: 03 §4 fixes the rule logic and says the profile may only change SLAs, labels and `applies_if`. `check_rules` fails fast if the profile lacks a stage a rule needs. SLA numbers appear nowhere in them.
+- **`stage_sort`** is the stage's 1-based position in the profile's `stages` list.
+- **Seeded result.** On the F05 dataset (seed 4242) the engine agrees with the generator's oracle on 100% of rows, story batches included.
