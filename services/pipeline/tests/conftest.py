@@ -1,14 +1,18 @@
 """Fixtures for the pipeline tests."""
 
+import sys
 from collections.abc import Callable, Iterator
 from datetime import UTC, datetime
 from decimal import Decimal
+from pathlib import Path
 
 import pytest
 from r2r_core import clock
 from r2r_core.clock import FixedClock
 from r2r_core.profile import SiteProfile, load_profile
 from r2r_pipeline.context import SourceDsns
+
+sys.path.insert(0, str(Path(__file__).parent))  # lets tests import fixture_world
 
 DEMO_NOW = datetime(2026, 10, 12, 7, 0, tzinfo=UTC)
 

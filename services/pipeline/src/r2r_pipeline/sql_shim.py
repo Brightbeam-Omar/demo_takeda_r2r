@@ -128,5 +128,5 @@ def render_template(text: str, **variables: Any) -> str:
     return _environment().from_string(text).render(**variables)
 
 
-def render_file(path: Path, dialect: str, timezone: str, **variables: Any) -> str:
-    return expand_macros(render_template(path.read_text(encoding="utf-8"), **variables), dialect, timezone)
+def render_file(path: Path, dialect: str, tz_name: str, /, **variables: Any) -> str:
+    return expand_macros(render_template(path.read_text(encoding="utf-8"), **variables), dialect, tz_name)

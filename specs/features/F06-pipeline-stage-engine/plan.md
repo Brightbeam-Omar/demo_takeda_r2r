@@ -10,3 +10,7 @@
 
 ## Deviations
 - **Extract reads Postgres with SQLAlchemy → arrow** (OQ-043), not DuckDB's Postgres extension: no extension download, works offline and on both architectures.
+- **`48_batch_flat.sql` added.** Steps 10–45 build intermediate tables; a small `48_batch_flat.sql` assembles `staging.batch_flat` (with `row_key`). `60_flags.sql` is independent of the stage and runs with them; `90_batch_stage.sql` joins the stage-engine output (task T5).
+- **`source_refs_json` moved out of `batch_flat`** (04 §3 column list) into `batch_stage`, as 04 §3b says; it is built in Python (`source_refs.py`).
+- **Intermediate SQL tables** (`t_*`) live in the DuckDB session; only `batch_flat` and `batch_stage` are written to Delta.
+- **Template variables.** All SQL files, not only `50_stage.sql.j2`, are rendered with Jinja (snapshot date, UD codes, full-spec pairs come from the profile).

@@ -62,7 +62,7 @@ Even though the published tables are suffixed `_v`, they are materialised Delta 
 ## 3. `staging.batch_flat` (input to the stage engine)
 One row per `material_no, batch_no, inspection_lot_no` for lot types `01`/`09`, excluding cancelled UDs.
 
-`material_no, material_desc, material_class, molecule_type, supplier_id, supplier_name, supplier_batch, batch_no, batch_status_code, inspection_lot_no, lot_type, lot_start_date, storage_location, location_type, received_location_type, stock_category, gr_date, transfer_to_site_date, inbound_check_status ('none' if absent), inbound_check_completed_date, sample_id, sample_collected_date, offsite_test, external_lab, sample_shipped_date, lims_status ('none' if no sample), lims_approved_date, lims_approved_at, ud_code, ud_date, erp_results_recorded_at, campaign, system_need_by_date, open_deviation_count, closed_deviation_count, source_refs_json`
+`material_no, material_desc, material_class, molecule_type, supplier_id, supplier_name, supplier_batch, batch_no, batch_status_code, inspection_lot_no, lot_type, lot_start_date, storage_location, location_type, received_location_type, stock_category, gr_date, transfer_to_site_date, inbound_check_status ('none' if absent), inbound_check_completed_date, sample_id, sample_collected_date, offsite_test, external_lab, sample_shipped_date, lims_status ('none' if no sample), lims_approved_date, lims_approved_at, ud_code, ud_date, erp_results_recorded_at, campaign, system_need_by_date, open_deviation_count, closed_deviation_count`
 
 Derivations (non-obvious columns):
 

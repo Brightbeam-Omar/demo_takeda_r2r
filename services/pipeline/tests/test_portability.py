@@ -63,8 +63,7 @@ def test_f06_ac07_every_transform_file_is_portable(profile: SiteProfile) -> None
     from datetime import date
 
     files = transform_files()
-    if not files:
-        pytest.skip("no transform SQL files yet")
+    assert files, "no transform SQL files found"
     from r2r_pipeline.sql_shim import render_template
 
     variables = template_variables(profile, date(2026, 10, 12))
