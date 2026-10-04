@@ -7,6 +7,7 @@ source databases with the generator first, so it resets the data of the stack it
 import os
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 from typing import Any
@@ -54,10 +55,11 @@ def seeded() -> None:
         "POSTGRES_USER": _env_file_value("POSTGRES_USER", "r2r"),
         "POSTGRES_PASSWORD": _env_file_value("POSTGRES_PASSWORD", "r2r_dev_only"),
     }
-    result = subprocess.run(
-        [sys.executable, "-m", "datagen", "generate", "--profile", "site_a"],
-        check=False, cwd=REPO_ROOT, env=env, capture_output=True, text=True,
-    )  # fmt: skip
+    with tempfile.TemporaryDirectory() as artifacts:  # not the repo's artifacts/: its owner can differ in CI
+        result = subprocess.run(
+            [sys.executable, "-m", "datagen", "generate", "--profile", "site_a", "--artifacts", artifacts],
+            check=False, cwd=REPO_ROOT, env=env, capture_output=True, text=True,
+        )  # fmt: skip
     assert result.returncode == 0, f"datagen failed:\n{result.stdout}\n{result.stderr}"
 
 
