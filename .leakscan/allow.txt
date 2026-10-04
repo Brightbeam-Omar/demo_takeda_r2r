@@ -1,0 +1,2 @@
+# Allow-list for false positives: <repo-relative path>:<sha256 hex of the lowercased matched text>
+# Committed on purpose; hashes do not reveal terms. No globs. See tools/leakscan/src/leakscan/allow.py.

@@ -3,7 +3,7 @@ name = "r2r-demo"
 version = "0.1.0"
 description = "R2R Intelligence Demo workspace root"
 requires-python = ">=3.12,<3.13"
-dependencies = ["r2r-core"]
+dependencies = ["r2r-core", "leakscan"]
 
 [dependency-groups]
 dev = [
@@ -12,6 +12,7 @@ dev = [
     "pytest-cov>=5",
     "ruff>=0.5",
     "psycopg[binary]>=3.2",
+    "types-openpyxl",
 ]
 
 [tool.uv]
@@ -19,10 +20,11 @@ package = false
 
 # Explicit members: each is added when its package exists (F01 decision OQ-002).
 [tool.uv.workspace]
-members = ["packages/r2r_core"]
+members = ["packages/r2r_core", "tools/leakscan"]
 
 [tool.uv.sources]
 r2r-core = { workspace = true }
+leakscan = { workspace = true }
 
 [tool.ruff]
 line-length = 110
@@ -39,6 +41,11 @@ select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
 [tool.mypy]
 python_version = "3.12"
 strict = true
+
+[[tool.mypy.overrides]]
+# pyarrow ships no type stubs (used by tools/leakscan)
+module = ["pyarrow", "pyarrow.*"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["packages", "tools"]

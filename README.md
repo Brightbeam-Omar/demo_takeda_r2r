@@ -50,6 +50,12 @@ Integration tests (they need a running Postgres) are skipped by `make check`:
 uv run pytest tests/integration -m integration
 ```
 
+## Leak scanner
+
+`make check` runs `leakscan`. Locally, copy `.leakscan/denylist.example.txt` to `.leakscan/denylist.txt`
+(gitignored) and fill in the real client terms. In CI the list is the GitHub secret `LEAKSCAN_DENYLIST`
+(the content, not a path); without it CI fails. Details in [`tools/leakscan/README.md`](tools/leakscan/README.md).
+
 ## Rules worth knowing
 
 - No client-identifying content, ever. The leak scanner (F02) enforces it.
