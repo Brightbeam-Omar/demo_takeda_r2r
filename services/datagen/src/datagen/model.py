@@ -64,6 +64,7 @@ class TestSpec:
     value: str
     spec: str
     status: str = "pass"
+    completed_on: date | None = None  # default: the day the sample is closed, or started
 
 
 @dataclass

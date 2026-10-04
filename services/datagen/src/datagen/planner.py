@@ -231,7 +231,7 @@ def _name_batches(plan: Plan, builder: Builder) -> None:
 # --- phase 7: need-by dates, RAG, demand -----------------------------------------------------------
 
 
-def _facts(batch: BatchPlan, lot: LotPlan, need_by: date | None) -> RowFacts:
+def facts_of(batch: BatchPlan, lot: LotPlan, need_by: date | None) -> RowFacts:
     latest = lot.latest
     return RowFacts(
         row_key=lot.ref,
@@ -253,7 +253,7 @@ def _facts(batch: BatchPlan, lot: LotPlan, need_by: date | None) -> RowFacts:
 def rag_of(
     profile: SiteProfile, batch: BatchPlan, lot: LotPlan, need_by: date | None, today: date
 ) -> str | None:
-    result = plan_dates(_facts(batch, lot, need_by), profile, today)
+    result = plan_dates(facts_of(batch, lot, need_by), profile, today)
     return None if result.rag is None else str(result.rag)
 
 

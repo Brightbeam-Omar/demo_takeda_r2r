@@ -90,7 +90,7 @@ def _lot_events(batch: BatchPlan, lot: LotPlan) -> list[Event]:
         if sample.started is not None:
             out.append(Event(sample.started, "lims", "testing_started", {"sample_id": ref}))
         for number, test in enumerate(sample.results, start=1):
-            day = sample.closed_on or sample.started or sample.collected
+            day = test.completed_on or sample.closed_on or sample.started or sample.collected
             body = {
                 "sample_id": ref,
                 "test_code": test.code,
