@@ -4,7 +4,7 @@
 SHELL := /bin/bash
 SRC_DIRS := $(shell find packages services tools -type d -name src -not -path '*/node_modules/*' -not -path '*/.venv/*' 2>/dev/null)
 
-.PHONY: help install up down logs fmt test check check-python check-frontend coverage-core leakscan \
+.PHONY: help install up down logs fmt test check check-python check-frontend coverage-core leakscan integration stack-test \
         e2e e2e-headed demo-reset pipeline scenario record-agents record-video doctor
 
 help:
@@ -39,6 +39,10 @@ check-python:
 	uv run ruff format --check .
 	uv run mypy --strict $(SRC_DIRS)
 	uv run pytest
+
+integration: ## Run tests that need Postgres (starts the compose Postgres)
+	docker compose up -d --wait postgres
+	uv run pytest -m integration
 
 # F03-FR-09: 100% branch coverage on the SLA maths and the air-gap check, independent of what else runs.
 coverage-core:
