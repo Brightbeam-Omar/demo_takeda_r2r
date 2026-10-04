@@ -1,5 +1,5 @@
 # F06 · Plan
-- `services/pipeline/src/r2r_pipeline/{context.py, lake.py, extract.py, transform.py, stage_engine.py, sql_shim.py}`, `services/pipeline/sql/transform/{10_stock.sql, 20_lots.sql, 30_lims.sql, 40_quality.sql, 45_demand.sql, 50_stage.sql.j2, 60_flags.sql, 90_batch_flat.sql}`.
+- `services/pipeline/src/r2r_pipeline/{context.py, lake.py, extract.py, transform.py, stage_engine.py, sql_shim.py}`, `services/pipeline/sql/transform/{10_stock.sql, 20_lots.sql, 30_lims.sql, 40_quality.sql, 45_demand.sql, 50_stage.sql.j2, 60_flags.sql, 90_batch_stage.sql}`.
 - **Rules live in `packages/r2r_core/src/r2r_core/stage_rules.py`** as an ordered `RULES: list[StageRule(id, stage_key, condition_sql, description)]`. The Jinja template renders the CASE from this list. F09 reuses it for "Explain", so it is the single definition.
 - `lake.py`: `read_delta(name) -> duckdb relation` (via `deltalake` → arrow → duckdb) and `write_delta(name, arrow_table, mode)`.
 - Extract reads Postgres with `duckdb`'s postgres extension, or SQLAlchemy → arrow (choose the simpler of the two and record the choice in Deviations).
