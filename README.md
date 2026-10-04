@@ -12,7 +12,7 @@ The specs in [`specs/`](specs/) are the source of truth. Start with [`CLAUDE.md`
 - Docker Desktop (Compose v2 and buildx)
 - [uv](https://docs.astral.sh/uv/) (it installs Python 3.12 for you)
 - Node 20 or newer
-- A machine with 32 GB RAM (a 32 GB Apple Silicon laptop is the target)
+- An Apple Silicon laptop with 16 GB available to Docker (Docker Desktop > Resources > Memory)
 
 ## Quickstart
 
@@ -52,7 +52,7 @@ delivers them.
 | `make check` | ruff, mypy `--strict`, pytest, frontend lint/typecheck/test, leak scan |
 | `make fmt` / `make test` | Format Python / run all unit tests |
 | `make integration` | Tests that need Postgres (starts the compose Postgres) |
-| `make stack-test` | Build and start the whole stack, then run the acceptance tests against it |
+| `make stack-test` | Acceptance tests against an isolated copy of the stack (own project and ports, torn down afterwards); the demo stack is untouched |
 | `make coverage-core` | 100% branch-coverage gate on `r2r_core.sla` and `r2r_core.airgap` (part of `make check`) |
 | `make demo-reset` | Wipe state and rebuild the canonical opening state (F13) |
 | `make pipeline` | Trigger one pipeline run (F07) |

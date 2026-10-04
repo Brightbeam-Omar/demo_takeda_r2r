@@ -1,5 +1,7 @@
-# R2R Intelligence Demo: local stack. Host-side variables (POSTGRES_*) are read from .env
-# (`cp .env.example .env`). Later features add services (pipeline, app, agents, frontend).
+# R2R Intelligence Demo: local stack. Variables are read from .env (`cp .env.example .env`).
+# Host ports can be overridden (POSTGRES_HOST_PORT, SCENARIO_HOST_PORT, ERP_HOST_PORT, LIMS_HOST_PORT,
+# QMS_HOST_PORT): `make stack-test` uses other ports and its own project so the demo stack is never touched.
+# Later features add services (pipeline, app, agents, frontend).
 
 # Bind mount for the Delta lakehouse. Declared here so later services (Dagster, app-worker)
 # reuse the same anchor: `volumes: [*lakehouse]`. App-worker mounts it read-only (F08).
@@ -18,7 +20,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
@@ -53,7 +55,7 @@ services:
     environment:
       CLOCK_SOURCE: db
     ports:
-      - "8100:8100"
+      - "${SCENARIO_HOST_PORT:-8100}:8100"
     depends_on:
       postgres: {condition: service_healthy}
       db-migrate: {condition: service_completed_successfully}
@@ -75,7 +77,7 @@ services:
     environment:
       CLOCK_SOURCE: http
     ports:
-      - "8101:8101"
+      - "${ERP_HOST_PORT:-8101}:8101"
     depends_on:
       postgres: {condition: service_healthy}
       db-migrate: {condition: service_completed_successfully}
@@ -97,7 +99,7 @@ services:
     environment:
       CLOCK_SOURCE: http
     ports:
-      - "8102:8102"
+      - "${LIMS_HOST_PORT:-8102}:8102"
     depends_on:
       postgres: {condition: service_healthy}
       db-migrate: {condition: service_completed_successfully}
@@ -119,7 +121,7 @@ services:
     environment:
       CLOCK_SOURCE: http
     ports:
-      - "8103:8103"
+      - "${QMS_HOST_PORT:-8103}:8103"
     depends_on:
       postgres: {condition: service_healthy}
       db-migrate: {condition: service_completed_successfully}

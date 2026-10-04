@@ -80,7 +80,7 @@ jobs:
           platforms: linux/amd64
           push: false
 
-  # Builds every image and starts the compose stack, then runs the acceptance tests against it.
+  # Builds every image and starts an isolated compose project, runs the acceptance tests, tears it down.
   # Pull requests only, to keep push feedback fast.
   stack:
     name: stack acceptance (docker compose)

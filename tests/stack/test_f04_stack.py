@@ -21,7 +21,15 @@ import pytest
 pytestmark = pytest.mark.stack
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-SCENARIO, ERP, LIMS, QMS = (f"http://localhost:{port}" for port in (8100, 8101, 8102, 8103))
+SCENARIO, ERP, LIMS, QMS = (
+    f"http://localhost:{os.environ.get(name, default)}"
+    for name, default in (
+        ("SCENARIO_HOST_PORT", 8100),
+        ("ERP_HOST_PORT", 8101),
+        ("LIMS_HOST_PORT", 8102),
+        ("QMS_HOST_PORT", 8103),
+    )
+)
 
 
 def _env(name: str, default: str) -> str:
@@ -42,7 +50,7 @@ TOKEN = {"X-Scenario-Token": _env("SCENARIO_TOKEN", "dev-only-change-me")}
 def _pg(database: str) -> psycopg.Connection[Any]:
     return psycopg.connect(
         host="localhost",
-        port=int(_env("POSTGRES_PORT", "5432")),
+        port=int(os.environ.get("POSTGRES_HOST_PORT", "5432")),
         user=_env("POSTGRES_USER", "r2r"),
         password=_env("POSTGRES_PASSWORD", "r2r_dev_only"),
         dbname=database,

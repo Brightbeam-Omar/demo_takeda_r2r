@@ -44,10 +44,16 @@ integration: ## Run tests that need Postgres (starts the compose Postgres)
 	docker compose up -d --wait postgres
 	uv run pytest -m integration
 
-stack-test: ## Build and start the whole stack, then run the acceptance tests against it
+STACK_PROJECT := r2r_stacktest
+
+# Runs on its own compose project (own network, containers and Postgres volume) and other host ports, then
+# removes all of it, so the demo stack can keep running untouched.
+stack-test: ## Start an isolated copy of the stack, run the acceptance tests against it, tear it down
 	@test -f .env || cp .env.example .env
-	docker compose up -d --build --wait
-	uv run pytest -m stack tests/stack
+	@export COMPOSE_PROJECT_NAME=$(STACK_PROJECT) POSTGRES_HOST_PORT=15432 SCENARIO_HOST_PORT=18100 \
+		ERP_HOST_PORT=18101 LIMS_HOST_PORT=18102 QMS_HOST_PORT=18103; \
+	trap 'docker compose -p $(STACK_PROJECT) down -v --remove-orphans' EXIT; \
+	docker compose -p $(STACK_PROJECT) up -d --build --wait && uv run pytest -m stack tests/stack
 
 # F03-FR-09: 100% branch coverage on the SLA maths and the air-gap check, independent of what else runs.
 coverage-core:
