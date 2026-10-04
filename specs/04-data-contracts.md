@@ -67,35 +67,16 @@ Derivations (non-obvious columns):
 | `system_need_by_date`, `campaign` | From the single `mdez` row chosen as the earliest open `bdter ≥ snapshot_date` for the material (tie-break: lowest `id`). `campaign` is that row's campaign |
 | `open_/closed_deviation_count` | Via `deviation_link` on `(material_no, batch_no)` |
 
-Derivations (non-obvious columns):
-
-| Column | Derivation |
-|---|---|
-| `gr_date` | `MIN(mseg.budat)` of `bwart='101'` for the batch **after** removing 101s that have a same-day `102` for the same batch and quantity |
-| `received_location_type` | `t001l.zloctype` of `mseg.lgort` on that netted `101` |
-| `transfer_to_site_date` | `MIN(mseg.budat)` of `bwart='311'` where `t001l(umlgo).zloctype='onsite'` and `budat ≥ gr_date` |
-| `storage_location`, `location_type` | From `mchb` with the largest total qty for the batch. If there is no stock (consumed/released), the last `mseg` destination |
-| `stock_category` | `BLOCKED` if `speme > 0`, else `QI` if `insme > 0`, else `UNRESTRICTED` |
-| `lot_start_date` | `qals.pastrterm` |
-| `inbound_check_status` | `zinbchk.status` for the lot, else `'none'` |
-| `lims_status` | Latest `sample.status` for the lot: `registered`/`in_progress` → `in_progress`, `approved`, `rejected`. `'none'` if there is no sample |
-| `lims_approved_date` | `lims_approved_at` converted to the site timezone (profile) and truncated to date |
-| `system_need_by_date`, `campaign` | From the single `mdez` row chosen as the earliest open `bdter ≥ snapshot_date` for the material (tie-break: lowest `id`). `campaign` is that row's campaign |
-| `open_/closed_deviation_count` | Via `deviation_link` on `(material_no, batch_no)` |
-
 `source_refs_json` example: `{"erp":{"mcha":"RM10023|B1042","qals":"10000042","mseg":["4900001234"]},"lims":{"sample":"S-77812"},"qms":{"deviation":["DEV-000123"]}}`
 
 ## 4. Published contract (what the app mirrors)
 
 ### 4.1 `batch_pipeline_v`
 `row_key` (`material_no|batch_no|inspection_lot_no`), every `batch_flat` business column, plus:
-`stage_key, stage_rule_id, stage_sort, current_stage_entry_date, lims_rejected, lims_rejected, receipt_entry, receipt_exit, call_off_entry, call_off_exit, sampling_entry, sampling_exit, qc_ship_entry, qc_ship_exit, qc_testing_entry, qc_testing_exit, qa_release_entry, qa_release_exit, applicable_sla_json, system_need_by_locked, on_hold, erp_blocked, re_eval, offsite, full_spec, ud_rejected, deviation_light, inbound_light, snapshot_date, run_id, published_at`
+`stage_key, stage_rule_id, stage_sort, current_stage_entry_date, lims_rejected, receipt_entry, receipt_exit, call_off_entry, call_off_exit, sampling_entry, sampling_exit, qc_ship_entry, qc_ship_exit, qc_testing_entry, qc_testing_exit, qa_release_entry, qa_release_exit, applicable_sla_json, system_need_by_locked, on_hold, erp_blocked, re_eval, offsite, full_spec, ud_rejected, deviation_light, inbound_light, snapshot_date, run_id, published_at`
 
 ### 4.2 `weekly_metrics_v`
 `metric_id, week_start (date), completed (int), on_time (int), pct (decimal 5,1 null), run_id`
-
-### 4.2b `weekly_metric_rows_v`
-`metric_id, week_start, row_key, entry_date, exit_date, duration_days, sla_days, on_time (bool), run_id`. These are the contributing rows behind every `weekly_metrics_v` figure
 
 ### 4.2b `weekly_metric_rows_v`
 `metric_id, week_start, row_key, entry_date, exit_date, duration_days, sla_days, on_time (bool), run_id`. These are the contributing rows behind every `weekly_metrics_v` figure

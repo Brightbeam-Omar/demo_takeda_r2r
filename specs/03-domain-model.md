@@ -159,8 +159,8 @@ For metric `m` bound to stage `s`, week `w` (ISO week, Monday start, site timezo
 - `on_time(w)` = those with `exit − entry ≤ sla(s, lot_type)`
 - `pct = 100 × on_time / completed` (NULL if `completed = 0`)
 - The pipeline publishes the last 12 complete weeks plus the current week-to-date for metrics with `computed_in: pipeline`. It also publishes the contributing rows (`weekly_metric_rows_v`), so Explain never re-implements this maths.
-- The **headline value is the last complete week**. Week-to-date is shown as a secondary value, because at demo start (a Monday morning) week-to-date is empty. It also publishes the contributing rows (`weekly_metric_rows_v`), so Explain never re-implements this maths.
-- The **headline value is the last complete week**. Week-to-date is shown as a secondary value, because at demo start (a Monday morning) week-to-date is empty. For the others, `metric_reference_v.status = 'awaiting_signal'` with a human-readable `null_reason` (e.g. "Physical delivery date comes from 3PL feed, enabled in Tier 2").
+- For metrics with `computed_in: app`, `metric_reference_v.status = 'awaiting_signal'` with a human-readable `null_reason` (e.g. "Physical delivery date comes from 3PL feed, enabled in Tier 2").
+- The **headline value is the last complete week**. Week-to-date is shown as a secondary value, because at demo start (a Monday morning) week-to-date is empty.
 - UI colour from `metric_rag`: `pct ≥ green_min_pct` green, `pct ≥ amber_min_pct` amber, otherwise red.
 
 ## 8. Quality indicators
