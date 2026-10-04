@@ -4,9 +4,16 @@ import argparse
 import sys
 from pathlib import Path
 
-from r2r_core.profile import load_profile
+from r2r_core.profile import SiteProfile, load_profile
+from sqlalchemy.exc import OperationalError, ProgrammingError
 
-from datagen.params import load_params
+from datagen.executor import Databases
+from datagen.generate import lot_numbers_from_db
+from datagen.legacy_workbook import build_workbook, check_workbook
+from datagen.oracle import oracle_rows
+from datagen.params import Params, load_params
+from datagen.planner import build_plan
+from datagen.stats import compute_stats
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -33,7 +40,32 @@ def main(argv: list[str] | None = None) -> int:
     profile = load_profile(args.profile)
     seed = profile.demo.seed if args.seed is None else args.seed
     params = load_params()
-    print(f"datagen {args.command}: profile={args.profile} seed={seed} stages={len(params.open_stage_mix)}")
+    if args.command == "legacy-workbook":
+        return _legacy_workbook(profile, params, seed, args.out)
+    print(f"datagen {args.command}: profile={args.profile} seed={seed}")
+    return 0
+
+
+def _legacy_workbook(profile: SiteProfile, params: Params, seed: int, out: Path) -> int:
+    plan = build_plan(profile, params, seed)
+    numbers: dict[str, str] = {}
+    try:
+        numbers = lot_numbers_from_db(plan, Databases.from_env().erp)
+    except (OperationalError, ProgrammingError):
+        print(
+            "datagen: no generated ERP database reachable, using the plan's lot refs instead of lot numbers"
+        )
+    out.parent.mkdir(parents=True, exist_ok=True)
+    build_workbook(plan, params, compute_stats(plan, profile), numbers).save(out)
+    intended = {key: stage for key, stage, _ in oracle_rows(plan, None)}
+    if numbers:
+        intended = {
+            f"{b.matnr}|{b.charg}|{numbers[lot.ref]}": lot.stage
+            for b, lot in plan.lots()
+            if lot.ref in numbers
+        }
+    rows, disagree = check_workbook(out, intended)
+    print(f"datagen: wrote {out} ({rows} tracker rows, {disagree} typed statuses disagree with the source)")
     return 0
 
 
