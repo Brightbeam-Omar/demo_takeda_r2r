@@ -54,10 +54,11 @@ def seeded() -> None:
         "POSTGRES_USER": _env_file_value("POSTGRES_USER", "r2r"),
         "POSTGRES_PASSWORD": _env_file_value("POSTGRES_PASSWORD", "r2r_dev_only"),
     }
-    subprocess.run(
+    result = subprocess.run(
         [sys.executable, "-m", "datagen", "generate", "--profile", "site_a"],
-        check=True, cwd=REPO_ROOT, env=env, capture_output=True,
+        check=False, cwd=REPO_ROOT, env=env, capture_output=True, text=True,
     )  # fmt: skip
+    assert result.returncode == 0, f"datagen failed:\n{result.stdout}\n{result.stderr}"
 
 
 @pytest.fixture(scope="module")
