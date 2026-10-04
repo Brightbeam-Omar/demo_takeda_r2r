@@ -14,3 +14,7 @@ storage:
 
 telemetry:
   enabled: false
+
+# The first-visit community/newsletter pop-up of the UI (instance setting `nux`, Dagster 1.13).
+nux:
+  enabled: false
