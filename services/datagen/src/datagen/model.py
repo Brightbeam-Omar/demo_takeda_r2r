@@ -210,3 +210,16 @@ def current_stage_entry(batch: BatchPlan, lot: LotPlan) -> date | None:
             return latest.closed_on if latest else None
         case _:
             return None
+
+
+def sampling_entry(batch: BatchPlan, lot: LotPlan) -> date | None:
+    """Entry date of the sampling stage (03 section 4, stage entry table)."""
+    if lot.lot_type == "01" and batch.received_location_type == "3pl":
+        return lot.transfer
+    return lot.check_done or lot.start
+
+
+def weekdays_between(first: date, last: date) -> list[date]:
+    """Business days from ``first`` to ``last``, both included."""
+    days = (first + timedelta(days=n) for n in range((last - first).days + 1))
+    return [day for day in days if day.weekday() < 5]
