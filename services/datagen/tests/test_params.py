@@ -1,7 +1,7 @@
 """T1: params file and seeded streams (F05-FR-02, FR-03, FR-09)."""
 
 import pytest
-from datagen.cli import build_parser, main
+from datagen.cli import build_parser
 from datagen.params import Params, load_params
 from datagen.rng import stream
 from pydantic import ValidationError
@@ -39,8 +39,7 @@ def test_f05_fr09_streams_are_reproducible_and_independent() -> None:
     assert first != [stream(4243, "world").random() for _ in range(3)]
 
 
-def test_f05_cli_has_both_commands_and_runs() -> None:
+def test_f05_cli_has_both_commands() -> None:
     parser = build_parser()
     assert parser.parse_args(["generate"]).profile == "site_a"
     assert parser.parse_args(["legacy-workbook"]).out.name == "legacy_tracker.xlsx"
-    assert main(["generate", "--seed", "1"]) == 0

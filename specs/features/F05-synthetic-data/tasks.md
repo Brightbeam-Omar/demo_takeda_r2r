@@ -6,4 +6,4 @@
 - [x] T5 [TDD] Story batches (FR-06, AC-04)
 - [x] T6 [TDD] Determinism test (AC-01) and distribution test (AC-02)
 - [x] T7 Legacy workbook exporter (FR-07, AC-05)
-- [ ] T8 Report, performance check, leak scan on artefacts (FR-08, AC-06, AC-07)
+- [x] T8 Report, performance check, leak scan on artefacts (FR-08, AC-06, AC-07)

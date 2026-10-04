@@ -2,6 +2,7 @@
 
 import time
 from collections import Counter
+from pathlib import Path
 
 import pytest
 from datagen.executor import Databases
@@ -36,3 +37,35 @@ def test_f05_fr01_generate_populates_the_sources_through_the_event_functions(
     assert generated.result.event_count == len(generated.events)
     print(f"replayed {len(generated.events)} events in {elapsed:.1f}s", Counter(generated.result.per_kind))
     assert elapsed < 60
+
+
+def test_f05_fr08_fr11_generate_writes_the_report_and_the_oracle(
+    source_databases: Databases, tmp_path: Path
+) -> None:
+    generated = generate(load_profile("site_a"), load_params(), 4242, source_databases, tmp_path)
+    report = (tmp_path / "datagen_report.md").read_text(encoding="utf-8")
+    for heading in (
+        "## Volumes",
+        "## Rows by table",
+        "## Open-row stage mix",
+        "## RAG mix",
+        "## Quirks",
+        "## Story batches",
+    ):
+        assert heading in report
+    for story in ("B1042", "B2077", "B3150", "B4410", "B5003"):
+        assert story in report
+    assert "**NO**" not in report  # every target in the report is met
+    lines = (tmp_path / "expected_stages.csv").read_text(encoding="utf-8").splitlines()
+    assert lines[0] == "row_key,intended_stage,story_id"
+    assert len(lines) == 1 + len(generated.plan.lots())
+    assert any(line.endswith(",B5003") and ",qa_release," in line for line in lines)
+    assert generated.elapsed_seconds < 60  # F05-AC-07
+
+
+def test_f05_oracle_is_a_sidecar_and_not_loaded_into_any_source_database(source_databases: Databases) -> None:
+    from sqlalchemy import inspect
+
+    for dsn in (source_databases.erp, source_databases.lims, source_databases.qms):
+        tables = set(inspect(create_engine(dsn)).get_table_names())
+        assert not any("expected" in name or "oracle" in name for name in tables)

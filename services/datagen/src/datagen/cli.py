@@ -8,7 +8,7 @@ from r2r_core.profile import SiteProfile, load_profile
 from sqlalchemy.exc import OperationalError, ProgrammingError
 
 from datagen.executor import Databases
-from datagen.generate import lot_numbers_from_db
+from datagen.generate import generate, lot_numbers_from_db
 from datagen.legacy_workbook import build_workbook, check_workbook
 from datagen.oracle import oracle_rows
 from datagen.params import Params, load_params
@@ -42,7 +42,16 @@ def main(argv: list[str] | None = None) -> int:
     params = load_params()
     if args.command == "legacy-workbook":
         return _legacy_workbook(profile, params, seed, args.out)
-    print(f"datagen {args.command}: profile={args.profile} seed={seed}")
+    return _generate(profile, params, seed, args.artifacts)
+
+
+def _generate(profile: SiteProfile, params: Params, seed: int, artifacts: Path) -> int:
+    generated = generate(profile, params, seed, Databases.from_env(), artifacts)
+    print(
+        f"datagen: {len(generated.plan.batches)} batches, {len(generated.plan.lots())} lots, "
+        f"{generated.result.event_count} events in {generated.elapsed_seconds:.1f} s; "
+        f"report and expected_stages.csv are in {artifacts}"
+    )
     return 0
 
 
