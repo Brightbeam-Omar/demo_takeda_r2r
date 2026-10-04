@@ -148,3 +148,34 @@ def test_f04_fr10_explicit_sample_ids_are_used_and_duplicates_conflict(
         assert collect(session, sample_id="S-0000077") == "S-0000077"
         with pytest.raises(Conflict):
             collect(session, inspection_lot_no="10000002", sample_id="S-0000077")
+
+
+def test_f05_test_result_recorded_adds_a_result_to_a_sample(factory: sessionmaker[Session]) -> None:
+    from lims_sim.models import TestResult
+
+    with factory() as session:
+        sample_id = collect(session)
+        body = schemas.TestResultIn(
+            sample_id=sample_id,
+            test_code="ASSAY",
+            test_name="Assay",
+            result_value="99.1 %",
+            spec="98.0-102.0 %",
+        )
+        done = events.test_result_recorded(session, body)["test_result"]
+        pending = events.test_result_recorded(
+            session, schemas.TestResultIn(**{**body.model_dump(), "status": "pending"})
+        )["test_result"]
+        session.commit()
+        row = session.get(TestResult, done["id"])
+        assert row is not None
+        assert (row.status, row.completed_at, row.updated_at) == ("pass", DEMO_NOW, DEMO_NOW)
+        assert pending["completed_at"] is None
+
+
+def test_f05_test_result_for_an_unknown_sample_is_invalid(factory: sessionmaker[Session]) -> None:
+    body = schemas.TestResultIn(
+        sample_id="S-9999999", test_code="A", test_name="A", result_value="1", spec="1"
+    )
+    with factory() as session, pytest.raises(Invalid):
+        events.test_result_recorded(session, body)

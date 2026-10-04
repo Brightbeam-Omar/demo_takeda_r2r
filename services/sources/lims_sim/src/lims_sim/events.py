@@ -13,7 +13,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from lims_sim import schemas
-from lims_sim.models import Counter, Sample
+from lims_sim.models import Counter, Sample, TestResult
 
 OPEN_STATUSES = ("registered", "in_progress")
 
@@ -110,3 +110,23 @@ def rejected(session: Session, body: schemas.SampleRef) -> dict[str, Any]:
     sample.status = "rejected"
     session.flush()
     return {"sample": row_dict(sample)}
+
+
+def test_result_recorded(session: Session, body: schemas.TestResultIn) -> dict[str, Any]:
+    """Record one test result for a sample. Added in F05 so seeded results also go through an event."""
+    sample = _sample(session, body.sample_id)
+    done = body.completed_on or clock.today()
+    result = TestResult(
+        sample_id=sample.sample_id,
+        test_code=body.test_code,
+        test_name=body.test_name,
+        result_value=body.result_value,
+        spec=body.spec,
+        status=body.status,
+        completed_at=None
+        if body.status == "pending"
+        else clock.now().replace(year=done.year, month=done.month, day=done.day),
+    )
+    session.add(result)
+    session.flush()
+    return {"test_result": row_dict(result)}

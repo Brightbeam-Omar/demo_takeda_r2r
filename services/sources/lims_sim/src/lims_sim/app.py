@@ -62,6 +62,7 @@ add_event_routes(
         ("/testing-started", schemas.SampleRef, events.testing_started),
         ("/approved", schemas.SampleRef, events.approved),
         ("/rejected", schemas.SampleRef, events.rejected),
+        ("/test-result", schemas.TestResultIn, events.test_result_recorded),
     ],
     get_session,
 )
