@@ -56,6 +56,8 @@ def engine_variables(profile: SiteProfile) -> dict[str, Any]:
     dated = []
     for stage in profile.stages:
         if stage.key not in STAGE_DATES:
+            if stage.sla_days > 0 and not stage.terminal:
+                raise ValueError(f"stage {stage.key!r} has an SLA but the stage engine has no dates for it")
             continue
         entry, exit_ = STAGE_DATES[stage.key]
         if stage.applies_if:

@@ -183,3 +183,23 @@ def test_f06_fr04_the_output_columns_are_those_of_the_contract(profile: SiteProf
         "qa_release_exit", "on_hold", "erp_blocked", "re_eval", "offsite", "full_spec", "ud_rejected",
         "deviation_light", "inbound_light",
     ]  # fmt: skip
+
+
+def test_f06_fr04_a_profile_stage_with_an_sla_but_no_date_rule_is_an_error(profile: SiteProfile) -> None:
+    from r2r_core.profile import Stage
+    from r2r_pipeline.stage_engine import engine_variables
+
+    extra = Stage(key="quarantine", label="Quarantine", sla_days=3, team="QA", action="Hold")
+    broken = profile.model_copy(update={"stages": [*profile.stages, extra]})
+    with pytest.raises(ValueError, match="quarantine"):
+        engine_variables(broken)
+    assert engine_variables(profile)["dated_stages"]  # the real profile is fine
+
+
+def test_f06_fr09_the_pipeline_steps_do_not_depend_on_dagster() -> None:
+    import importlib
+    import sys
+
+    for name in ("r2r_pipeline.extract", "r2r_pipeline.transform"):
+        importlib.import_module(name)
+    assert not [m for m in sys.modules if m == "dagster" or m.startswith("dagster.")]

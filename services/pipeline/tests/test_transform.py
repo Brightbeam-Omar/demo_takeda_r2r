@@ -331,6 +331,18 @@ def test_f06_fr07_source_refs_list_every_document_and_the_sample(
     }
 
 
+def test_f06_fr07_erp_results_recorded_at_is_the_lot_zresrec(tmp_path: Path, profile: SiteProfile) -> None:
+    world = World()
+    world.receive("B1", "10000001", D(2026, 10, 1))
+    world.receive("B2", "10000002", D(2026, 10, 1))
+    recorded = datetime(2026, 10, 9, 10, 0, tzinfo=UTC)
+    world.lot_field("10000001", zresrec=recorded)
+    con, _ = build(world, tmp_path, profile)
+    flat = rows(con)
+    assert flat["RM1|B1|10000001"]["erp_results_recorded_at"] == recorded
+    assert flat["RM1|B2|10000002"]["erp_results_recorded_at"] is None
+
+
 def test_f06_fr09_transform_is_a_plain_function_that_writes_batch_flat(
     tmp_path: Path, profile: SiteProfile
 ) -> None:

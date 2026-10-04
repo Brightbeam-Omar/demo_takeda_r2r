@@ -80,4 +80,23 @@ def test_f06_fr01_extract_copies_every_source_table_and_records_freshness(
     assert context.freshness["erp"]["max_updated_at"] == NOW.isoformat()
     assert context.freshness["lims"]["max_updated_at"] is None  # nothing in LIMS yet
     assert set(context.freshness) == {"erp", "lims", "qms"}
-    assert erp_events and erp_schemas  # the fixture used the simulators' event functions
+    assert context.freshness["erp"]["extracted_at"] == NOW.isoformat()
+    # a lot closed with a cancel usage decision never reaches staging, and a second run overwrites
+    from r2r_core.db import make_engine, make_session_factory
+
+    with make_session_factory(make_engine(source_dsns.erp))() as session:
+        result = erp_events.goods_receipt(
+            session,
+            erp_schemas.GoodsReceiptIn(
+                matnr="RM10001", charg="B1002", lifnr="SUP001", lgort="0100", menge=Decimal(50)
+            ),
+        )
+        erp_events.usage_decision(
+            session, erp_schemas.UsageDecisionIn(prueflos=result["qals"]["prueflos"], vcode="X")
+        )
+        session.commit()
+    extract(context)
+    extract(context)
+    assert read_delta(tmp_path, "staging.stg_qals").num_rows == 1  # the cancelled lot is gone
+    assert read_delta(tmp_path, "staging.stg_mseg").num_rows == 2  # raw movements keep both batches
+    assert read_delta(tmp_path, "staging.stg_mcha").num_rows == 2
