@@ -5,6 +5,8 @@ and then replaces all eight mirrors and their watermark rows. The caller commits
 """
 
 import json
+import logging
+import time
 from dataclasses import dataclass
 from typing import Any
 
@@ -15,6 +17,8 @@ from sqlalchemy.orm import Session
 
 from app_api.models import JSON, MIRROR_TABLES, MIRRORS, OBJECTS_WITH_RUN_ID, Watermark
 
+log = logging.getLogger(__name__)
+
 
 class SyncError(Exception):
     """The published contract cannot be mirrored now. The event fails and the mirror stays as it was."""
@@ -24,6 +28,10 @@ class SyncError(Exception):
 class SyncResult:
     rows_upserted: int
     noop: bool
+
+
+def _ms(began: float) -> float:
+    return round((time.perf_counter() - began) * 1000, 1)
 
 
 def read_published(reader: ContractReader) -> tuple[str, dict[str, list[dict[str, Any]]]]:
@@ -71,12 +79,18 @@ def _insert_rows(session: Session, table: Table, records: list[dict[str, Any]]) 
 
 def sync_mirror(session: Session, reader: ContractReader) -> SyncResult:
     """Mirror the currently published run, or do nothing when the mirror already holds it."""
+    began = time.perf_counter()
     run_id, data = read_published(reader)
+    log.info(
+        "contract_pulled",
+        extra={"run_id": run_id, "rows": sum(map(len, data.values())), "duration_ms": _ms(began)},
+    )
     check_consistent(run_id, data)
     held = dict(session.execute(select(Watermark.object_name, Watermark.run_id)).tuples().all())
     if all(held.get(name) == run_id for name in MIRRORS):
         return SyncResult(rows_upserted=0, noop=True)
 
+    began = time.perf_counter()
     now = session.execute(select(func.now())).scalar_one()
     total = 0
     for name, table in MIRROR_TABLES.items():
@@ -90,4 +104,5 @@ def sync_mirror(session: Session, reader: ContractReader) -> SyncResult:
                 index_elements=[Watermark.object_name], set_={"run_id": run_id, "synced_at": now}
             )
         )
+    log.info("mirror_upserted", extra={"run_id": run_id, "rows": total, "duration_ms": _ms(began)})
     return SyncResult(rows_upserted=total, noop=False)

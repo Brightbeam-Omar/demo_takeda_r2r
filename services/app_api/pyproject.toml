@@ -4,7 +4,9 @@ version = "0.1.0"
 description = "Application: app database, sync layer (F08: webhook, queue, drain worker, mirror) and API (F09)"
 requires-python = ">=3.12,<3.13"
 dependencies = [
-    "r2r-core[delta]",
+    "r2r-core",
+    "deltalake>=0.18",  # the drain worker reads the Delta lakehouse (F08)
+    "pyarrow>=16",
     "fastapi>=0.110",
     "uvicorn>=0.29",
     "sqlalchemy>=2",

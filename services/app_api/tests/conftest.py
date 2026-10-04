@@ -1,7 +1,9 @@
 """Fixtures for the app API tests: a migrated throwaway ``app`` database and a client wired to it."""
 
+import sys
 from collections.abc import Callable, Iterator
 from datetime import UTC, datetime
+from pathlib import Path
 
 import pytest
 from app_api.db import get_session, migrate
@@ -12,6 +14,8 @@ from r2r_core.clock import FixedClock
 from r2r_core.db import make_engine, make_session_factory
 from sqlalchemy import Engine, text
 from sqlalchemy.orm import Session, sessionmaker
+
+sys.path.insert(0, str(Path(__file__).parent))  # lets tests import support
 
 DEMO_NOW = datetime(2026, 10, 12, 7, 0, tzinfo=UTC)
 

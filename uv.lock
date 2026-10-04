@@ -76,9 +76,11 @@ version = "0.1.0"
 source = { editable = "services/app_api" }
 dependencies = [
     { name = "alembic" },
+    { name = "deltalake" },
     { name = "fastapi" },
     { name = "psycopg", extra = ["binary"] },
-    { name = "r2r-core", extra = ["delta"] },
+    { name = "pyarrow" },
+    { name = "r2r-core" },
     { name = "sqlalchemy" },
     { name = "uvicorn" },
 ]
@@ -86,9 +88,11 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "alembic", specifier = ">=1.13" },
+    { name = "deltalake", specifier = ">=0.18" },
     { name = "fastapi", specifier = ">=0.110" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
-    { name = "r2r-core", extras = ["delta"], editable = "packages/r2r_core" },
+    { name = "pyarrow", specifier = ">=16" },
+    { name = "r2r-core", editable = "packages/r2r_core" },
     { name = "sqlalchemy", specifier = ">=2" },
     { name = "uvicorn", specifier = ">=0.29" },
 ]

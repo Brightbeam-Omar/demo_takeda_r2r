@@ -6,14 +6,19 @@ once, so a locked or already claimed event is never handed out twice. A crash af
 (Postgres ``now()``, OQ-003 and OQ-054), never the demo clock.
 """
 
+import logging
+import time
+
 from r2r_core.contract import ContractReader
 from sqlalchemy import func, text, update
 from sqlalchemy.orm import Session, sessionmaker
 
+from app_api.logs import bind
 from app_api.models import SyncEvent
 from app_api.sync.mirror import sync_mirror
 
 MAX_ERROR_CHARS = 2000
+log = logging.getLogger(__name__)
 
 STALE_CLAIM_MINUTES = 5
 
@@ -48,6 +53,7 @@ def process_event(factory: sessionmaker[Session], reader: ContractReader, event_
     The mirror and the ``done`` mark share one transaction. Any error rolls the mirror back and marks the
     event ``failed`` with the error text; the next webhook or manual trigger retries.
     """
+    began = time.perf_counter()
     try:
         with factory() as session:
             result = sync_mirror(session, reader)
@@ -57,6 +63,10 @@ def process_event(factory: sessionmaker[Session], reader: ContractReader, event_
                 .values(status="done", finished_at=func.now(), rows_upserted=result.rows_upserted, error=None)
             )
             session.commit()
+        log.info(
+            "event_done",
+            extra={"rows_upserted": result.rows_upserted, "noop": result.noop, "duration_ms": _ms(began)},
+        )
     except Exception as error:
         message = f"{type(error).__name__}: {error}"[:MAX_ERROR_CHARS]
         with factory() as session:
@@ -66,6 +76,11 @@ def process_event(factory: sessionmaker[Session], reader: ContractReader, event_
                 .values(status="failed", finished_at=func.now(), error=message)
             )
             session.commit()
+        log.error("event_failed", extra={"error": message, "duration_ms": _ms(began)})
+
+
+def _ms(began: float) -> float:
+    return round((time.perf_counter() - began) * 1000, 1)
 
 
 def drain_once(factory: sessionmaker[Session], reader: ContractReader) -> int:
@@ -74,8 +89,10 @@ def drain_once(factory: sessionmaker[Session], reader: ContractReader) -> int:
     while True:
         with factory() as session:
             event = claim_next(session)
-            event_id = None if event is None else event.id
+            event_id, run_id = (None, None) if event is None else (event.id, event.run_id)
         if event_id is None:
             return processed
-        process_event(factory, reader, event_id)
+        with bind(event_id=event_id, run_id=run_id):
+            log.info("event_claimed")
+            process_event(factory, reader, event_id)
         processed += 1
