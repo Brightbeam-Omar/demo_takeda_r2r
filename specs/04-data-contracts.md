@@ -51,7 +51,7 @@ The REST API (`lims-sim`) exposes `GET /samples?batch_no=` and `GET /samples/{id
 ```
 lakehouse/
   staging/        stg_mara, stg_lfa1, stg_t001l, stg_mcha, stg_mchb, stg_mseg, stg_qals, stg_zinbchk,
-                  stg_mdez, stg_sample, stg_deviation, stg_deviation_link, batch_flat     (overwrite per run)
+                  stg_mdez, stg_sample, stg_deviation, stg_deviation_link, batch_flat, batch_stage   (overwrite per run)
   intelligence/   batch_snapshot (append/replace by snapshot_date), weekly_metrics, need_by_history,
                   pipeline_run_log
   published/      batch_pipeline_v, weekly_metrics_v, weekly_metric_rows_v, pipeline_status_v,
@@ -62,26 +62,30 @@ Even though the published tables are suffixed `_v`, they are materialised Delta 
 ## 3. `staging.batch_flat` (input to the stage engine)
 One row per `material_no, batch_no, inspection_lot_no` for lot types `01`/`09`, excluding cancelled UDs.
 
-`material_no, material_desc, material_class, molecule_type, supplier_id, supplier_name, supplier_batch, batch_no, batch_status_code, inspection_lot_no, lot_type, lot_start_date, storage_location, location_type, received_location_type, stock_category, gr_date, transfer_to_site_date, inbound_check_status ('none' if absent), inbound_check_completed_date, sample_id, sample_collected_date, offsite_test, external_lab, sample_shipped_date, lims_status ('none' if no sample), lims_approved_date, lims_approved_at, ud_code, ud_date, erp_results_recorded_at, campaign, system_need_by_date, open_deviation_count, closed_deviation_count, source_refs_json`
+`material_no, material_desc, material_class, molecule_type, supplier_id, supplier_name, supplier_batch, batch_no, batch_status_code, inspection_lot_no, lot_type, lot_start_date, storage_location, location_type, received_location_type, stock_category, gr_date, transfer_to_site_date, inbound_check_status ('none' if absent), inbound_check_completed_date, sample_id, sample_collected_date, offsite_test, external_lab, sample_shipped_date, lims_status ('none' if no sample), lims_approved_date, lims_approved_at, ud_code, ud_date, erp_results_recorded_at, campaign, system_need_by_date, open_deviation_count, closed_deviation_count`
 
 Derivations (non-obvious columns):
 
 | Column | Derivation |
 |---|---|
-| `gr_date` | `MIN(mseg.budat)` of `bwart='101'` for the batch **after** removing 101s that have a same-day `102` for the same batch and quantity |
-| `received_location_type` | `t001l.zloctype` of `mseg.lgort` on that netted `101` |
+| `gr_date` | `MIN(mseg.budat)` of `bwart='101'` for the batch **after** netting: a `102` cancels at most one `101` of the same batch, posting date and quantity, and each `101` is cancelled at most once. Unmatched or partial reversals stay as posted. `stg_mseg` is a raw copy; netting happens here |
+| `received_location_type` | `t001l.zloctype` of `mseg.lgort` on that netted `101`. For `lot_type = '09'` it is always `onsite` (a re-evaluation cycle starts with the stock on site) |
 | `transfer_to_site_date` | `MIN(mseg.budat)` of `bwart='311'` where `t001l(umlgo).zloctype='onsite'` and `budat ≥ gr_date` |
-| `storage_location`, `location_type` | From `mchb` with the largest total qty for the batch. If there is no stock (consumed/released), the last `mseg` destination |
-| `stock_category` | `BLOCKED` if `speme > 0`, else `QI` if `insme > 0`, else `UNRESTRICTED` |
+| `storage_location`, `location_type` | From `mchb` with the largest total qty for the batch; ties go to the lowest location number. If there is no stock (consumed/released), the last `mseg` destination |
+| `stock_category` | From the bucket sums over all the batch's `mchb` rows: `BLOCKED` if the sum of `speme > 0`, else `QI` if the sum of `insme > 0`, else `UNRESTRICTED` |
+| `inbound_check_completed_date` | `zinbchk.completed_on` only when the status is `passed`; NULL for `open`, `failed` or no check (so a failed check leaves the receipt stage without an exit date) |
 | `lot_start_date` | `qals.pastrterm` |
 | `inbound_check_status` | `zinbchk.status` for the lot, else `'none'` |
 | `lims_status` | Latest `sample.status` for the lot: `registered`/`in_progress` → `in_progress`, `approved`, `rejected`. `'none'` if there is no sample |
 | `erp_results_recorded_at` | `qals.zresrec` for the lot (NULL if never recorded) |
 | `lims_approved_date` | `lims_approved_at` converted to the site timezone (profile) and truncated to date |
-| `system_need_by_date`, `campaign` | From the single `mdez` row chosen as the earliest open `bdter ≥ snapshot_date` for the material (tie-break: lowest `id`). `campaign` is that row's campaign |
+| `system_need_by_date`, `campaign` | From the single `mdez` row chosen as the earliest open `bdter ≥ snapshot_date` for the material (tie-break: lowest `id`). `campaign` is that row's campaign. Joined to rows whose `ud_code` is not an accept code of the profile; released rows get NULL |
 | `open_/closed_deviation_count` | Via `deviation_link` on `(material_no, batch_no)` |
 
-`source_refs_json` example: `{"erp":{"mcha":"RM10023|B1042","qals":"10000042","mseg":["4900001234"]},"lims":{"sample":"S-77812"},"qms":{"deviation":["DEV-000123"]}}`
+### 3b. `staging.batch_stage` (output of the stage engine)
+One row per `row_key`, built by the SQL steps `50`–`90` from `batch_flat`: `row_key` plus the columns of §4.1 from `stage_key` to `inbound_light` (stage, rule id, sort, entry and exit dates per stage, flags, lights, `applicable_sla_json`, `source_refs_json`). `snapshot_date`, `run_id`, `published_at` and `system_need_by_locked` are added by F07, which joins `batch_flat` and `batch_stage` to publish `batch_pipeline_v`.
+
+`source_refs_json` lists every material document of the batch (netted ones included), ordered by number. Example: `{"erp":{"mcha":"RM10023|B1042","qals":"10000042","mseg":["4900001234"]},"lims":{"sample":"S-77812"},"qms":{"deviation":["DEV-000123"]}}`
 
 ## 4. Published contract (what the app mirrors)
 

@@ -1,0 +1,25 @@
+[project]
+name = "r2r-pipeline"
+version = "0.1.0"
+description = "Data product pipeline: extract, flatten and the stage engine (SQL on DuckDB over Delta)"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "r2r-core",
+    "duckdb>=1.0",
+    "deltalake>=0.18",
+    "pyarrow>=16",
+    "jinja2>=3.1",
+    "sqlglot>=25",
+    "sqlalchemy>=2",
+    "psycopg[binary]>=3.2",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/r2r_pipeline"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"sql" = "r2r_pipeline/sql"
