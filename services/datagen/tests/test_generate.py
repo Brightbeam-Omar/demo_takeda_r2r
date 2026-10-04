@@ -2,6 +2,7 @@
 
 import time
 from collections import Counter
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
@@ -99,3 +100,54 @@ def test_f05_ac03_ac04_quirks_and_stories_reach_the_databases(
     report = (tmp_path / "datagen_report.md").read_text(encoding="utf-8")
     for text in ("M3 sampling done", "Batches (distinct)", "Inspection lots (rows)"):
         assert text in report or text.replace("Tier 1 pipeline", "In Tier 1 the pipeline") in report
+
+
+def test_f05_oq039_only_the_air_gap_lots_lack_the_erp_results_record(
+    source_databases: Databases, tmp_path: Path
+) -> None:
+    generate(load_profile("site_a"), load_params(), 4242, source_databases, tmp_path)
+    erp, lims = create_engine(source_databases.erp), create_engine(source_databases.lims)
+    with Session(lims) as session:
+        approved = set(
+            session.scalars(select(Sample.inspection_lot_no).where(Sample.status == "approved")).all()
+        )
+        b5003 = session.scalars(select(Sample.inspection_lot_no).where(Sample.batch_no == "B5003")).one()
+    with Session(erp) as session:
+        lots = session.scalars(select(Qals).where(Qals.vcode.is_(None))).all()
+        gaps = {lot.prueflos for lot in lots if lot.prueflos in approved and lot.zresrec is None}
+        recorded = [lot for lot in lots if lot.prueflos in approved and lot.zresrec is not None]
+    assert 3 <= len(gaps) <= 5
+    assert b5003 in gaps
+    assert recorded  # normal approvals have their results recorded
+
+
+def test_f05_generate_leaves_the_app_database_including_demo_clock_unchanged(
+    source_databases: Databases, make_test_database: Callable[[str], str]
+) -> None:
+    from app_api.db import migrate as migrate_app
+    from sqlalchemy import text
+
+    app_dsn = make_test_database("datagen_app")
+    migrate_app(app_dsn)
+    engine = create_engine(app_dsn)
+    with engine.begin() as connection:
+        connection.execute(
+            text("INSERT INTO demo_clock (id, now_utc, frozen) VALUES (1, '2026-10-12T07:00:00+00', false)")
+        )
+
+    def snapshot() -> list[tuple[object, ...]]:
+        with engine.connect() as connection:
+            tables = connection.execute(
+                text("SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY 1")
+            )
+            return [
+                (name, *row)
+                for (name,) in tables.fetchall()
+                for row in connection.execute(text(f"SELECT * FROM {name}")).fetchall()
+            ]
+
+    before = snapshot()
+    assert any(row[0] == "demo_clock" for row in before)
+    generate(load_profile("site_a"), load_params(), 4242, source_databases)
+    assert snapshot() == before
+    engine.dispose()
