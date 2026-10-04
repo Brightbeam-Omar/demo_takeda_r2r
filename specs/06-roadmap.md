@@ -23,7 +23,7 @@ Claude Code updates `in_progress` and `review`. Only the human sets `done`.
 |---|---|---|---|---|
 | F01 | Repo foundation & tooling | n/a | 1 | done |
 | F02 | Leak scanner | F01 | 1 | done |
-| F03 | Core library: site profile, demo clock, SLA maths | F01 | 1 | ready |
+| F03 | Core library: site profile, demo clock, SLA maths | F01 | 1 | review |
 | F04 | Source simulators & clock service | F03 | 1 | ready |
 | F05 | Synthetic data generator & story batches | F04 | 1 | ready |
 | F06 | Pipeline I: extract, flatten, stage engine | F05 | 1 | ready |

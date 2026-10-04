@@ -28,7 +28,8 @@ def test_f02_fr06_example_denylist_has_only_fake_entries() -> None:
 def test_f02_fr07_make_check_runs_leakscan_and_ci_wires_the_secret() -> None:
     """F02-FR-07: `make check` depends on the leakscan target; CI maps the secret and scans commits."""
     makefile = (REPO_ROOT / "Makefile").read_text()
-    assert "check: check-python check-frontend leakscan" in makefile
+    check_line = next(ln for ln in makefile.splitlines() if ln.startswith("check:"))
+    assert "leakscan" in check_line.split("##")[0].split()
     assert "python -m leakscan --commits" in makefile
     workflow = (REPO_ROOT / ".github" / "workflows" / "ci.yml").read_text()
     assert "LEAKSCAN_DENYLIST: ${{ secrets.LEAKSCAN_DENYLIST }}" in workflow

@@ -37,6 +37,7 @@ delivers them.
 | `make logs` | Follow stack logs |
 | `make check` | ruff, mypy `--strict`, pytest, frontend lint/typecheck/test, leak scan |
 | `make fmt` / `make test` | Format Python / run all unit tests |
+| `make coverage-core` | 100% branch-coverage gate on `r2r_core.sla` and `r2r_core.airgap` (part of `make check`) |
 | `make demo-reset` | Wipe state and rebuild the canonical opening state (F13) |
 | `make pipeline` | Trigger one pipeline run (F07) |
 | `make scenario STEP=<id>` | Apply a scripted scenario step (F13) |
