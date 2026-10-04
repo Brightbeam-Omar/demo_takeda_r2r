@@ -7,7 +7,7 @@
 | F11-FR-02 | **Need-by edit modal** per the UX guide. It calls a **preview** endpoint before save: add `POST /api/rows/{row_key}/need-by/preview` to F09 (same body, no persistence, returns `PlanResult`). Saving shows a toast and the table re-sorts with the row highlighted |
 | F11-FR-03 | **Status edit** (RAG + reason + team) and comment entry, available per role |
 | F11-FR-04 | **Explain popover** on: stage chip, expected completion, each metric chip, each flow-strip count. Content per F09 explain payloads and the UX guide |
-| F11-FR-05 | **Sync Status page** (`/sync`). `run_id` is the Dagster run id: pipeline status card (last run id, last success, freshness, per-source freshness table), watermark table, last 50 sync events with status chips and durations, an admin-only "Trigger sync" button, and a link to the Dagster UI run (`http://localhost:3001/runs/<run_id>` in local mode) |
+| F11-FR-05 | **Sync Status page** (`/sync`). `run_id` is the Dagster run id: pipeline status card (last run id, last success, freshness, per-source freshness table), watermark table, last 50 sync events with status chips and durations (shown as relative ages and durations such as "2 min ago" and "1.4 s", never as absolute dates, because sync times are wall-clock and must not clash with the demo date on screen; the API gives `age_seconds` and `duration_ms`), an admin-only "Trigger sync" button, and a link to the Dagster UI run (`http://localhost:3001/runs/<run_id>` in local mode) |
 | F11-FR-06 | **Audit Log page** (`/audit`): filterable table (actor, action, row, date range), with expandable details (old → new) |
 | F11-FR-07 | Deep link: `/overview?row=<row_key>` opens the drawer |
 
