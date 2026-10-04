@@ -33,7 +33,7 @@ def _today(value: date | None) -> date:
     return value if value is not None else clock.today()
 
 
-def _row(obj: Any) -> dict[str, Any]:
+def row_dict(obj: Any) -> dict[str, Any]:
     return {attr.key: getattr(obj, attr.key) for attr in obj.__mapper__.column_attrs}
 
 
@@ -190,11 +190,11 @@ def goods_receipt(session: Session, body: schemas.GoodsReceiptIn) -> dict[str, A
     session.add(check)
     session.flush()
     return {
-        "mcha": _row(batch),
-        "mseg": _row(movement),
-        "mchb": _row(stock),
-        "qals": _row(lot),
-        "zinbchk": _row(check),
+        "mcha": row_dict(batch),
+        "mseg": row_dict(movement),
+        "mchb": row_dict(stock),
+        "qals": row_dict(lot),
+        "zinbchk": row_dict(check),
     }
 
 
@@ -226,10 +226,10 @@ def goods_receipt_reversal(session: Session, body: schemas.ReversalIn) -> dict[s
         menge=quantity,
         explicit=body.mblnr,
     )
-    changed = _row(stock)
+    changed = row_dict(stock)
     _drop_if_empty(session, stock)
     session.flush()
-    return {"mseg": _row(movement), "mchb": changed}
+    return {"mseg": row_dict(movement), "mchb": changed}
 
 
 def transfer(session: Session, body: schemas.TransferIn) -> dict[str, Any]:
@@ -266,10 +266,10 @@ def transfer(session: Session, body: schemas.TransferIn) -> dict[str, Any]:
         menge=quantity,
         explicit=body.mblnr,
     )
-    changed = {"from": _row(source), "to": _row(target)}
+    changed = {"from": row_dict(source), "to": row_dict(target)}
     _drop_if_empty(session, source)
     session.flush()
-    return {"mseg": _row(movement), "mchb": changed}
+    return {"mseg": row_dict(movement), "mchb": changed}
 
 
 def inbound_check(session: Session, body: schemas.InboundCheckIn) -> dict[str, Any]:
@@ -281,7 +281,7 @@ def inbound_check(session: Session, body: schemas.InboundCheckIn) -> dict[str, A
     check.completed_on = None if body.status == "open" else _today(body.completed_on)
     check.notes = body.notes
     session.flush()
-    return {"zinbchk": _row(check)}
+    return {"zinbchk": row_dict(check)}
 
 
 def usage_decision(session: Session, body: schemas.UsageDecisionIn) -> dict[str, Any]:
@@ -305,7 +305,7 @@ def usage_decision(session: Session, body: schemas.UsageDecisionIn) -> dict[str,
             stock.speme += stock.insme
             stock.insme = ZERO
     session.flush()
-    return {"qals": _row(lot), "mchb": [_row(s) for s in rows]}
+    return {"qals": row_dict(lot), "mchb": [row_dict(s) for s in rows]}
 
 
 def reeval_lot(session: Session, body: schemas.ReevalLotIn) -> dict[str, Any]:
@@ -329,13 +329,13 @@ def reeval_lot(session: Session, body: schemas.ReevalLotIn) -> dict[str, Any]:
     )
     session.add(lot)
     session.flush()
-    result: dict[str, Any] = {"qals": _row(lot)}
+    result: dict[str, Any] = {"qals": row_dict(lot)}
     if body.inbound_check != "none":
         done = None if body.inbound_check == "open" else _today(body.completed_on)
         check = Zinbchk(prueflos=lot.prueflos, status=body.inbound_check, completed_on=done, notes="")
         session.add(check)
         session.flush()
-        result["zinbchk"] = _row(check)
+        result["zinbchk"] = row_dict(check)
     return result
 
 
@@ -360,7 +360,7 @@ def stock_block(session: Session, body: schemas.StockMoveIn) -> dict[str, Any]:
     stock.insme -= quantity
     stock.speme += quantity
     session.flush()
-    return {"mchb": _row(stock)}
+    return {"mchb": row_dict(stock)}
 
 
 def stock_unblock(session: Session, body: schemas.StockMoveIn) -> dict[str, Any]:
@@ -372,14 +372,14 @@ def stock_unblock(session: Session, body: schemas.StockMoveIn) -> dict[str, Any]
     stock.speme -= quantity
     stock.insme += quantity
     session.flush()
-    return {"mchb": _row(stock)}
+    return {"mchb": row_dict(stock)}
 
 
 def hold(session: Session, body: schemas.HoldIn) -> dict[str, Any]:
     batch = _batch(session, body.matnr, body.charg)
     batch.zstat = "H" if body.hold else ""
     session.flush()
-    return {"mcha": _row(batch)}
+    return {"mcha": row_dict(batch)}
 
 
 def demand(session: Session, body: schemas.DemandIn) -> dict[str, Any]:
@@ -400,4 +400,4 @@ def demand(session: Session, body: schemas.DemandIn) -> dict[str, Any]:
     row.matnr, row.campaign = body.matnr, body.campaign
     row.bdter, row.bdmng, row.is_open = body.requirement_date, body.quantity, body.is_open
     session.flush()
-    return {"mdez": _row(row)}
+    return {"mdez": row_dict(row)}
