@@ -1,5 +1,6 @@
 """Delta tables on the lakehouse volume: ``<root>/<layer>/<table>``, addressed as ``layer.table``."""
 
+from datetime import date
 from pathlib import Path
 
 import duckdb
@@ -38,3 +39,16 @@ def delta_exists(root: Path, name: str) -> bool:
 def register(connection: duckdb.DuckDBPyConnection, root: Path, name: str, alias: str | None = None) -> None:
     """Make a Delta table queryable in DuckDB as ``alias`` (default: the table part of ``name``)."""
     connection.register(alias or name.partition(".")[2], read_delta(root, name))
+
+
+def replace_partition(root: Path, name: str, table: pa.Table, column: str, value: date) -> None:
+    """Replace the rows where ``column = value`` and leave every other row alone (idempotent per date)."""
+    path = table_path(root, name)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    write_deltalake(
+        str(path),
+        table,
+        mode="overwrite",
+        partition_by=[column],
+        predicate=f"{column} = '{value.isoformat()}'",
+    )
