@@ -171,3 +171,55 @@ def plan(
         late=late,
         late_reason_auto=_auto_late_reason(row, adjusted, late),
     )
+
+
+@dataclass(frozen=True)
+class Flags:
+    """The overlay flags that decide exceptions-first ordering (03 section 6)."""
+
+    ud_rejected: bool = False
+    on_hold: bool = False
+    air_gap: bool = False
+
+
+_NO_DATE = dt.date.max.toordinal()
+
+
+def exception_sort_key(row: RowFacts, plan_result: PlanResult, flags: Flags) -> tuple[int, int, str, str]:
+    """Sort key for the Overview table, exceptions first (03 section 5.5). Lower sorts earlier.
+
+    Groups: 0 late, 1 ud_rejected, 2 on_hold, 3 air_gap, 4 the rest. A row with several flags goes in the
+    lowest-numbered group that matches. Within a group, rows sort by expected completion ascending (no date
+    last), then material and batch. For late rows that puts the most overdue first, because days remaining
+    and expected completion order the same way for a given "today".
+    """
+    if plan_result.late:
+        group = 0
+    elif flags.ud_rejected:
+        group = 1
+    elif flags.on_hold:
+        group = 2
+    elif flags.air_gap:
+        group = 3
+    else:
+        group = 4
+    expected = plan_result.expected_completion
+    when = _NO_DATE if expected is None else expected.toordinal()
+    material, _, rest = row.row_key.partition("|")
+    batch = rest.partition("|")[0]
+    return group, when, material, batch
+
+
+def in_period(plan_result: PlanResult, stage_terminal: bool, period: tuple[dt.date, dt.date] | None) -> bool:
+    """Period filter (03 section 5.6). ``period=None`` is "All dates": every row is included.
+
+    For a real ``(from, to)`` window a row is in when its expected completion is on or before ``to`` and
+    its stage is not terminal, so overdue rows roll into every current window and ``from`` never excludes
+    a row. Rows with no expected completion are left out.
+    """
+    if period is None:
+        return True
+    expected = plan_result.expected_completion
+    if stage_terminal or expected is None:
+        return False
+    return expected <= period[1]
