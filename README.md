@@ -19,7 +19,7 @@ The specs in [`specs/`](specs/) are the source of truth. Start with [`CLAUDE.md`
 ```bash
 cp .env.example .env   # local dev defaults; edit if you need to
 make install           # uv sync + npm ci
-make up                # builds and starts Postgres, the simulators and the scenario (clock) service
+make up                # builds and starts Postgres, the simulators, the pipeline and the app sync layer
 make check             # lint, types, tests, leak scan (leak scan arrives with F02)
 ```
 
@@ -35,6 +35,9 @@ Check the databases with `docker compose exec postgres psql -U r2r -d postgres -
 | `erp-sim` | 8101 | SAP-shaped ERP simulator |
 | `lims-sim` | 8102 | LIMS simulator |
 | `qms-sim` | 8103 | QMS simulator |
+| `dagster-web` / `dagster-daemon` | 3001 | The data product pipeline (UI at http://localhost:3001) |
+| `app-api` | 8000 | Application API: signed webhook `POST /api/sync/webhook`, `GET /api/sync/status`, admin `POST /api/sync/trigger` (F08) |
+| `app-worker` | n/a | Drain worker: mirrors the published contract into the `app` database every `DRAIN_INTERVAL_SECONDS`. The only reader of the lakehouse, which it mounts read-only (F08) |
 
 Every service serves OpenAPI docs at `/docs`. Reads are open; every `POST` needs the header
 `X-Scenario-Token` (`SCENARIO_TOKEN` in `.env`). A one-shot `db-migrate` container migrates the `app`
@@ -55,7 +58,7 @@ delivers them.
 | `make stack-test` | Acceptance tests against an isolated copy of the stack (own project and ports, torn down afterwards); the demo stack is untouched |
 | `make coverage-core` | 100% branch-coverage gate on `r2r_core.sla` and `r2r_core.airgap` (part of `make check`) |
 | `make demo-reset` | Wipe state and rebuild the canonical opening state (F13) |
-| `make pipeline` | Trigger one pipeline run (F07) |
+| `make pipeline` | Trigger one pipeline run (F07); the worker mirrors it into the app within about 30 s (F08) |
 | `make scenario STEP=<id>` | Apply a scripted scenario step (F13) |
 | `make e2e` / `make e2e-headed` | Playwright run-of-show (F14) |
 | `make record-agents` / `make record-video` | Record LLM replays / backup video (F12, F14) |

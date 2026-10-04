@@ -13,7 +13,7 @@ from app_api.db import session_factory
 from app_api.logs import configure_logging
 from app_api.sync.drain import drain_once
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("app_api.worker")  # not __name__: under `python -m` that is "__main__"
 DEFAULT_INTERVAL_SECONDS = 20
 
 
