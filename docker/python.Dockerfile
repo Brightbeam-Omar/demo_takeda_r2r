@@ -10,12 +10,14 @@ ARG SERVICE_PATH=packages/r2r_core
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     UV_SYSTEM_PYTHON=1 \
-    UV_COMPILE_BYTECODE=1
+    UV_COMPILE_BYTECODE=1 \
+    SITE_PROFILES_DIR=/app/config/site-profiles
 
 WORKDIR /app
 COPY packages/ packages/
 COPY services/ services/
 COPY tools/ tools/
+COPY config/ config/
 
 # Install the shared core first, then the requested member (a no-op when they are the same).
 RUN uv pip install ./packages/r2r_core \
