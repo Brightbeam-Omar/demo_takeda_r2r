@@ -11,6 +11,7 @@ import { AlertsBand } from '../components/flow-strip/AlertsBand'
 import { FlowStrip } from '../components/flow-strip/FlowStrip'
 import { BatchTable } from '../components/table/BatchTable'
 import { useToast } from '../components/common/Toasts'
+import { canEditNeedBy } from '../lib/roles'
 import { saveBlob } from '../lib/download'
 import { MetricsRibbon } from '../components/metrics/MetricsRibbon'
 import { TopBar } from '../components/shell/TopBar'
@@ -39,7 +40,7 @@ export function Overview() {
   const { notify } = useToast()
   const [exporting, setExporting] = useState(false)
   // Only planners and admins may adjust a need-by (F09); everyone else sees the pencil disabled (OQ-063).
-  const canEdit = me.data?.role === 'planner' || me.data?.role === 'admin'
+  const canEdit = canEditNeedBy(me.data?.role)
   const stageIndex = useMemo(
     () => new Map((reference.data?.stages ?? []).map((stage, index) => [String(stage.stage_key), index])),
     [reference.data],

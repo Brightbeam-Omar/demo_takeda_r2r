@@ -2,7 +2,10 @@ import * as Dialog from '@radix-ui/react-dialog'
 import { useClock, useReference, useRowDetail } from '../../api/queries'
 import { Skeleton } from '../common/States'
 import { StageChip, TagChips } from '../table/cells'
+import { READ_ONLY_HINT } from '../../lib/roles'
 import { DrawerSection, HumanInputSection, PlanSection, QualitySection, SourceRefs } from './Sections'
+import { Comments } from './Comments'
+import { StatusForm } from './StatusForm'
 import { SiblingLots, StageTimeline } from './Timeline'
 
 interface Props {
@@ -85,7 +88,7 @@ export function BatchDrawer({ rowKey, onOpenRow, canEdit, onEdit }: Props) {
                     <button
                       type="button"
                       disabled={!canEdit}
-                      title={canEdit ? 'Adjust need-by' : 'Read-only role'}
+                      title={canEdit ? 'Adjust need-by' : READ_ONLY_HINT}
                       className="rounded-chip border border-slate-300 px-2.5 py-1 text-xs enabled:hover:bg-slate-50 disabled:opacity-40"
                       onClick={() => onEdit(data.row_key)}
                     >
@@ -99,7 +102,13 @@ export function BatchDrawer({ rowKey, onOpenRow, canEdit, onEdit }: Props) {
                   <QualitySection detail={data} />
                 </DrawerSection>
                 <DrawerSection title="Human input">
-                  <HumanInputSection detail={data} />
+                  <StatusForm detail={data} />
+                  <div className="mt-4">
+                    <HumanInputSection detail={data} />
+                  </div>
+                </DrawerSection>
+                <DrawerSection title="Comments">
+                  <Comments detail={data} />
                 </DrawerSection>
                 <DrawerSection title="Source refs">
                   <SourceRefs detail={data} />
