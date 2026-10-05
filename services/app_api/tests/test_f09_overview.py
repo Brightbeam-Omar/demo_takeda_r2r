@@ -132,3 +132,35 @@ def test_f09_ac08_b5003_is_an_air_gap_alert_with_at_least_30_hours(
 def test_f09_fr02_an_empty_mirror_gives_an_empty_overview(client: TestClient) -> None:
     body = client.get("/api/overview").json()
     assert body["total"] == 0 and body["rows"] == [] and body["freshness"]["contract_run_id"] is None
+
+
+def test_f09_fr03_the_air_gap_alert_lists_at_most_five_rows(
+    client: TestClient, app_factory: sessionmaker[Session], profile: SiteProfile
+) -> None:
+    rows = [qa(f"G{n}", lims_approved_at=NOW - timedelta(hours=30 + n)) for n in range(7)]
+    load_mirror(app_factory, profile, rows)
+    alert = next(a for a in client.get("/api/overview").json()["alerts"] if a["kind"] == "air_gap")
+    assert alert["count"] == 7 and [r["batch_no"] for r in alert["rows"]] == ["G6", "G5", "G4", "G3", "G2"]
+
+
+def test_f09_fr02_last_week_and_this_month_windows(client: TestClient, mirror: list[dict[str, Any]]) -> None:
+    # the demo Monday is 12 Oct: last week ended on Sunday 11 Oct, so only the overdue lot is in
+    assert keys(client, period="last_week") == ["B2"]
+    # this month ends on 31 Oct: everything due in October and not released is in
+    assert set(keys(client, period="this_month")) == {"B1", "B2", "B3", "B4", "B5", "B6", "B7"}
+
+
+def test_f09_fr02_weeks_follow_the_site_date_not_the_utc_date(
+    client: TestClient, mirror: list[dict[str, Any]]
+) -> None:
+    from datetime import UTC, datetime
+
+    from r2r_core import clock
+    from r2r_core.clock import FixedClock
+
+    # Sunday 18 Oct 23:30 UTC is already Monday 19 Oct in the site timezone (summer time ended on 25 Oct)
+    clock.set_clock_source(FixedClock(datetime(2026, 10, 18, 23, 30, tzinfo=UTC)))
+    names = keys(client, period="this_week")
+    assert "B1" in names and "B7" in names  # due 15 and 18 Oct: overdue by the new Monday, still rolled in
+    assert {"B1", "B2", "B7"} <= set(keys(client, period="last_week"))  # the window ends on Sunday 18 Oct
+    assert "B8" not in names

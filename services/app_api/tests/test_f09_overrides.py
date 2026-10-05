@@ -179,6 +179,15 @@ def test_f09_fr04_manual_status_is_versioned_and_display_only(
     response = client.put(f"/api/rows/{ROW}/status", json=body, headers=quinn).json()
     assert response["manual_status"] == {"rag": "red", "team": "QC Lab"}
     assert response["plan"]["rag"] == "green" and response["late"] is False  # OQ-057
+    overview = client.get("/api/overview").json()
+    assert [r["batch_no"] for r in overview["rows"]] == ["B2077", "B9"]  # order unchanged
+    assert next(e for e in overview["flow_strip"] if e["stage_key"] == "sampling")["breached"] is False
+    assert {a["kind"]: a["count"] for a in overview["alerts"]} == {
+        "air_gap": 0,
+        "late": 0,
+        "on_hold": 0,
+        "rejected": 0,
+    }
     assert versions(app_factory, "manual_status") == [
         (1, {"rag": "red", "team": "QC Lab"}, None, True, "quinn")
     ]
