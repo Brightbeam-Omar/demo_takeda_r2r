@@ -11,7 +11,7 @@ Claude Code updates `in_progress` and `review`. Only the human sets `done`.
 | **M1 Sources & data** | F04, F05 | Simulated ERP/LIMS/QMS populated with ~700 realistic rows and 5 story batches | 2–3 days |
 | **M2 Data product** | F06, F07 | Dagster run produces the published contract and fires the webhook | 3–4 days |
 | **M3 Application core** | F08, F09 | Mirror syncs automatically. API serves composed rows, overrides, audit, RBAC | 3 days |
-| **M4 Experience** | F10, F11 | Overview, editing, batch drawer, Explain, Sync Status and Audit pages | 4–5 days |
+| **M4 Experience** | F10, F11, F15–F21 | Overview, editing, batch drawer, Explain, Sync Status and Audit pages, then the UI parity pack (shell, filters, stage and metric cards, table, batch windows, Reports, Sync/Admin pages) | 4–5 days + F15–F21 |
 | **M5 Harness** | F12 | Air-gap agent: propose, validate, approve, act, trace (replay + live) | 3 days |
 | **M6 Demo-ready** | F13, F14 | `make demo-reset`, scripted scenario steps, Playwright run-of-show, README | 2 days |
 
@@ -31,11 +31,18 @@ Claude Code updates `in_progress` and `review`. Only the human sets `done`.
 | F08 | Sync layer: webhook, queue, drain, mirror | F07 | 1 | done |
 | F09 | Application API: reads, overrides, audit, RBAC, explain | F08 | 1 | done |
 | F10 | Frontend shell & Overview | F09 | 1 | done |
-| F11 | Editing, batch drawer, Explain, Sync & Audit pages | F10 | 1 | review |
-| F12 | Agent harness & Air-gap agent | F09 (API), F11 (UI tasks) | 1 | ready |
+| F11 | Editing, batch drawer, Explain, Sync & Audit pages | F10 | 1 | done |
+| F15 | UI shell, visual system & profile terminology | F11 | 1 | ready |
+| F16 | Overview I: filter panel, presets, bookmarks, alert banners | F15 | 1 | ready |
+| F17 | Overview II: stage cards (incl. Expected Delivery), metric cards, tag row | F16 | 1 | ready |
+| F18 | Overview III: pipeline table parity, row actions, exports | F17 | 1 | ready |
+| F19 | Batch windows: History, Inbound, Quality, Status Log, Sample Data, Adjust Needs-by | F18 | 1 | ready |
+| F20 | Reports & Metrics page (6 tabs) | F19 | 1 | ready |
+| F21 | Sync Status, Webhook Sync Status & Admin pages | F20 | 1 | ready |
+| F12 | Agent harness & Air-gap agent | F09 (API), F21 (UI) | 1 | ready |
 | F13 | Scenario engine & demo reset | F07, F09, F10, F12 | 1 | ready |
 | F14 | Run-of-show E2E, README, rehearsal kit | all Tier 1 | 1 | ready |
-| T2-01 | 3PL feed, delivery entry, metrics M1/M2/M4/M5 | Tier 1 | 2 | draft |
+| T2-01 | 3PL feed, delivery entry, metrics M1/M2/M4/M5 | Tier 1 (UI parts: F21) | 2 | draft |
 | T2-02 | Safety poll self-heal, ops console, alerts | Tier 1 | 2 | draft |
 | T2-03 | Release-readiness agent | F12 | 2 | draft |
 | T2-04 | Tacit-signal agent & unstructured corpus | F12 | 2 | draft |
@@ -48,7 +55,7 @@ Claude Code updates `in_progress` and `review`. Only the human sets `done`.
 
 ## 3. Parallel tracks (if two people drive Claude Code)
 - **Track A (data):** F03 → F04 → F05 → F06 → F07
-- **Track B (app):** F01/F02 → F08 against a **fixture contract** (hand-written Delta files matching `04-data-contracts` §4, written to `LAKEHOUSE_PATH`) → F09 → F10 → F11 → F12
+- **Track B (app):** F01/F02 → F08 against a **fixture contract** (hand-written Delta files matching `04-data-contracts` §4, written to `LAKEHOUSE_PATH`) → F09 → F10 → F11 → F15 → … → F21 → F12
 - **Join:** when F07 is `done`, swap the fixture for the real pipeline output, re-run F08–F12 tests, then build F13 → F14.
 - Track B needs F03 (core library) and F04's `demo_clock` migration. Do those first, or have Track B stub them.
 
@@ -67,6 +74,7 @@ Claude Code updates `in_progress` and `review`. Only the human sets `done`.
 | F05 | Open the generated data and legacy workbook. Does it look like a real site? Ask the domain SME to sanity-check the 5 story batches |
 | F07 | Inspect `published.*` with DuckDB. Stage counts plausible? Metrics plausible? |
 | F11 | Screen-share rehearsal of acts 2, 3 and 5 at 1440×900 |
+| F21 | Screen-share walk-through of the whole parity UI at 1440×900 before F12 starts |
 | F12 | Read the agent prompts and validator rules. Check the evidence quality |
 | F14 | Full dry run with the presenter and SME |
 

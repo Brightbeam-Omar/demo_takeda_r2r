@@ -3,7 +3,7 @@
 ## Functional requirements
 | ID | Requirement |
 |---|---|
-| F14-FR-01 | Playwright test `tests/e2e/run_of_show.spec.ts` that executes acts 2, 3, 5 and 6 of `01-product-overview` §6 exactly as a presenter would (persona switches, clicks, scenario steps through the Demo Controls UI), with assertions at each beat. Runs with `LLM_PROVIDER=replay` |
+| F14-FR-01 | Playwright test `tests/e2e/run_of_show.spec.ts` that executes acts 2, 3, 5 and 6 of `01-product-overview` §6 exactly as a presenter would (persona switches, clicks, scenario steps through the Demo Controls UI), with assertions at each beat. Runs with `LLM_PROVIDER=replay`. The acts use the parity UI (F15–F21): act 5 is W6 Adjust Needs-by on B2077; act 6 runs the agent from the Insights window and the Agents page; "Explain this number" uses the ⓘ popovers |
 | F14-FR-02 | `make e2e` = `make demo-reset` then Playwright headless, with an HTML report in `artifacts/e2e/`. `make e2e-headed` for watching it |
 | F14-FR-03 | `docs/demo-script.md`: presenter script per act with exact clicks, talk track, the "why it matters" line, timings, and recovery moves (e.g. use the `pull-forward-B2077` fallback step) |
 | F14-FR-04 | `docs/architecture-overview.md`: a one-page generic architecture diagram (Mermaid) and a "how this maps to a customer stack" table (lakehouse → Databricks, ERP sim → SAP ECC/S4, LIMS/QMS sims → customer systems, auth → SSO) |

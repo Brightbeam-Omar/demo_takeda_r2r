@@ -11,7 +11,7 @@ The presenter needs one-click, repeatable control of the story (constitution P7)
 | F13-FR-03 | API: `GET /scenario/steps` (with precondition status), `POST /scenario/steps/{id}/run` → streams progress (Server-Sent Events) per action, `POST /scenario/reset` |
 | F13-FR-04 | `make scenario STEP=<id>` calls the API and prints progress. Exit non-zero on failure |
 | F13-FR-05 | **Reset** (`make demo-reset` and `POST /scenario/reset`): stop the agents autorun → truncate app tables except `app_user` and `alembic_version` (and reset `demo_clock` to `demo.start_datetime`) → launch Dagster job `r2r_reset_lakehouse` → `datagen generate` with the profile seed → run pipeline → wait for sync `done` → health summary. Target < 3 min. Idempotent |
-| F13-FR-06 | **Demo Controls** panel on `/admin` (admin persona, DEMO_MODE): list of steps with title, talk track, precondition indicator, Run button, live progress log, and a "Reset demo" button with confirm |
+| F13-FR-06 | **Demo Controls** panel at `/admin/demo` (ADMIN menu item "Demo Controls", `DEMO_MODE` and admin only, added in F15): list of steps with title, talk track, precondition indicator, Run button, live progress log, and a "Reset demo" button with confirm |
 | F13-FR-07 | Step runs are recorded in `audit_event(action='scenario_step')` with the step id and outcome |
 | F13-FR-08 | Wait semantics: `wait_sync` polls `/api/sync/status` until the watermark equals the run_id of the pipeline run started in the same step (timeout 120 s) |
 
