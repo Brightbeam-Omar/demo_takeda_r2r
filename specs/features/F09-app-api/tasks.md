@@ -1,6 +1,6 @@
 # F09 · Tasks
 - [x] T0 [TDD] Publish `cycle_start_date` and `ud_effective` (F06 `batch_stage`, F07 `batch_pipeline_v`, F08 mirror and migration) and give each `StageRule` an explicit `inputs` tuple with a test against `condition_sql` and the contract (OQ-060)
-- [ ] T1 Auth/persona dependency, `require_role`, `/me`, `/users` (FR-05, AC-01)
+- [x] T1 Auth/persona dependency, `require_role`, `/me`, `/users` (FR-05, AC-01)
 - [ ] T2 [TDD] Row composition service (FR-01)
 - [ ] T3 [TDD] Overview: filters, period, ordering, flow strip, alerts (FR-02, FR-03, AC-04, AC-05, AC-08)
 - [ ] T4 [TDD] Overrides with versioning + audit. need-by, status, comments (FR-04, AC-02, AC-03)

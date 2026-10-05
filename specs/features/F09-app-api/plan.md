@@ -7,3 +7,4 @@
 ## Deviations
 - OQ-060: F09 touches F06/F07/F08 to publish `cycle_start_date` and `ud_effective` and to add `StageRule.inputs`, instead of recomputing them in Python. The mirror gets them through a new migration `0003_mirror_rule_inputs`.
 - Cache key and its inputs follow OQ-061.
+- Auth: a request without `X-Demo-User` is `pat` on every endpoint in DEMO_MODE (the spec states the default only for `/api/me`), so the UI need not send the header for the opening persona. F08's "no header on trigger is 401" test became 403.
