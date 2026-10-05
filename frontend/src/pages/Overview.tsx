@@ -16,6 +16,7 @@ import { BatchTable } from '../components/table/BatchTable'
 import { useToast } from '../components/common/Toasts'
 import { canEditNeedBy } from '../lib/roles'
 import { saveBlob } from '../lib/download'
+import { ShowingLine, TagRow } from '../components/tags/TagRow'
 import { MetricsRibbon, metricsTitle } from '../components/metrics/MetricsRibbon'
 import { useJustSaved } from '../state/just-saved'
 import { useRowChanges } from '../state/row-changes'
@@ -153,6 +154,8 @@ export function Overview() {
           )}
         </Section>
         <Section title="Batches">
+          <ShowingLine filters={filters} />
+          <TagRow filters={filters} onChange={update} />
           {data ? (
             data.total === 0 && overview.isSuccess && activeFilterCount(filters) === 0 && filters.period === 'all' ? (
               <EmptyState>No batches yet. The pipeline has not published any data.</EmptyState>

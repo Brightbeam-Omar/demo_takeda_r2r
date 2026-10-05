@@ -5,7 +5,6 @@ import { useFilterPanel, type Filters } from '../../state/url-filters'
 import { FilterChips, filterChips } from './FilterChips'
 import { FilterPanel } from './FilterPanel'
 import { PresetsMenu } from './PresetsMenu'
-import { TagChips } from './TagChips'
 
 interface Props {
   reference: Reference | undefined
@@ -75,7 +74,6 @@ export function FilterBar({ reference, rows, filters, stageLabel, bookmarks, onC
       </div>
       {panel.open && <FilterPanel reference={reference} rows={rows} filters={filters} onChange={onChange} />}
       {!panel.open && <FilterChips chips={chips} onRemove={onChange} onClear={onClear} />}
-      <TagChips flags={filters.flags} onChange={onChange} />
     </section>
   )
 }

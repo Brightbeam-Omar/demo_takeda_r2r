@@ -1,7 +1,8 @@
 import { screen } from '@testing-library/react'
 import { renderWithProviders } from '../test-utils'
 import { expect, test } from 'vitest'
-import { FilterBar } from '../components/filters/FilterBar'
+import { TagRow } from '../components/tags/TagRow'
+import { EMPTY_FILTERS } from '../state/url-filters'
 import { DEFAULT_TERMS, TermsContext } from './useTerms'
 import { MemoryRouter } from 'react-router-dom'
 import { vi } from 'vitest'
@@ -12,26 +13,7 @@ function band(erpBlockedTag: string) {
   renderWithProviders(
     <MemoryRouter>
       <TermsContext.Provider value={{ ...DEFAULT_TERMS, erp_blocked_tag: erpBlockedTag }}>
-        <FilterBar
-          reference={undefined}
-          rows={[]}
-          filters={{
-            types: [],
-            classes: [],
-            campaigns: [],
-            flags: [],
-            stages: [],
-            bookmarked: false,
-            q: '',
-            period: 'all',
-            from: null,
-            to: null,
-          }}
-          stageLabel={(key) => key}
-          bookmarks={[]}
-          onChange={vi.fn()}
-          onClear={vi.fn()}
-        />
+        <TagRow filters={EMPTY_FILTERS} onChange={vi.fn()} />
       </TermsContext.Provider>
     </MemoryRouter>,
   )

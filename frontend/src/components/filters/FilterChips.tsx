@@ -1,6 +1,6 @@
 import type { Reference } from '../../api/queries'
 import type { Terms } from '../../hooks/useTerms'
-import { flagChips } from '../../lib/flags'
+import { selectedTags } from '../../lib/tags'
 import type { Filters } from '../../state/url-filters'
 
 export interface Chip {
@@ -37,10 +37,8 @@ export function filterChips(
     const text = filters.stages.length === 1 ? stageLabel(filters.stages[0]!) : plural(filters.stages.length, 'stage')
     chips.push({ id: 'stage', text: `Stage: ${text}`, remove: { stages: [] } })
   }
-  for (const tag of flagChips(terms)) {
-    if (tag.keys.every((key) => filters.flags.includes(key))) {
-      chips.push({ id: `tag-${tag.label}`, text: `Tag: ${tag.label}`, remove: { flags: filters.flags.filter((flag) => !tag.keys.includes(flag)) } })
-    }
+  for (const tag of selectedTags(terms, filters.flags)) {
+    chips.push({ id: `tag-${tag.id}`, text: `Tag: ${tag.label}`, remove: { flags: filters.flags.filter((flag) => !tag.keys.includes(flag)) } })
   }
   if (filters.bookmarked) chips.push({ id: 'bookmarked', text: 'Bookmarked', remove: { bookmarked: false } })
   if (filters.q) chips.push({ id: 'q', text: `Search: “${filters.q}”`, remove: { q: '' } })

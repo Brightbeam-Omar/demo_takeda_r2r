@@ -127,3 +127,21 @@ test('F16-FR-06/08: the banners show the counts and open their windows; zero cou
   expect(await screen.findByText(/No adjusted needs-by dates in this period/)).toBeInTheDocument()
   expect(screen.getByText(/No LIMS–ERP Insights in this period/)).toBeInTheDocument()
 })
+
+test('F17-FR-09 / AC-05: the F10 alert-chip band is gone; late, rejected and on-hold are reached through the tag row', async () => {
+  const alerts = [
+    { kind: 'late', count: 4, rows: [], detail: {} },
+    { kind: 'rejected', count: 2, rows: [], detail: { ud_rejected: 1, lims_rejected: 1 } },
+    { kind: 'on_hold', count: 3, rows: [], detail: {} },
+    { kind: 'air_gap', count: 1, rows: [], detail: {} },
+  ]
+  stubApi(
+    { freshness, flow_strip: [], on_hold_count: 3, adjusted_count: 0, total: 1, batch_count: 1, mode: 'snapshot', alerts, bookmarks: [], rows: [rowOf(1, 'green')] },
+    { freshness, filtered: false, week_starts: [], metrics: [] },
+  )
+  render(<App />)
+  expect(await screen.findByTestId('tag-row')).toBeInTheDocument()
+  expect(screen.queryByTestId('alert-late')).not.toBeInTheDocument()
+  expect(screen.queryByRole('region', { name: 'Alerts' })).not.toBeInTheDocument()
+  expect(screen.getByTestId('showing-line')).toHaveTextContent('Showing: All in-flight batches')
+})
