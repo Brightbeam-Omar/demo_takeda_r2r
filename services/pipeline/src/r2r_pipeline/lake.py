@@ -17,13 +17,17 @@ def table_path(root: Path, name: str) -> Path:
 
 
 def write_delta(root: Path, name: str, table: pa.Table, mode: str = "overwrite") -> None:
-    """Write ``table``; an overwrite also replaces the schema (staging tables are rebuilt every run)."""
+    """Write ``table``.
+
+    An overwrite also replaces the schema (staging, published and wholesale-rebuilt tables), and an append
+    merges it (``deltalake`` ``schema_mode``), so a column added to a contract needs no lakehouse reset.
+    """
     path = table_path(root, name)
     path.parent.mkdir(parents=True, exist_ok=True)
     if mode == "overwrite":
         write_deltalake(str(path), table, mode="overwrite", schema_mode="overwrite")
     else:
-        write_deltalake(str(path), table, mode="append")
+        write_deltalake(str(path), table, mode="append", schema_mode="merge")
 
 
 def read_delta(root: Path, name: str) -> pa.Table:
@@ -43,7 +47,10 @@ def register(connection: duckdb.DuckDBPyConnection, root: Path, name: str, alias
 
 
 def replace_partition(root: Path, name: str, table: pa.Table, column: str, value: date) -> None:
-    """Replace the rows where ``column = value`` and leave every other row alone (idempotent per date)."""
+    """Replace the rows where ``column = value`` and leave every other row alone (idempotent per date).
+
+    The schema is merged: a column added since earlier runs is NULL in the rows of the other dates.
+    """
     path = table_path(root, name)
     path.parent.mkdir(parents=True, exist_ok=True)
     write_deltalake(
@@ -52,6 +59,7 @@ def replace_partition(root: Path, name: str, table: pa.Table, column: str, value
         mode="overwrite",
         partition_by=[column],
         predicate=f"{column} = '{value.isoformat()}'",
+        schema_mode="merge",
     )
 
 
