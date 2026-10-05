@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { apiBlob } from '../api/client'
 import { useClock, useMe, useMetrics, useOverview, useReference } from '../api/queries'
 import { EmptyState, ErrorState, Skeleton } from '../components/common/States'
+import { BatchDrawer } from '../components/drawer/BatchDrawer'
 import { Section } from '../components/common/Section'
 import { FiltersBand } from '../components/filters/FiltersBand'
 import { PeriodSelector } from '../components/filters/PeriodSelector'
@@ -13,10 +14,11 @@ import { saveBlob } from '../lib/download'
 import { MetricsRibbon } from '../components/metrics/MetricsRibbon'
 import { TopBar } from '../components/shell/TopBar'
 import { useRowChanges } from '../state/row-changes'
-import { activeFilterCount, toApiParams, useUrlFilters } from '../state/url-filters'
+import { activeFilterCount, toApiParams, useDrawerRow, useUrlFilters } from '../state/url-filters'
 
 export function Overview() {
   const { filters, update, clearAll } = useUrlFilters()
+  const drawer = useDrawerRow()
   const reference = useReference()
   const clock = useClock()
   const params = toApiParams(filters)
@@ -110,6 +112,7 @@ export function Overview() {
                 stageIndex={stageIndex}
                 canEdit={canEdit}
                 changedKeys={changed}
+                onOpenRow={drawer.open}
                 toolbar={
                   <button
                     type="button"
@@ -127,6 +130,7 @@ export function Overview() {
           )}
         </Section>
       </main>
+      <BatchDrawer rowKey={drawer.row} onOpenRow={drawer.open} />
     </>
   )
 }

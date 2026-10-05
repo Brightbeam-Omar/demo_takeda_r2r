@@ -55,3 +55,10 @@ export function humanize(value: string): string {
   const text = value.replace(/_/g, ' ')
   return text.charAt(0).toUpperCase() + text.slice(1)
 }
+
+/** Whole days from one calendar date to another (`2026-10-05` → `2026-10-12` is 7). */
+export function daysBetween(fromIso: string, toIso: string): number {
+  const [fy, fm, fd] = fromIso.slice(0, 10).split('-').map(Number)
+  const [ty, tm, td] = toIso.slice(0, 10).split('-').map(Number)
+  return Math.round((Date.UTC(ty, tm - 1, td) - Date.UTC(fy, fm - 1, fd)) / 86_400_000)
+}
