@@ -23,7 +23,22 @@ import {
 
 const ROW_HEIGHT = 36
 const helper = createColumnHelper<Row>()
-const WIDTHS: Record<string, string> = {material: '230px', campaign: '100px', batch: '80px', location: '100px', inbound: '70px', deviation: '80px', stage: '110px', system_need_by: '100px', adjusted_need_by: '120px', expected: '150px', days: '90px', status: '90px'}
+// Minimum px and a share of any spare width per column; at 1440 px the whole table fits without scrolling.
+const MIN_WIDTH = 1108
+const WIDTHS: Record<string, string> = {
+  material: 'minmax(190px, 2.4fr)',
+  campaign: 'minmax(90px, 1fr)',
+  batch: 'minmax(64px, 0.7fr)',
+  location: 'minmax(84px, 1fr)',
+  inbound: 'minmax(56px, 0.5fr)',
+  deviation: 'minmax(70px, 0.6fr)',
+  stage: 'minmax(100px, 1.1fr)',
+  system_need_by: 'minmax(84px, 0.9fr)',
+  adjusted_need_by: 'minmax(100px, 1fr)',
+  expected: 'minmax(140px, 1.4fr)',
+  days: 'minmax(60px, 0.6fr)',
+  status: 'minmax(70px, 0.7fr)',
+}
 
 interface Props {
   rows: Row[]
@@ -126,7 +141,7 @@ export function BatchTable({ rows, stageIndex, canEdit, changedKeys, toolbar }: 
 
   const widths = table
     .getVisibleLeafColumns()
-    .map((column) => WIDTHS[column.id] ?? '100px')
+    .map((column) => WIDTHS[column.id] ?? 'minmax(100px, 1fr)')
     .join(' ')
   const grid = { display: 'grid', gridTemplateColumns: widths } as const
 
@@ -145,7 +160,7 @@ export function BatchTable({ rows, stageIndex, canEdit, changedKeys, toolbar }: 
         aria-rowcount={tableRows.length}
         className="h-[28rem] overflow-auto rounded-card border border-slate-200 bg-white text-[13px]"
       >
-        <div role="rowgroup" className="sticky top-0 z-10 min-w-max bg-slate-50 shadow-[0_1px_0_var(--color-slate-200)]">
+        <div role="rowgroup" className="sticky top-0 z-10 w-full bg-slate-50 shadow-[0_1px_0_var(--color-slate-200)]" style={{ minWidth: MIN_WIDTH }}>
           {table.getHeaderGroups().map((group) => (
             <div key={group.id} role="row" style={grid}>
               {group.headers.map((header) => {
@@ -177,7 +192,7 @@ export function BatchTable({ rows, stageIndex, canEdit, changedKeys, toolbar }: 
             </div>
           ))}
         </div>
-        <div role="rowgroup" className="relative min-w-max" style={{ height: virtualizer.getTotalSize() }}>
+        <div role="rowgroup" className="relative w-full" style={{ minWidth: MIN_WIDTH, height: virtualizer.getTotalSize() }}>
           {virtualizer.getVirtualItems().map((item) => {
             const row = tableRows[item.index]
             const changed = changedKeys.has(row.original.row_key)

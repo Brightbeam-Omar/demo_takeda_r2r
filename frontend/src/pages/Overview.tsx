@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { apiBlob } from '../api/client'
 import { useClock, useMe, useMetrics, useOverview, useReference } from '../api/queries'
+import { EmptyState, ErrorState, Skeleton } from '../components/common/States'
 import { Section } from '../components/common/Section'
 import { FiltersBand } from '../components/filters/FiltersBand'
 import { PeriodSelector } from '../components/filters/PeriodSelector'
@@ -11,13 +12,16 @@ import { useToast } from '../components/common/Toasts'
 import { saveBlob } from '../lib/download'
 import { MetricsRibbon } from '../components/metrics/MetricsRibbon'
 import { TopBar } from '../components/shell/TopBar'
-import { toApiParams, useUrlFilters } from '../state/url-filters'
+import { useRowChanges } from '../state/row-changes'
+import { activeFilterCount, toApiParams, useUrlFilters } from '../state/url-filters'
 
 export function Overview() {
   const { filters, update, clearAll } = useUrlFilters()
   const reference = useReference()
   const clock = useClock()
-  const overview = useOverview(toApiParams(filters))
+  const params = toApiParams(filters)
+  const overview = useOverview(params)
+  const changed = useRowChanges(overview.data, params.toString())
   const metrics = useMetrics(overview.data?.freshness.contract_run_id)
   const stageLabel = useCallback(
     (key: string) => String(reference.data?.stages.find((stage) => stage.stage_key === key)?.label ?? key),
@@ -58,6 +62,10 @@ export function Overview() {
           onChange={update}
           onClear={clearAll}
         />
+        {overview.isError && !data && (
+          <ErrorState what="the overview" error={overview.error} onRetry={() => void overview.refetch()} />
+        )}
+        {!data && overview.isPending && <Skeleton label="alerts and pipeline" height="h-40" />}
         {data && <AlertsBand alerts={data.alerts} onFilter={update} />}
         {data && reference.data && (
           <Section title="Pipeline by Stage">
@@ -79,31 +87,45 @@ export function Overview() {
             />
           </Section>
         )}
-        {metrics.data && (
-          <Section title="Weekly Metrics">
-            <MetricsRibbon metrics={metrics.data.metrics} />
-          </Section>
-        )}
-        {data && (
-          <Section title="Batches">
-            <BatchTable
-              rows={data.rows}
-              stageIndex={stageIndex}
-              canEdit={canEdit}
-              changedKeys={new Set()}
-              toolbar={
-                <button
-                  type="button"
-                  disabled={exporting}
-                  className="rounded-chip border border-slate-300 bg-white px-3 py-1.5 text-sm hover:border-slate-400 disabled:opacity-50"
-                  onClick={() => void exportCsv()}
-                >
-                  Export CSV
-                </button>
-              }
-            />
-          </Section>
-        )}
+        <Section title="Weekly Metrics">
+          {metrics.isError ? (
+            <ErrorState what="the weekly metrics" error={metrics.error} onRetry={() => void metrics.refetch()} />
+          ) : metrics.data ? (
+            metrics.data.metrics.length > 0 ? (
+              <MetricsRibbon metrics={metrics.data.metrics} />
+            ) : (
+              <EmptyState>No metrics are published yet.</EmptyState>
+            )
+          ) : (
+            <Skeleton label="weekly metrics" />
+          )}
+        </Section>
+        <Section title="Batches">
+          {data ? (
+            data.total === 0 && overview.isSuccess && activeFilterCount(filters) === 0 && filters.period === 'all' ? (
+              <EmptyState>No batches yet. The pipeline has not published any data.</EmptyState>
+            ) : (
+              <BatchTable
+                rows={data.rows}
+                stageIndex={stageIndex}
+                canEdit={canEdit}
+                changedKeys={changed}
+                toolbar={
+                  <button
+                    type="button"
+                    disabled={exporting}
+                    className="rounded-chip border border-slate-300 bg-white px-3 py-1.5 text-sm hover:border-slate-400 disabled:opacity-50"
+                    onClick={() => void exportCsv()}
+                  >
+                    Export CSV
+                  </button>
+                }
+              />
+            )
+          ) : (
+            !overview.isError && <Skeleton label="batches" height="h-96" />
+          )}
+        </Section>
       </main>
     </>
   )

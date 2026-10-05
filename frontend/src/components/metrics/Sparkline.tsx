@@ -5,7 +5,7 @@ interface Props {
 }
 
 /** 0–100 % over time as an inline SVG polyline. A week without completions leaves a gap. */
-export function Sparkline({ values, width = 96, height = 24 }: Props) {
+export function Sparkline({ values, width = 72, height = 24 }: Props) {
   const step = values.length > 1 ? width / (values.length - 1) : 0
   const segments: string[][] = [[]]
   values.forEach((value, index) => {

@@ -50,7 +50,7 @@ export function MetricChip({ metric }: { metric: Metric }) {
       </div>
       <div className="mt-1 flex items-center justify-between">
         <Sparkline values={complete.map((week) => pct(week.pct))} />
-        {metric.sla_days ? <span className="text-xs">SLA {metric.sla_days} d</span> : null}
+        {metric.sla_days ? <span className="text-xs whitespace-nowrap">SLA {metric.sla_days} d</span> : null}
       </div>
     </div>
   )
