@@ -52,7 +52,7 @@ export function freshnessTone(minutes: number): FreshnessTone {
 
 /** `small_molecule` → `Small molecule`. */
 export function humanize(value: string): string {
-  const text = value.replace(/_/g, ' ')
+  const text = value.replace(/_/g, ' ').toLowerCase()
   return text.charAt(0).toUpperCase() + text.slice(1)
 }
 

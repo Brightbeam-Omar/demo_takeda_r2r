@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Layout } from './app/Layout'
 import { ToastProvider } from './components/common/Toasts'
+import { Audit } from './pages/Audit'
 import { Overview } from './pages/Overview'
 import { Sync } from './pages/Sync'
 import { PlaceholderPage } from './pages/PlaceholderPage'
@@ -24,7 +25,7 @@ export default function App() {
               <Route path="/overview" element={<Overview />} />
               <Route path="/agents" element={<PlaceholderPage title="Agents" feature="F12" />} />
               <Route path="/sync" element={<Sync />} />
-              <Route path="/audit" element={<PlaceholderPage title="Audit Log" feature="F11" />} />
+              <Route path="/audit" element={<Audit />} />
               <Route path="/admin" element={<PlaceholderPage title="Admin" feature="F11" />} />
               <Route path="*" element={<Navigate to="/overview" replace />} />
             </Route>

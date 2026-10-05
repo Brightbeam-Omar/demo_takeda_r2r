@@ -33,4 +33,14 @@ test('F11-AC-01: Pat pulls B2077 forward; the preview shows 6/37/6 and 14 Oct am
   await expect(row.getByTestId('system-need-by')).toHaveClass(/line-through/)
   await expect(row.getByTestId('rag-cell')).toContainText('14 Oct')
   await expect(row.getByTestId('rag-cell')).toHaveAttribute('data-rag', 'amber')
+
+  // The audit log has the entry with its old and new values.
+  await page.getByRole('link', { name: 'Audit Log' }).click()
+  const entry = page.locator('[data-testid=audit-entry][data-action=need_by_set]').first()
+  await expect(entry).toContainText('pat')
+  await expect(entry).toContainText(B2077)
+  await entry.getByRole('button', { name: /Show details/ }).click()
+  const details = page.getByTestId('audit-details')
+  await expect(details).toContainText('system date → 26 Nov 2026')
+  await expect(details).toContainText('Campaign pulled forward')
 })
