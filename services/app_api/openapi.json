@@ -515,6 +515,204 @@
         "title": "CompletionExplain",
         "type": "object"
       },
+      "DeliveriesOut": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "mode": {
+            "enum": [
+              "snapshot",
+              "due_in_period"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "overdue_count": {
+            "title": "Overdue Count",
+            "type": "integer"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/DeliveryOut"
+            },
+            "title": "Rows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "count",
+          "overdue_count",
+          "mode",
+          "rows"
+        ],
+        "title": "DeliveriesOut",
+        "type": "object"
+      },
+      "DeliveryOut": {
+        "properties": {
+          "campaign": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Campaign"
+          },
+          "ebeln": {
+            "title": "Ebeln",
+            "type": "string"
+          },
+          "ebelp": {
+            "title": "Ebelp",
+            "type": "string"
+          },
+          "material_class": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Material Class"
+          },
+          "material_desc": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Material Desc"
+          },
+          "material_no": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Material No"
+          },
+          "molecule_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Molecule Type"
+          },
+          "overdue": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Overdue"
+          },
+          "planned_location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planned Location"
+          },
+          "planned_location_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planned Location Type"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity"
+          },
+          "scheduled_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scheduled Date"
+          },
+          "supplier_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supplier Id"
+          },
+          "supplier_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supplier Name"
+          }
+        },
+        "required": [
+          "ebeln",
+          "ebelp",
+          "material_no",
+          "material_desc",
+          "molecule_type",
+          "material_class",
+          "supplier_id",
+          "supplier_name",
+          "campaign",
+          "scheduled_date",
+          "quantity",
+          "planned_location",
+          "planned_location_type",
+          "overdue"
+        ],
+        "title": "DeliveryOut",
+        "type": "object"
+      },
       "DeviationOut": {
         "properties": {
           "closed_on": {
@@ -744,6 +942,17 @@
           "late_count": {
             "title": "Late Count",
             "type": "integer"
+          },
+          "skip_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Skip Count"
           },
           "stage_key": {
             "title": "Stage Key",
@@ -1385,6 +1594,10 @@
             "title": "Alerts",
             "type": "array"
           },
+          "batch_count": {
+            "title": "Batch Count",
+            "type": "integer"
+          },
           "bookmarks": {
             "items": {
               "type": "string"
@@ -1432,6 +1645,7 @@
           "on_hold_count",
           "adjusted_count",
           "total",
+          "batch_count",
           "mode",
           "alerts",
           "bookmarks",
@@ -3235,6 +3449,227 @@
         "summary": "Demo Clock"
       }
     },
+    "/api/expected-deliveries": {
+      "get": {
+        "operationId": "expected_deliveries_api_expected_deliveries_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "type[]",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Type[]"
+            }
+          },
+          {
+            "in": "query",
+            "name": "class[]",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Class[]"
+            }
+          },
+          {
+            "in": "query",
+            "name": "campaign[]",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Campaign[]"
+            }
+          },
+          {
+            "in": "query",
+            "name": "flags[]",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Flags[]"
+            }
+          },
+          {
+            "in": "query",
+            "name": "stage",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Stage"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_released",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Released",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "default": "all",
+              "title": "Period",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "bookmarked",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Bookmarked",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveriesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Expected Deliveries"
+      }
+    },
     "/api/explain": {
       "get": {
         "operationId": "explain_figure_api_explain_get",
@@ -3348,13 +3783,26 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
                 },
                 {
                   "type": "null"
                 }
               ],
               "title": "Stage"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_released",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Released",
+              "type": "boolean"
             }
           },
           {
@@ -3564,13 +4012,26 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
                 },
                 {
                   "type": "null"
                 }
               ],
               "title": "Stage"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_released",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Released",
+              "type": "boolean"
             }
           },
           {
@@ -3988,13 +4449,26 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
                 },
                 {
                   "type": "null"
                 }
               ],
               "title": "Stage"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_released",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Released",
+              "type": "boolean"
             }
           },
           {
@@ -4197,13 +4671,26 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
                 },
                 {
                   "type": "null"
                 }
               ],
               "title": "Stage"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_released",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Released",
+              "type": "boolean"
             }
           },
           {
@@ -4406,13 +4893,26 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
                 },
                 {
                   "type": "null"
                 }
               ],
               "title": "Stage"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_released",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Released",
+              "type": "boolean"
             }
           },
           {

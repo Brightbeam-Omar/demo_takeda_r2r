@@ -11,7 +11,8 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 from pydantic import BaseModel
-from r2r_core.profile import SiteProfile
+from r2r_core.applies_if import parse_applies_if
+from r2r_core.profile import SiteProfile, Stage
 from r2r_core.sla import in_period, month_window
 
 from app_api.schemas import Freshness, RowOut
@@ -21,7 +22,7 @@ from app_api.services.windows import adjusted_rows, air_gap_rows
 PERIODS = ("all", "this_week", "last_week", "next_week", "this_month", "last_month", "next_month", "custom")
 FLAG_NAMES = (
     "on_hold", "erp_blocked", "re_eval", "offsite", "full_spec", "expedite", "ud_rejected", "lims_rejected",
-    "air_gap", "late",
+    "air_gap", "late", "released", "release_on_coa",
 )  # fmt: skip
 TOP_AIR_GAPS = 5
 UNKNOWN_CLASS = "unknown"  # reserved key: rows whose material class is NULL (OQ-086)
@@ -37,7 +38,8 @@ class Filters:
     types: Sequence[str] = ()
     classes: Sequence[str] = ()
     campaigns: Sequence[str] = ()
-    stage: str | None = None
+    stages: Sequence[str] = ()  # repeated `stage=`: ORed (F17-FR-05)
+    include_released: bool = False  # F17-FR-10
     flags: Sequence[str] = ()
     period: str = "all"
     date_from: dt.date | None = None
@@ -45,6 +47,11 @@ class Filters:
     q: str | None = None
     bookmarked_keys: frozenset[str] | None = None  # the user's bookmarks when `bookmarked` is on (F16-FR-04)
     extra: dict[str, str] = field(default_factory=dict)
+
+    @property
+    def wants_released(self) -> bool:
+        """Released lots show only when asked for: the flag, the Released card or the parameter."""
+        return self.include_released or "released" in self.stages or "released" in self.flags
 
 
 def window(filters: Filters, today: dt.date) -> tuple[dt.date, dt.date] | None:
@@ -74,6 +81,10 @@ def has_flag(row: ComposedRow, name: str) -> bool:
         return row.air_gap
     if name == "late":
         return row.plan.late
+    if name == "released":
+        return row.stage_terminal
+    if name == "release_on_coa":
+        return False  # arrives with F18 (F17-OQ097)
     return bool(row.facts[name])
 
 
@@ -85,7 +96,9 @@ def _matches(row: ComposedRow, filters: Filters, period: tuple[dt.date, dt.date]
         return False
     if filters.campaigns and facts["campaign"] not in filters.campaigns:
         return False
-    if stage and filters.stage and facts["stage_key"] != filters.stage:
+    if stage and filters.stages and facts["stage_key"] not in filters.stages:
+        return False
+    if stage and row.stage_terminal and not filters.wants_released:
         return False
     if filters.bookmarked_keys is not None and row.row_key not in filters.bookmarked_keys:
         return False
@@ -114,6 +127,9 @@ class FlowEntry(BaseModel):
     count: int
     breached: bool
     late_count: int
+    skip_count: int | None = (
+        None  # rows past this stage for which its `applies_if` is false (None: no condition)
+    )
 
 
 class AlertOut(BaseModel):
@@ -129,10 +145,25 @@ class OverviewOut(BaseModel):
     on_hold_count: int
     adjusted_count: int  # F16-FR-06: non-released rows with a current adjusted need-by
     total: int
+    batch_count: int  # distinct (material, batch) among the shown lots
     mode: Literal["snapshot", "due_in_period"]
     alerts: list[AlertOut]
     bookmarks: list[str]  # every row the current user bookmarked, whatever the filters
     rows: list[RowOut]
+
+
+def skipped(rows: Sequence[ComposedRow], stage: Stage, order: dict[str, int]) -> int | None:
+    """Open lots past ``stage`` that never needed it: its `applies_if` is false for them (F17-FR-04)."""
+    if stage.applies_if is None:
+        return None
+    condition = parse_applies_if(stage.applies_if)
+    return sum(
+        1
+        for row in rows
+        if not row.stage_terminal
+        and order[row.facts["stage_key"]] > order[stage.key]
+        and not condition.evaluate(row.row_facts)
+    )
 
 
 def build_overview(
@@ -144,6 +175,7 @@ def build_overview(
     bookmarks: Sequence[str] = (),
 ) -> OverviewOut:
     labels = {stage.key: stage.label for stage in profile.stages}
+    order = {stage.key: number for number, stage in enumerate(profile.stages)}
     shown = select(rows, filters, today)
     unstaged = select(rows, filters, today, with_stage=False)
     flow = [
@@ -153,6 +185,7 @@ def build_overview(
             count=sum(1 for row in unstaged if row.facts["stage_key"] == stage.key),
             breached=any(row.plan.late for row in unstaged if row.facts["stage_key"] == stage.key),
             late_count=sum(1 for row in unstaged if row.facts["stage_key"] == stage.key and row.plan.late),
+            skip_count=skipped(unstaged, stage, order),
         )
         for stage in profile.stages
     ]
@@ -176,6 +209,7 @@ def build_overview(
         on_hold_count=on_hold,
         adjusted_count=len(adjusted_rows(unstaged)),
         total=len(shown),
+        batch_count=len({(row.facts["material_no"], row.facts["batch_no"]) for row in shown}),
         mode="snapshot" if filters.period == "all" else "due_in_period",
         alerts=alerts,
         bookmarks=list(bookmarks),
