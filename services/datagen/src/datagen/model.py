@@ -115,6 +115,7 @@ class BatchPlan:
     holds: list[tuple[date, bool]] = field(default_factory=list)  # (day, hold on/off)
     blocks: list[tuple[date, bool]] = field(default_factory=list)  # (day, block/unblock)
     story_id: str | None = None
+    po_ref: str | None = None  # the PO line this delivery closes (F17); set after the plan is built
 
     @property
     def first_day(self) -> date:
@@ -129,6 +130,22 @@ class DemandPlan:
     quantity: Decimal
     created_on: date
     closed_on: date | None = None  # set when the line was closed again
+
+
+@dataclass
+class PoLinePlan:
+    """One purchase-order line (F17): created ahead of a delivery, or still open at demo start."""
+
+    ref: str  # "<matnr>|<charg>" of the delivery that closes it, or "open-<n>" for a line still to arrive
+    matnr: str
+    lifnr: str
+    lgort: str  # planned receiving location
+    quantity: Decimal
+    scheduled: date  # eindt: the scheduled delivery date
+    created_on: date
+    open_at_start: bool = (
+        False  # a line for a delivery still to come (reopened lines are counted via their batch)
+    )
 
 
 @dataclass
@@ -152,6 +169,7 @@ class Plan:
     batches: list[BatchPlan] = field(default_factory=list)
     demands: list[DemandPlan] = field(default_factory=list)
     deviations: list[DeviationPlan] = field(default_factory=list)
+    po_lines: list[PoLinePlan] = field(default_factory=list)
     need_by: dict[str, date | None] = field(
         default_factory=dict
     )  # per material: the system need-by at opening

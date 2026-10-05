@@ -85,6 +85,15 @@ class Quirks(_Model):
     quantities: list[int]
 
 
+class PoLines(_Model):
+    lead_days: tuple[int, int]  # a line is created this many days before the delivery it is for
+    open_total: tuple[int, int]  # open lines at demo start, reopened ones included
+    overdue_share: float  # of the open lines, those whose scheduled date has passed
+    due_within_days: int  # the other open lines are due in the next 0..N days
+    overdue_max_days: int  # an overdue line was due up to this many days ago
+    receipt_jitter_days: tuple[int, int]  # scheduled date of a delivered line, relative to its receipt
+
+
 class Params(_Model):
     history: History
     volumes: Volumes
@@ -100,6 +109,7 @@ class Params(_Model):
     demand: Demand
     deviations: DeviationParams
     quirks: Quirks
+    po_lines: PoLines
 
     @model_validator(mode="after")
     def _shares_add_up(self) -> "Params":

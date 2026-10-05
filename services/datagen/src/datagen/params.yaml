@@ -80,3 +80,11 @@ quirks:                      # F05-FR-05 (minimum is 3 of each; these are what t
   air_gap_lots: 4            # LIMS approved and never transferred to the ERP (B5003 is one); target 3-5
   air_gap_ages_hours: [62, 70, 90]   # approval age at demo start of the generated air gaps (B5003 is fixed at 30 h); all inside 24-96 h, on a business day
   quantities: [25, 50, 100, 200, 500, 1000, 2500]
+
+po_lines:                    # F17-FR-02: purchase-order lines behind the deliveries and the open ones
+  lead_days: [14, 56]        # created 2-8 weeks before the receipt
+  open_total: [60, 90]       # open at demo start, counting the lines reopened by reversed receipts
+  overdue_share: 0.10        # of the open lines past their scheduled date (reopened lines are always overdue)
+  due_within_days: 56        # the rest are due in the next 0-8 weeks
+  overdue_max_days: 14
+  receipt_jitter_days: [-3, 5]
