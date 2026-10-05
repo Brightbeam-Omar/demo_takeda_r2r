@@ -18,7 +18,7 @@ The REST API behind the UI. It composes the mirror with current overrides and ap
 | `PUT /api/rows/{row_key}/need-by` | planner, admin | Body `{adjusted_date|null, reason_code, expedite:bool, note}`. Reason is required when setting a date. Returns the recomputed row |
 | `PUT /api/rows/{row_key}/status` | qc_lead, qa_release, admin | `{rag:'red'|'amber'|'green', reason, team}` |
 | `POST /api/rows/{row_key}/comments` | all except viewer | `{body}` |
-| `GET /api/audit` | any | Paginated audit events, filter by row_key/actor/action |
+| `GET /api/audit` | any | Paginated audit events, filter by row_key/actor/action and a demo-date range (`from`, `to`, inclusive, site timezone; F11, OQ-068) |
 | `GET /api/export.csv` | any | Current overview rows (filters applied) |
 
 ## Functional requirements
@@ -36,7 +36,7 @@ The REST API behind the UI. It composes the mirror with current overrides and ap
 ## Decisions (OQ-056 to OQ-062)
 - **Need-by PUT:** only changed fields (`adjusted_need_by_date`, `expedite`) get a new version, with one audit event per changed field, in one transaction. `reason_code` must exist in `mirror_reason_codes` (422) and is required when a date is set; clearing needs none. A no-op PUT writes nothing. Unknown row 404; released row 409; pending rows may be adjusted; any date is accepted.
 - **Status PUT:** `value_json = {rag, team}`, `reason` is stored in `note` and is required when setting; `rag: null` clears. A manual status is display-only: it never changes the plan, `late`, ordering, `breached` or alerts.
-- **Audit actions:** `need_by_set`, `need_by_cleared`, `expedite_set`, `expedite_cleared`, `status_set`, `status_cleared`, `comment_added`, `forbidden` (`row_key` from the path, `details_json = {method, path, required_roles, role}`). `GET /api/users` needs no identity and is 404 unless `DEMO_MODE=true`. `/api/clock` falls back to `demo_clock` when scenario is down. `GET /api/audit`: `limit` (50, max 200), `offset`, newest first, filters `row_key`, `actor`, `action`.
+- **Audit actions:** `need_by_set`, `need_by_cleared`, `expedite_set`, `expedite_cleared`, `status_set`, `status_cleared`, `comment_added`, `forbidden` (`row_key` from the path, `details_json = {method, path, required_roles, role}`). `GET /api/users` needs no identity and is 404 unless `DEMO_MODE=true`. `/api/clock` falls back to `demo_clock` when scenario is down. `GET /api/audit`: `limit` (50, max 200), `offset`, newest first, filters `row_key`, `actor`, `action`, and `from`/`to` (added in F11, OQ-068).
 - **Overview:** values within a filter are ORed and filters are ANDed (`flags[]` is OR). Windows are Monday to Sunday and the calendar month in the site timezone from the demo clock; `custom` needs both `from` and `to` (422). No pagination: `total = len(rows)`. The flow strip has one entry per stage in reference order. `alerts` and `on_hold_count` honour all filters except `stage`; `rejected` counts `ud_rejected` or `lims_rejected` and returns both numbers.
 - **Explain:** each `StageRule` has `inputs`, and Explain shows exactly those published columns. `week` is the ISO Monday date (default: current week). An `awaiting_signal` metric returns its `null_reason` and no rows. `flow:` has no row cap.
 - **Cache:** key is run id, max override id, max comment id and demo-clock now to the second, 5 s TTL.

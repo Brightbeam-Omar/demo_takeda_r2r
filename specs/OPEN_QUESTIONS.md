@@ -378,38 +378,46 @@ Add entries as: `## OQ-NNN · <feature> · <date>` then context, question, optio
 **Context:** F11-FR-02 adds `POST /api/rows/{row_key}/need-by/preview` ("same body, no persistence, returns `PlanResult`") but not who may call it, whether `reason_code` is required, or what a released row, unknown row or invalid reason returns. The modal needs a preview while the reason field is still empty.
 **Question:** Role, validation and response shape of the preview?
 **Proposal:** Any authenticated role may preview (it writes nothing, not even an audit row). `reason_code` is optional for a preview and, if sent, must exist in `mirror_reason_codes` (422). 404 unknown row, 409 released row, same as the PUT. The response is the `PlanOut` of the row as it would be after the change, plus `current` (the `PlanOut` now), so the modal can show before and after. It reuses the PUT's composition code so the two cannot drift.
+**Decision:** Accepted: any identified role may call the preview; no reason is required (a `reason_code` that is sent must still exist, 422); no writes of any kind, not even an audit row.
 
 ## OQ-068 · F11 · 2026-10-05
 **Context:** F11-FR-06 asks for an Audit Log filter by date range, but `GET /api/audit` filters only by `row_key`, `actor` and `action`. The expandable details show "old → new", which F09 stores in `details_json` (`{field, old, new, reason_code, note}`) only for override actions. `at` is the demo clock.
 **Question:** How is the date range filtered, and what do non-override rows show?
 **Proposal:** Add `from` and `to` (demo-clock dates, inclusive, site timezone) to `GET /api/audit` as an additive F09 change, with a test and a regenerated OpenAPI file. The details panel shows old → new for override rows, and the key/value list of `details_json` for the others (`forbidden`, `comment_added`). JSON is not shown raw (05 Copy), only as labelled fields.
+**Decision:** Accepted: `GET /api/audit` gains `from` and `to` (additive F09 change, F09 spec updated); old → new comes from `details_json`.
 
 ## OQ-069 · F11 · 2026-10-05
 **Context:** F11-FR-04 puts the Explain popover on the stage chip, expected completion, each metric chip and each flow-strip count. A table of ~800 rows would carry up to 1,600 ⓘ icons, and flow cards and metric chips are already clickable (stage filter) or dense. 05 also asks for the popover to be copyable and to show a run id and time.
 **Question:** Where do the ⓘ icons sit, and what does copy do?
 **Proposal:** In the table the ⓘ appears on cell hover and keyboard focus (like the pencil), for the stage chip and expected completion only. Flow cards and metric chips get a small ⓘ in the corner that does not trigger the card's filter. One Radix Popover shows the F09 payload as: rule or formula in words, an inputs table, source refs (JSON only inside the "Source refs" expander), then run id and time. "Copy" puts that content as plain text on the clipboard. The metric popover uses the last complete week by default.
+**Decision:** Accepted: the table ⓘ shows on row hover (and keyboard focus); flow cards get a small corner ⓘ with its own hit target, separate from click-to-filter; the popover content is copyable.
 
 ## OQ-070 · F11 · 2026-10-05
 **Context:** F11-FR-02 says a save "re-sorts the table with the row highlighted". F10's highlight (`useRowChanges`) fires only when `contract_run_id` changes (OQ-065), and an override changes plan fields without a new run. The Overview query is cached for 5 s on the server, keyed on the max override id, so a refetch after save is correct.
 **Question:** What drives the highlight after a save, and what about the drawer and other tabs?
 **Proposal:** After a successful save the client invalidates the overview, the row and the audit queries, and marks the saved `row_key` as "just saved" in the F10 `changedKeys` set for 5 s, with the toast "Need-by updated". Other people's edits arrive through the 10 s poll and are not highlighted (they do not change the run id), which matches OQ-065.
+**Decision:** Accepted: a separate "just saved" row highlight (5 s), independent of the contract-run highlight.
 
 ## OQ-071 · F11 · 2026-10-05
 **Context:** FR-03 says status and comment entry are "available per role". F09 allows status for `qc_lead`, `qa_release` and `admin`, comments for all roles except `viewer`, and need-by for `planner` and `admin`. In DEMO_MODE write controls appear disabled with "Read-only role" (05). The status payload is `{rag, reason, team}` with `reason` required when setting and `rag: null` to clear (OQ-057).
 **Question:** What do the forms show for each role, and what are the `team` choices?
 **Proposal:** Controls follow the F09 matrix; a control the role lacks is disabled with the tooltip "Read-only role" (never hidden, in DEMO_MODE). `team` is a select over the distinct stage owners from `/api/reference` (`team` of each stage), not a free text field. A set status shows next to the system RAG, labelled as human input (pencil, italic). Clear status is a button that sends `rag: null`.
+**Decision:** Accepted: `qc_lead`, `qa_release` and `admin` can set status; other roles see it disabled with "Read-only role". Comments are open to everyone except viewer.
 
 ## OQ-072 · F11 · 2026-10-05
 **Context:** FR-07 says `/overview?row=<row_key>` opens the drawer. The row may be filtered out of the table by the current filters or period. F10 stores filters in the URL, so `row` must coexist with them. `row_key` contains `|`.
 **Question:** How does the drawer load, and what does closing do?
 **Proposal:** The drawer loads from `GET /api/rows/{row_key}` independently of the table, so it opens even when the row is filtered out. Clicking a row sets `row=` in the URL (percent-encoded, history replace); closing removes only `row`. An unknown key shows a "Batch not found" state inside the drawer with a close button. Escape and the backdrop close it.
+**Decision:** Accepted: the drawer loads from `/api/rows/{row_key}` independently, so `?row=` works even when the row is filtered out.
 
 ## OQ-073 · F11 · 2026-10-05
 **Context:** FR-05 gives `http://localhost:3001/runs/<run_id>` "in local mode" as the Dagster link and says sync times are shown as relative ages and durations (the API gives `age_seconds` and `duration_ms`). The F09 status payload has no Dagster base URL, and a hard-coded host would not survive AWS (Tier 2). The "Trigger sync" button uses the admin-only `POST /api/sync/trigger`.
 **Question:** Where does the Dagster URL come from, and how fresh must the page be?
 **Proposal:** A frontend build-time variable `VITE_DAGSTER_URL` (default `http://localhost:3001`, documented in `.env.example` and passed to the Vite/nginx build) is used to build the run link, shown only when `run_id` is not null. The page polls `/api/sync/status` every 5 s (faster than the 10 s Overview poll, so a `pending → claimed → done` transition is visible within the 20 s drain interval, AC-05). Ages are recomputed in the browser from the last response's `age_seconds` plus the elapsed time since it arrived. "Trigger sync" is hidden unless the role is `admin` (disabled with the tooltip for others in DEMO_MODE, per 05).
+**Decision:** Accepted: the Dagster base URL comes from config (`VITE_DAGSTER_URL`, default `http://localhost:3001`), documented in `.env.example`.
 
 ## OQ-074 · F11 · 2026-10-05
 **Context:** The drawer Timeline shows "days per stage vs SLA" and the sibling lots "in order". The per-stage entry and exit dates are published columns (`*_entry`, `*_exit`), but the SLA per stage for the row comes from `applicable_sla_json` and the effective (possibly compressed) SLA from `plan.effective_slas`. B4410 must show the initial lot, three earlier re-evals and the current one (AC-03), as separate lots of the same batch.
 **Question:** Which SLA is compared, and how are siblings ordered and labelled?
 **Proposal:** Each applicable stage shows entry, exit (or "in progress"), days taken, and the profile SLA for that lot (from `applicable_sla_json`); when the plan is compressed the effective SLA is shown beside it. Stages that do not apply (call-off for onsite, QC ship for onsite tests) are omitted. Siblings come from `RowDetail.siblings`, ordered by lot start date, each labelled "Initial" (`01`) or "Re-eval 1…n" (`09`) with its stage chip and lot number, the current row marked, and a click opens that lot's drawer.
+**Decision:** Accepted as proposed.
