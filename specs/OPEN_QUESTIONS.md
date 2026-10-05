@@ -517,3 +517,51 @@ Add entries as: `## OQ-NNN · <feature> · <date>` then context, question, optio
 **Question:** Can any persona bookmark, and is it audited?
 **Proposal:** Any persona, including viewer, can bookmark. A bookmark is personal, not a business change, so it is not audited.
 **Decision:** Accepted: any persona including viewer may bookmark; bookmarks are not written to `audit_event`.
+
+## OQ-092 · F17 · 2026-10-06
+**Context:** F17-FR-01 says a same-day `goods-receipt-reversal` "reopens" the PO line that the GR closed. 04 §1.1 gives `mseg` no PO reference (`ebeln`/`ebelp`), so the reversal cannot tell which line to reopen. The pending rows in the seed arise from exactly these reversals.
+**Question:** How does a reversal find its line?
+**Proposal:** Add nullable `ebeln`/`ebelp` to `mseg` (SAP's `mseg` carries them too) in migration `0003_ekpo`, written by `goods-receipt` when it closes a line. A `102` reopens the line referenced by the `101` it nets (same batch, posting date, quantity). Reversals of GRs with no PO reference reopen nothing.
+**Decision:** Accepted: nullable `ebeln`/`ebelp` on `mseg` in `0003_ekpo`, written by `goods-receipt`. A `102` reopens the line of the `101` it nets. A GR with no PO reference reopens nothing.
+
+## OQ-093 · F17 · 2026-10-06
+**Context:** F17-FR-02 wants about 60–90 open lines due in the next 0–8 weeks, plus about 10% overdue. Reversed GRs (the pending population) also reopen their lines under FR-01. It is unclear whether the 60–90 includes those reopened lines, whether the 10% is of the 60–90, and whether future lines belong to existing materials only.
+**Question:** What exactly is the opening open-line count, and where do the lines come from?
+**Proposal:** The reopened lines of pending rows count as overdue lines. On top of them the generator adds future lines for existing materials and suppliers so the total open count is 60–90, of which about 10% (including the reopened ones) have `eindt` < today. Story batches get closed PO lines like any other batch. The exact count is whatever the seed gives; AC-01 compares the card to `expected_deliveries_v`, not to a constant.
+**Decision:** Accepted: reopened lines count as overdue. Future lines for existing materials and suppliers bring the open total to 60-90, about 10% of them overdue. AC-01 compares against `expected_deliveries_v`, not a constant.
+
+## OQ-094 · F17 · 2026-10-06
+**Context:** F17-FR-04 defines the Expected Delivery count by period only. The type, class and campaign filters (F16) are not mentioned. `ekpo` has material and supplier, so type and class can be joined from `mara`. Campaign comes only from `mdez` demand, by material. FR-04's caption is always "Due this period", while the flow strip captions are "snapshot" or "due in period" (03 §5.6).
+**Question:** Do type, class and campaign filters apply to Stage 0 and the Expected Deliveries window? What is the caption under All Dates?
+**Proposal:** Yes for type and class (joined on material). Campaign applies through the material's earliest open demand, as for batch rows, and is reported in `expected_deliveries_v` as `campaign`. Stage and tag selections never apply (it is a pre-batch grain). Caption: "Open PO lines" under All Dates, "Due this period" otherwise.
+**Decision:** Accepted: type and class apply via material; campaign applies via earliest open demand (published as `campaign`); stage and tags never apply. Caption: "Open PO lines" under All Dates, "Due this period" otherwise.
+
+## OQ-095 · F17 · 2026-10-06
+**Context:** F17-FR-04 defines "N skip <label>" as "open rows past that stage's position for which `applies_if` is false". Open questions: (a) does a row in an earlier stage (receipt) count, since it has not yet passed the position; (b) the contract names `skip_call_off_count`, but FR-04 also says "any card whose stage has an `applies_if`", which includes QCL Ship For External Testing for onsite tests; (c) does it honour the F16 filters like the other card figures.
+**Question:** Exact definition and API shape?
+**Proposal:** Count open rows (not released, not pending) with `stage_sort` greater than the card's stage and `applies_if` false, using `r2r_core.applies_if`. Rows still before the stage are not counted. The API returns a generic `skip_count` on every flow entry whose stage has `applies_if` (null otherwise), so no stage key is hard-coded; `skip_call_off_count` in the spec is read as `skip_count` for `call_off`. Honours every filter except stage, like the rest of the flow strip (OQ-059). Both Call Off and QCL Ship cards show the note.
+**Decision:** Accepted: generic `skip_count` on every flow entry whose stage has `applies_if`; counts rows past the stage only; honours every filter except stage; Call Off and QCL Ship both show the note.
+
+## OQ-096 · F17 · 2026-10-06
+**Context:** F17-FR-08 says RELEASED shows released rows "otherwise excluded only when a stage set excludes them", while FR-07 reads "All in-flight batches" and 05 §4 shows "803 lots" in the table toolbar (482 is the active total). It is not stated whether the default table includes released rows.
+**Question:** What does the table show by default, and how do stage cards, the Released card and the RELEASED tag combine?
+**Proposal:** Keep F09/F10 behaviour: the default table (Total Pipeline) shows all non-cancelled rows, released included, so the count equals the 803 lots in the toolbar. "Showing: All in-flight batches" is only the label for the empty selection. Selecting stage cards restricts to those stages (Released card = released rows). Tags are OR among themselves and AND with stage and other filters. The RELEASED tag is equivalent to selecting the Released card. Please confirm, because FR-08 can also be read as "released rows hidden unless asked for".
+**Decision:** Changed. The default table shows in-flight lots only, meaning not released (pending included), matching the guide's "in-flight" and the "Active batches" Total Pipeline card. Released rows appear only when the Released card is selected or the RELEASED tag is active (the two are equivalent). Stage cards restrict to their stages; tags are OR among themselves and AND with stage and other filters. The toolbar count at demo start reads `... of 482 lots (n batches)`. Table export and "All filtered results" follow the same default. F09 `/api/overview` gains this additively: `include_released` is false unless Released/RELEASED is selected. F09, F10 and F16 tests and specs that assumed 803 are updated. This supersedes the earlier "803 lots" caption.
+
+## OQ-097 · F17 · 2026-10-06
+**Context:** F17-FR-08 adds the RELEASE ON COA tag, "wired in F18", and the ON HOLD tag. F18 changes `on_hold` into `erp_hold OR manual_hold` (`on_hold_display`) and introduces the `release_on_coa` override. F09's `flags[]` does not know `release_on_coa`.
+**Question:** What do the two tags query in F17?
+**Proposal:** F09 accepts `flags[]=release_on_coa` now and returns zero rows (no override field exists yet). ON HOLD queries the current `on_hold` flag; F18 re-points it to `on_hold_display` and keeps the Place Hold behaviour out of F17. The On Hold stage card keeps its current count.
+**Decision:** Accepted: `flags[]=release_on_coa` is accepted now and returns zero rows. ON HOLD queries the current `on_hold`; F18 re-points it to `on_hold_display`.
+
+## OQ-098 · F17 · 2026-10-06
+**Context:** F17-FR-06 describes the metric card sub-line as `<sla> · on_time/completed`, and 05 §4 adds a `4-wk` label for "windowed metrics". No profile metric is marked as windowed. M5 has `sla_days: 30` with no stage, and stage metrics have SLAs that vary by lot type (re-eval overrides). The header year should follow the ISO week year, not the calendar year of `week_start`.
+**Question:** Which metrics show `4-wk`, and what SLA text does the card print?
+**Proposal:** No metric is windowed in Tier 1, so `4-wk` is not rendered (add a `window_weeks` profile field in T2 if needed). The SLA text is the metric's `sla_days` from `metric_reference_v` as `SLA 7d` (the 01-lot SLA; the re-eval variant is explained in the ⓘ tooltip). Header: ISO week number and ISO week-year of the published `week_start` (`getISOWeek`/`getISOWeekYear`, no timezone conversion because `week_start` is already a site-local date).
+**Decision:** Accepted: no windowed metrics in Tier 1, so no `4-wk` label (T2-01 adds `window_weeks`). The card shows `sla_days` as `SLA 7d`, with the re-eval variant in the tooltip. Header uses the ISO week and ISO week-year of the published `week_start`.
+
+## OQ-099 · F17 · 2026-10-06
+**Context:** F17-AC-04 requires M3 green, M6 amber and M7 red for week 41, while the same feature requires that the F05 week-41 percentages do not change. If the seed percentages do not land in those bands, the AC and the data contradict each other.
+**Question:** What is the source of truth if they disagree?
+**Proposal:** Check the seeded week-41 percentages against `metric_rag` (90/80) before starting T7. If they match, nothing to do. If not, the frozen F05 numbers win and the AC colours are corrected in the spec (data is not retuned).
+**Decision:** Confirmed, no conflict. Seeded week 41 is M3 94% (green), M6 84% (amber), M7 69% (red). AC-04 asserts those values.
