@@ -16,6 +16,7 @@ from r2r_core.sla import in_period, month_window
 
 from app_api.schemas import Freshness, RowOut
 from app_api.services.compose import ComposedRow
+from app_api.services.windows import adjusted_rows, air_gap_rows
 
 PERIODS = ("all", "this_week", "last_week", "next_week", "this_month", "last_month", "next_month", "custom")
 FLAG_NAMES = (
@@ -126,6 +127,7 @@ class OverviewOut(BaseModel):
     freshness: Freshness
     flow_strip: list[FlowEntry]
     on_hold_count: int
+    adjusted_count: int  # F16-FR-06: non-released rows with a current adjusted need-by
     total: int
     mode: Literal["snapshot", "due_in_period"]
     alerts: list[AlertOut]
@@ -154,7 +156,7 @@ def build_overview(
         )
         for stage in profile.stages
     ]
-    gaps = sorted((row for row in unstaged if row.air_gap), key=lambda row: (-row.air_gap_hours, row.row_key))
+    gaps = air_gap_rows(unstaged)
     ud_rejected = sum(1 for row in unstaged if row.facts["ud_rejected"])
     lims_rejected = sum(1 for row in unstaged if row.facts["lims_rejected"])
     on_hold = sum(1 for row in unstaged if row.facts["on_hold"])
@@ -172,6 +174,7 @@ def build_overview(
         freshness=fresh,
         flow_strip=flow,
         on_hold_count=on_hold,
+        adjusted_count=len(adjusted_rows(unstaged)),
         total=len(shown),
         mode="snapshot" if filters.period == "all" else "due_in_period",
         alerts=alerts,

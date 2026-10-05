@@ -1,6 +1,128 @@
 {
   "components": {
     "schemas": {
+      "AdjustedOut": {
+        "properties": {
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/AdjustedRowOut"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "rows"
+        ],
+        "title": "AdjustedOut",
+        "type": "object"
+      },
+      "AdjustedRowOut": {
+        "properties": {
+          "adjusted_date": {
+            "format": "date",
+            "title": "Adjusted Date",
+            "type": "string"
+          },
+          "batch_no": {
+            "title": "Batch No",
+            "type": "string"
+          },
+          "delta_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delta Days"
+          },
+          "material_desc": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Material Desc"
+          },
+          "material_no": {
+            "title": "Material No",
+            "type": "string"
+          },
+          "reason_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Code"
+          },
+          "reason_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Label"
+          },
+          "row_key": {
+            "title": "Row Key",
+            "type": "string"
+          },
+          "set_at": {
+            "format": "date-time",
+            "title": "Set At",
+            "type": "string"
+          },
+          "set_by": {
+            "title": "Set By",
+            "type": "string"
+          },
+          "system_need_by_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "System Need By Date"
+          }
+        },
+        "required": [
+          "row_key",
+          "batch_no",
+          "material_no",
+          "material_desc",
+          "system_need_by_date",
+          "adjusted_date",
+          "delta_days",
+          "reason_code",
+          "reason_label",
+          "set_by",
+          "set_at"
+        ],
+        "title": "AdjustedRowOut",
+        "type": "object"
+      },
       "AlertOut": {
         "properties": {
           "count": {
@@ -766,6 +888,82 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "InsightRowOut": {
+        "properties": {
+          "air_gap_hours": {
+            "title": "Air Gap Hours",
+            "type": "integer"
+          },
+          "batch_no": {
+            "title": "Batch No",
+            "type": "string"
+          },
+          "days_gap": {
+            "title": "Days Gap",
+            "type": "integer"
+          },
+          "material_desc": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Material Desc"
+          },
+          "material_no": {
+            "title": "Material No",
+            "type": "string"
+          },
+          "row_key": {
+            "title": "Row Key",
+            "type": "string"
+          },
+          "stage_key": {
+            "title": "Stage Key",
+            "type": "string"
+          },
+          "stage_label": {
+            "title": "Stage Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "row_key",
+          "batch_no",
+          "material_no",
+          "material_desc",
+          "stage_key",
+          "stage_label",
+          "air_gap_hours",
+          "days_gap"
+        ],
+        "title": "InsightRowOut",
+        "type": "object"
+      },
+      "InsightsOut": {
+        "properties": {
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/InsightRowOut"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "rows"
+        ],
+        "title": "InsightsOut",
+        "type": "object"
+      },
       "MetricExplain": {
         "properties": {
           "completed": {
@@ -1176,6 +1374,10 @@
       },
       "OverviewOut": {
         "properties": {
+          "adjusted_count": {
+            "title": "Adjusted Count",
+            "type": "integer"
+          },
           "alerts": {
             "items": {
               "$ref": "#/components/schemas/AlertOut"
@@ -1228,6 +1430,7 @@
           "freshness",
           "flow_strip",
           "on_hold_count",
+          "adjusted_count",
           "total",
           "mode",
           "alerts",
@@ -3899,6 +4102,424 @@
           }
         },
         "summary": "Overview"
+      }
+    },
+    "/api/overview/adjusted": {
+      "get": {
+        "description": "The Adjusted Needs-by Dates window (F16-FR-07): every filter except stage applies.",
+        "operationId": "adjusted_api_overview_adjusted_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "type[]",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Type[]"
+            }
+          },
+          {
+            "in": "query",
+            "name": "class[]",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Class[]"
+            }
+          },
+          {
+            "in": "query",
+            "name": "campaign[]",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Campaign[]"
+            }
+          },
+          {
+            "in": "query",
+            "name": "flags[]",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Flags[]"
+            }
+          },
+          {
+            "in": "query",
+            "name": "stage",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Stage"
+            }
+          },
+          {
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "default": "all",
+              "title": "Period",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "bookmarked",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Bookmarked",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdjustedOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Adjusted"
+      }
+    },
+    "/api/overview/insights": {
+      "get": {
+        "description": "The air-gap insights window (F16-FR-09): every air-gap row, worst first, no cap.",
+        "operationId": "insights_api_overview_insights_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "type[]",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Type[]"
+            }
+          },
+          {
+            "in": "query",
+            "name": "class[]",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Class[]"
+            }
+          },
+          {
+            "in": "query",
+            "name": "campaign[]",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Campaign[]"
+            }
+          },
+          {
+            "in": "query",
+            "name": "flags[]",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Flags[]"
+            }
+          },
+          {
+            "in": "query",
+            "name": "stage",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Stage"
+            }
+          },
+          {
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "default": "all",
+              "title": "Period",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "bookmarked",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Bookmarked",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InsightsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Insights"
       }
     },
     "/api/presets": {
