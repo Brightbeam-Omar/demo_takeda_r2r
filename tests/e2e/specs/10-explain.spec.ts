@@ -28,9 +28,9 @@ test('F11-FR-04: the table ⓘ appears on row hover, and a flow-card ⓘ explain
   await expect(page).not.toHaveURL(/row=/) // the click did not open the drawer
   await page.keyboard.press('Escape')
 
-  await page.getByRole('button', { name: 'Explain QC Testing count' }).click()
+  await page.getByRole('button', { name: 'Explain QCL Testing count' }).click()
   const popover = page.getByTestId('explain-popover')
-  await expect(popover).toContainText('QC Testing:')
+  await expect(popover).toContainText('QCL Testing:')
   await expect(popover).toContainText('R-QCT')
   await expect(page).not.toHaveURL(/stage=/) // the corner ⓘ is separate from click-to-filter
 })

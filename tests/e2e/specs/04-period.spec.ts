@@ -7,8 +7,8 @@ test('F10-AC-04: This week switches the caption to "due in period" and keeps ove
   const overdueKey = await page.getByTestId('batch-row').first().getAttribute('data-row-key')
   expect(overdueKey).toBeTruthy()
 
-  await page.getByRole('button', { name: 'Period' }).click()
-  await page.getByRole('menuitemradio', { name: 'This week' }).click()
+  await page.getByTestId('period-button').click()
+  await page.getByRole('button', { name: 'This Week' }).click()
 
   await expect(page).toHaveURL(/period=this_week/)
   await expect(page.getByTestId('flow-caption')).toContainText('due in period')

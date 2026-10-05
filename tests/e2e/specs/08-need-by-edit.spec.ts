@@ -29,7 +29,7 @@ test('F11-AC-01: Pat pulls B2077 forward; the preview shows 6/37/6 and 14 Oct am
   // Nothing is saved yet: the preview alone shows the new plan.
   await expect(modal.getByTestId('preview-expected')).toContainText('14 Oct 2026')
   await expect(modal.getByTestId('preview-rag')).toHaveText('AMBER')
-  await expect(modal.getByTestId('preview-compression')).toContainText('Sampling 6 d / QC Testing 37 d / QA Release 6 d')
+  await expect(modal.getByTestId('preview-compression')).toContainText('Sampling 6 d / QCL Testing 37 d / QA Release 6 d')
 
   await modal.getByRole('button', { name: 'Save' }).click()
   await expect(modal).toBeHidden()

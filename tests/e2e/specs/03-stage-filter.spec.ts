@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-test('F10-AC-03: clicking QC Testing filters the table, puts stage= in the URL and survives a reload', async ({ page }) => {
+test('F10-AC-03: clicking QCL Testing filters the table, puts stage= in the URL and survives a reload', async ({ page }) => {
   await page.goto('/overview')
   await expect(page.getByTestId('batch-row').first()).toBeVisible()
 
@@ -11,7 +11,7 @@ test('F10-AC-03: clicking QC Testing filters the table, puts stage= in the URL a
   const count = await page.getByTestId('flow-qc_testing').locator('div').nth(1).innerText()
   await expect(page.getByTestId('row-count')).toContainText(`${count} lots`)
   for (const cell of await page.getByTestId('batch-row').locator('[role=cell]:nth-child(7)').allInnerTexts()) {
-    expect(cell).toContain('QC Testing')
+    expect(cell).toContain('QCL Testing')
   }
 
   await page.reload()

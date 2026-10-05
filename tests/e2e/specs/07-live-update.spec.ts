@@ -11,7 +11,7 @@ test('F10-AC-05: a LIMS approval plus a pipeline run moves B1042 to QA Release, 
   await page.goto('/overview?q=B1042')
   const row = page.locator('[data-testid=batch-row][data-row-key*="|B1042|"]').first()
   await expect(row).toBeVisible()
-  await expect(row).toContainText('QC Testing')
+  await expect(row).toContainText('QCL Testing')
 
   const samples = (await (await request.get(`${LIMS_URL}/samples?batch_no=B1042`)).json()) as Sample[]
   const latest = [...samples].sort((a, b) => a.sample_id.localeCompare(b.sample_id)).at(-1)
