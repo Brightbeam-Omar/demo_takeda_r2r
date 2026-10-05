@@ -1,5 +1,13 @@
 import { expect, test } from 'vitest'
-import { formatAge, formatClock, formatDate, freshnessTone, minutesBetween } from './format'
+import {
+  formatAge,
+  formatClock,
+  formatDate,
+  formatFeedAge,
+  formatTopBarClock,
+  freshnessTone,
+  minutesBetween,
+} from './format'
 
 test('F10-FR-03: dates and the demo clock use the 05 copy formats', () => {
   expect(formatDate('2026-10-12')).toBe('12 Oct 2026')
@@ -15,4 +23,14 @@ test('F10-FR-03: freshness colour boundaries are 6 h and 12 h in demo time', () 
   expect(minutesBetween('2026-10-12T07:00:00Z', '2026-10-12T07:12:30Z')).toBe(12)
   expect(formatAge(12)).toBe('12 min')
   expect(formatAge(180)).toBe('3 h')
+})
+
+test('F15-FR-03: the top bar clock is dd/mm/yyyy HH:MM in the site timezone', () => {
+  expect(formatTopBarClock('2026-10-12T07:00:00Z', 'Europe/Dublin')).toBe('12/10/2026 08:00')
+})
+
+test('F15-FR-03 / OQ-080: the feed age reads minutes under 60 and floored hours from 60', () => {
+  expect(formatFeedAge(59)).toBe('59 min')
+  expect(formatFeedAge(60)).toBe('1 h')
+  expect(formatFeedAge(1830)).toBe('30 h')
 })

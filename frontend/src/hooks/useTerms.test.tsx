@@ -1,0 +1,44 @@
+import { render, screen } from '@testing-library/react'
+import { expect, test } from 'vitest'
+import { FiltersBand } from '../components/filters/FiltersBand'
+import { DEFAULT_TERMS, TermsContext } from './useTerms'
+import { MemoryRouter } from 'react-router-dom'
+import { vi } from 'vitest'
+
+function band(erpBlockedTag: string) {
+  render(
+    <MemoryRouter>
+      <TermsContext.Provider value={{ ...DEFAULT_TERMS, erp_blocked_tag: erpBlockedTag }}>
+        <FiltersBand
+          reference={undefined}
+          rows={[]}
+          filters={{
+            types: [],
+            classes: [],
+            campaigns: [],
+            flags: [],
+            stage: null,
+            q: '',
+            period: 'all',
+            from: null,
+            to: null,
+          }}
+          stageLabel={(key) => key}
+          onChange={vi.fn()}
+          onClear={vi.fn()}
+        />
+      </TermsContext.Provider>
+    </MemoryRouter>,
+  )
+}
+
+test('F15-AC-03: the blocked tag comes from the terms, with no code change between profiles', () => {
+  band('SAP BLOCKED')
+  expect(screen.getByRole('button', { name: 'SAP BLOCKED' })).toBeInTheDocument()
+})
+
+test('F15-AC-03: a profile whose erp term is ERP reads ERP BLOCKED', () => {
+  band('ERP BLOCKED')
+  expect(screen.getByRole('button', { name: 'ERP BLOCKED' })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'SAP BLOCKED' })).not.toBeInTheDocument()
+})

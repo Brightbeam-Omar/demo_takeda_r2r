@@ -79,3 +79,23 @@ export function formatDuration(ms: number | null | undefined): string {
   if (ms < 60_000) return `${(ms / 1000).toFixed(1)} s`
   return `${Math.floor(ms / 60_000)} min ${Math.round((ms % 60_000) / 1000)} s`
 }
+
+/** The top bar's date-time, in the site timezone: `12/10/2026 08:00` (05 v2 section 7). */
+export function formatTopBarClock(nowUtc: string, timeZone: string): string {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(new Date(nowUtc))
+  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? ''
+  return `${get('day')}/${get('month')}/${get('year')} ${get('hour')}:${get('minute')}`
+}
+
+/** The feed pill's age: `12 min` under an hour, then whole hours (`3 h`, `30 h`) (OQ-080). */
+export function formatFeedAge(minutes: number): string {
+  return minutes < 60 ? `${minutes} min` : `${Math.floor(minutes / 60)} h`
+}

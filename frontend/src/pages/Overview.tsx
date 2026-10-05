@@ -1,12 +1,11 @@
 import { useCallback, useMemo, useState } from 'react'
 import { apiBlob } from '../api/client'
-import { useClock, useMe, useMetrics, useOverview, useReference } from '../api/queries'
+import { useMe, useMetrics, useOverview, useReference } from '../api/queries'
 import { EmptyState, ErrorState, Skeleton } from '../components/common/States'
 import { BatchDrawer } from '../components/drawer/BatchDrawer'
 import { NeedByModal } from '../components/edit/NeedByModal'
 import { Section } from '../components/common/Section'
 import { FiltersBand } from '../components/filters/FiltersBand'
-import { PeriodSelector } from '../components/filters/PeriodSelector'
 import { AlertsBand } from '../components/flow-strip/AlertsBand'
 import { FlowStrip } from '../components/flow-strip/FlowStrip'
 import { BatchTable } from '../components/table/BatchTable'
@@ -14,7 +13,6 @@ import { useToast } from '../components/common/Toasts'
 import { canEditNeedBy } from '../lib/roles'
 import { saveBlob } from '../lib/download'
 import { MetricsRibbon } from '../components/metrics/MetricsRibbon'
-import { TopBar } from '../components/shell/TopBar'
 import { useJustSaved } from '../state/just-saved'
 import { useRowChanges } from '../state/row-changes'
 import { activeFilterCount, toApiParams, useDrawerRow, useUrlFilters } from '../state/url-filters'
@@ -25,7 +23,6 @@ export function Overview() {
   const [editRow, setEditRow] = useState<string | null>(null)
   const justSaved = useJustSaved()
   const reference = useReference()
-  const clock = useClock()
   const params = toApiParams(filters)
   const overview = useOverview(params)
   const changed = useRowChanges(overview.data, params.toString())
@@ -58,9 +55,6 @@ export function Overview() {
 
   return (
     <>
-      <TopBar title="Overview">
-        <PeriodSelector filters={filters} today={clock.data?.today_local ?? '2026-10-12'} onChange={update} />
-      </TopBar>
       <main className="flex-1 space-y-5 overflow-auto p-6">
         <FiltersBand
           reference={reference.data}

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { Reference, Row } from '../../api/queries'
-import { FLAG_CHIPS } from '../../lib/flags'
-import { humanize } from '../../lib/format'
+import { useTerms } from '../../hooks/useTerms'
+import { flagChips } from '../../lib/flags'
 import { activeFilterCount, type Filters } from '../../state/url-filters'
 import { MultiSelect } from './MultiSelect'
 
@@ -15,6 +15,7 @@ interface Props {
 }
 
 export function FiltersBand({ reference, rows, filters, stageLabel, onChange, onClear }: Props) {
+  const terms = useTerms()
   const [search, setSearch] = useState(filters.q)
   // Follow the URL (back button, "clear all") and push typing to it after a short pause.
   const [seenQ, setSeenQ] = useState(filters.q)
@@ -47,13 +48,19 @@ export function FiltersBand({ reference, rows, filters, stageLabel, onChange, on
       <div className="flex flex-wrap items-center gap-2">
         <MultiSelect
           label="Type"
-          options={(reference?.molecule_types ?? []).map((value) => ({ value, label: humanize(value) }))}
+          options={(reference?.molecule_types ?? []).map((item) => ({
+            value: item.key,
+            label: item.label,
+          }))}
           selected={filters.types}
           onChange={(types) => onChange({ types })}
         />
         <MultiSelect
           label="Class"
-          options={(reference?.classes ?? []).map((value) => ({ value, label: humanize(value) }))}
+          options={(reference?.classes ?? []).map((item) => ({
+            value: item.key,
+            label: item.label,
+          }))}
           selected={filters.classes}
           onChange={(classes) => onChange({ classes })}
         />
@@ -69,7 +76,7 @@ export function FiltersBand({ reference, rows, filters, stageLabel, onChange, on
           onChange={(campaigns) => onChange({ campaigns })}
         />
         <span className="mx-1 h-5 w-px bg-slate-300" aria-hidden />
-        {FLAG_CHIPS.map((chip) => {
+        {flagChips(terms).map((chip) => {
           const on = chip.keys.every((key) => filters.flags.includes(key))
           return (
             <button

@@ -4,7 +4,6 @@ import { apiGet, type Schemas } from '../api/client'
 import { useReference, useUsers } from '../api/queries'
 import { AuditDetails } from '../components/audit/AuditDetails'
 import { EmptyState, ErrorState, Skeleton } from '../components/common/States'
-import { TopBar } from '../components/shell/TopBar'
 import { formatClock, humanize } from '../lib/format'
 import { usePersona } from '../state/persona'
 
@@ -60,7 +59,6 @@ export function Audit() {
 
   return (
     <>
-      <TopBar title="Audit Log" />
       <main className="flex-1 space-y-4 overflow-auto p-6">
         <section aria-label="Filters" className="flex flex-wrap items-end gap-3">
           <label className="text-xs text-slate-500">

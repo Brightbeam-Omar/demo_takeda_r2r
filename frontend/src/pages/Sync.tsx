@@ -5,7 +5,6 @@ import { useClock, useMe, useReference, useSyncStatus, type SyncStatus } from '.
 import { useToast } from '../components/common/Toasts'
 import { ErrorState, Skeleton } from '../components/common/States'
 import { Section } from '../components/common/Section'
-import { TopBar } from '../components/shell/TopBar'
 import { dagsterRunUrl } from '../config'
 import { formatAge, formatClock, formatDuration, formatRelative } from '../lib/format'
 import { READ_ONLY_HINT } from '../lib/roles'
@@ -73,7 +72,6 @@ export function Sync() {
 
   return (
     <>
-      <TopBar title="Sync Status" />
       <main className="flex-1 space-y-5 overflow-auto p-6">
         {status.isError && !data ? (
           <ErrorState what="the sync status" error={status.error} onRetry={() => void status.refetch()} />
