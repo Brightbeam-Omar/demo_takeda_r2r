@@ -5,5 +5,5 @@
 - [x] T4 Bookmarked filter + star on rows (FR-04, AC-02)
 - [x] T5 Presets menu (FR-05, AC-03)
 - [x] T6 [TDD] Adjusted + insights endpoints (FR-06–09)
-- [ ] T7 Banners + both windows on shared Modal/DataTable (FR-06–09, AC-04–06)
+- [x] T7 Banners + both windows on shared Modal/DataTable (FR-06–09, AC-04–06)
 - [ ] T8 Playwright, screenshot, spec check, PR (AC-07). The old alert band stays (FR-10 moved to F17, OQ-085)

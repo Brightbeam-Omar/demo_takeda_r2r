@@ -13,6 +13,8 @@ export type Row = Schemas['RowOut']
 export type Metrics = Schemas['MetricsOut']
 export type RowDetail = Schemas['RowDetail']
 export type Preset = Schemas['PresetOut']
+export type Adjusted = Schemas['AdjustedOut']
+export type Insights = Schemas['InsightsOut']
 
 /** Query keys carry the persona so a switch refetches everything (F10-FR-02). */
 function useKey(...parts: unknown[]) {
@@ -82,7 +84,7 @@ export function useToggleBookmark() {
   return useMutation({
     mutationFn: ({ rowKey, on }: { rowKey: string; on: boolean }) =>
       on ? apiSend('POST', `/bookmarks/${encodeURIComponent(rowKey)}`, {}) : apiDelete(`/bookmarks/${encodeURIComponent(rowKey)}`),
-    onSuccess: () => client.invalidateQueries({ predicate: (query) => query.queryKey[0] === 'overview' }),
+    onSuccess: () => client.invalidateQueries({ predicate: (query) => String(query.queryKey[0]).startsWith('overview') }),
   })
 }
 
@@ -112,5 +114,22 @@ export function useDeletePreset() {
   return useMutation({
     mutationFn: (id: number) => apiDelete(`/presets/${id}`),
     onSuccess: () => client.invalidateQueries({ queryKey: ['presets'] }),
+  })
+}
+
+/** The two banner windows load only while open, with the same filters as the Overview minus stage (F16-FR-07, FR-09). */
+export function useAdjusted(params: URLSearchParams, enabled: boolean) {
+  return useQuery({
+    queryKey: useKey('overview-adjusted', params.toString()),
+    queryFn: () => apiGet<Adjusted>('/overview/adjusted', params),
+    enabled,
+  })
+}
+
+export function useInsights(params: URLSearchParams, enabled: boolean) {
+  return useQuery({
+    queryKey: useKey('overview-insights', params.toString()),
+    queryFn: () => apiGet<Insights>('/overview/insights', params),
+    enabled,
   })
 }

@@ -263,3 +263,7 @@ def test_f16_oq087_bookmarked_narrows_the_insights(client: TestClient) -> None:
         if a["kind"] == "air_gap"
     )
     assert alert["count"] == 1
+
+
+def test_f16_fr09_the_reference_carries_the_air_gap_threshold_for_the_window_text(client: TestClient) -> None:
+    assert client.get("/api/reference").json()["air_gap_threshold_hours"] == 24

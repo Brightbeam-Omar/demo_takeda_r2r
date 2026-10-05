@@ -9,7 +9,7 @@ The REST API behind the UI. It composes the mirror with current overrides and ap
 | `GET /api/me` | any | Current user and role (from `X-Demo-User`, default `pat` in DEMO_MODE) |
 | `GET /api/clock` | any | Proxy of scenario `/clock` (demo now, today, frozen) |
 | `GET /api/users` | any (DEMO_MODE) | Personas for the switcher |
-| `GET /api/reference` | any | Stages, metrics, reason codes, molecule types and classes (`{key, label}`), campaigns (distinct from mirror), profile site name, profile `terms`, `release_badge` (env `RELEASE_BADGE`) |
+| `GET /api/reference` | any | Stages, metrics, reason codes, molecule types and classes (`{key, label}`), campaigns (distinct from mirror), profile site name, profile `terms`, `release_badge` (env `RELEASE_BADGE`), `air_gap_threshold_hours` (F16) |
 | `GET /api/overview` | any | Query: `type[]`, `class[]`, `campaign[]`, `stage`, `flags[]`, `period` (`all`,`this_week`,`last_week`,`next_week`,`this_month`,`last_month`,`next_month`,`custom`), `from`, `to`, `q` (search material/batch), `bookmarked` (true = only the user's bookmarks; `class[]=unknown` matches a NULL class, OQ-086). Returns `{freshness, flow_strip:[{stage_key,count,breached}], on_hold_count, total, mode:'snapshot'|'due_in_period', alerts:[…], adjusted_count, bookmarks:[row_key…], rows:[…]}` |
 | `GET /api/metrics` | any | Weekly metrics (12 weeks + current) and reference, honouring the same filters where computable (Tier 1: unfiltered, flag `filtered:false`) |
 | `GET /api/rows/{row_key}` | any | Full row: facts, plan, overrides (current + history), comments, deviations, sibling lots of same batch (history) |

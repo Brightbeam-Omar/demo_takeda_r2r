@@ -1694,6 +1694,10 @@
       },
       "ReferenceOut": {
         "properties": {
+          "air_gap_threshold_hours": {
+            "title": "Air Gap Threshold Hours",
+            "type": "integer"
+          },
           "campaigns": {
             "items": {
               "type": "string"
@@ -1799,7 +1803,8 @@
           "periods",
           "metric_rag",
           "terms",
-          "release_badge"
+          "release_badge",
+          "air_gap_threshold_hours"
         ],
         "title": "ReferenceOut",
         "type": "object"

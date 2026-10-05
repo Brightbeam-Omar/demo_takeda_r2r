@@ -1026,6 +1026,8 @@ export interface components {
         };
         /** ReferenceOut */
         ReferenceOut: {
+            /** Air Gap Threshold Hours */
+            air_gap_threshold_hours: number;
             /** Campaigns */
             campaigns: string[];
             /** Classes */

@@ -5,6 +5,10 @@ import { EmptyState, ErrorState, Skeleton } from '../components/common/States'
 import { BatchDrawer } from '../components/drawer/BatchDrawer'
 import { NeedByModal } from '../components/edit/NeedByModal'
 import { Section } from '../components/common/Section'
+import { AdjustedBanner } from '../components/banners/AdjustedBanner'
+import { InsightsBanner } from '../components/banners/InsightsBanner'
+import { AdjustedNeedByWindow } from '../components/windows/AdjustedNeedByWindow'
+import { InsightsWindow } from '../components/windows/InsightsWindow'
 import { FilterBar } from '../components/filters/FilterBar'
 import { AlertsBand } from '../components/flow-strip/AlertsBand'
 import { FlowStrip } from '../components/flow-strip/FlowStrip'
@@ -21,6 +25,7 @@ export function Overview() {
   const { filters, update, clearAll } = useUrlFilters()
   const drawer = useDrawerRow()
   const [editRow, setEditRow] = useState<string | null>(null)
+  const [openWindow, setOpenWindow] = useState<'adjusted' | 'insights' | null>(null)
   const justSaved = useJustSaved()
   const reference = useReference()
   const params = toApiParams(filters)
@@ -34,6 +39,9 @@ export function Overview() {
   const data = overview.data
   const changedKeys = useMemo(() => new Set([...changed, ...justSaved]), [changed, justSaved])
   const me = useMe()
+  // Both banners and their windows use every filter except stage (OQ-059(5), OQ-087).
+  const bannerParams = useMemo(() => toApiParams({ ...filters, stage: null }), [filters])
+  const airGapCount = data?.alerts.find((alert) => alert.kind === 'air_gap')?.count ?? 0
   const bookmarks = useMemo(() => data?.bookmarks ?? [], [data])
   const bookmarkSet = useMemo(() => new Set(bookmarks), [bookmarks])
   const toggleBookmark = useToggleBookmark()
@@ -72,6 +80,12 @@ export function Overview() {
           <ErrorState what="the overview" error={overview.error} onRetry={() => void overview.refetch()} />
         )}
         {!data && overview.isPending && <Skeleton label="alerts and pipeline" height="h-40" />}
+        {data && (
+          <section aria-label="Banners" className="space-y-2">
+            <AdjustedBanner count={data.adjusted_count} onView={() => setOpenWindow('adjusted')} />
+            <InsightsBanner count={airGapCount} onView={() => setOpenWindow('insights')} />
+          </section>
+        )}
         {data && <AlertsBand alerts={data.alerts} onFilter={update} />}
         {data && reference.data && (
           <Section title="Pipeline by Stage">
@@ -144,6 +158,8 @@ export function Overview() {
         </Section>
       </main>
       <BatchDrawer rowKey={drawer.row} onOpenRow={drawer.open} canEdit={canEdit} onEdit={setEditRow} />
+      <AdjustedNeedByWindow open={openWindow === 'adjusted'} onClose={() => setOpenWindow(null)} params={bannerParams} />
+      <InsightsWindow open={openWindow === 'insights'} onClose={() => setOpenWindow(null)} params={bannerParams} />
       {editRow ? <NeedByModal rowKey={editRow} onClose={() => setEditRow(null)} /> : null}
     </>
   )
