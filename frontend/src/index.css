@@ -4,6 +4,9 @@
 /* Visual system tokens (specs/05-ux-guidelines.md). Colour carries meaning only: RAG and stage hues. */
 @theme {
   --font-sans: "Inter Variable", system-ui, sans-serif;
+  /* The root is 14 px, so these keep the smallest text at 12 px and the table text at 13 px (05). */
+  --text-xs: 0.857rem;
+  --text-sm: 0.929rem;
   --radius-card: 8px;
   --radius-chip: 6px;
   --color-stage-1: var(--color-sky-500);

@@ -22,11 +22,11 @@ export function MetricChip({ metric }: { metric: Metric }) {
       <div
         data-testid={`metric-${metric.metric_id}`}
         title={metric.null_reason ?? 'Awaiting signal'}
-        className="rounded-card border border-slate-200 bg-slate-100 px-3 py-2 text-slate-500"
+        className="rounded-card border border-slate-200 bg-slate-100 px-3 py-2 text-slate-700"
       >
         <div className="flex items-center justify-between text-xs">
           <span>{metric.metric_id} · {metric.label}</span>
-          <span className="rounded-chip bg-slate-200 px-1.5 py-0.5">Tier 2</span>
+          <span className="rounded-chip bg-slate-200 px-1.5 py-0.5 text-slate-700">Tier 2</span>
         </div>
         <div className="text-xl font-semibold" aria-label={`${metric.label}: no data. ${metric.null_reason ?? ''}`}>–</div>
       </div>

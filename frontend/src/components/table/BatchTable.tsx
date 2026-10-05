@@ -24,14 +24,14 @@ import {
 const ROW_HEIGHT = 36
 const helper = createColumnHelper<Row>()
 // Minimum px and a share of any spare width per column; at 1440 px the whole table fits without scrolling.
-const MIN_WIDTH = 1108
+const MIN_WIDTH = 1134
 const WIDTHS: Record<string, string> = {
   material: 'minmax(190px, 2.4fr)',
   campaign: 'minmax(90px, 1fr)',
   batch: 'minmax(64px, 0.7fr)',
   location: 'minmax(84px, 1fr)',
-  inbound: 'minmax(56px, 0.5fr)',
-  deviation: 'minmax(70px, 0.6fr)',
+  inbound: 'minmax(68px, 0.5fr)',
+  deviation: 'minmax(84px, 0.6fr)',
   stage: 'minmax(100px, 1.1fr)',
   system_need_by: 'minmax(84px, 0.9fr)',
   adjusted_need_by: 'minmax(100px, 1fr)',

@@ -1,7 +1,7 @@
 # R2R Intelligence Demo: local stack. Variables are read from .env (`cp .env.example .env`).
 # Host ports can be overridden (POSTGRES_HOST_PORT, SCENARIO_HOST_PORT, ERP_HOST_PORT, LIMS_HOST_PORT,
-# QMS_HOST_PORT, DAGSTER_HOST_PORT, APP_API_HOST_PORT, LAKEHOUSE_HOST_DIR): `make stack-test` uses other ports and its own project so the demo stack is never touched.
-# Later features add services (agents, frontend).
+# QMS_HOST_PORT, DAGSTER_HOST_PORT, APP_API_HOST_PORT, FRONTEND_HOST_PORT, FRONTEND_WEB_HOST_PORT, LAKEHOUSE_HOST_DIR): `make stack-test` uses other ports and its own project so the demo stack is never touched.
+# Later features add services (agents).
 
 # Bind mount for the Delta lakehouse. Dagster mounts it read-write (`*lakehouse`); the app-worker, the only
 # application reader, mounts the same directory read-only (`*lakehouse-ro`, F08-FR-06).
@@ -155,6 +155,39 @@ services:
       interval: 5s
       timeout: 5s
       retries: 12
+
+  # The React app (F10). `frontend` is the Vite dev server (hot reload needs a rebuild here, `make up` does it).
+  # `frontend-web` is the production nginx image on 8080 and starts only with `--profile prod`.
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+      target: dev
+    environment:
+      API_PROXY_TARGET: http://app-api:8000
+      AGENTS_PROXY_TARGET: http://agents:8200
+    ports:
+      - "${FRONTEND_HOST_PORT:-5173}:5173"
+    depends_on:
+      app-api: {condition: service_healthy}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:5173/"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  frontend-web:
+    profiles: ["prod"]
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+      target: prod
+    ports:
+      - "${FRONTEND_WEB_HOST_PORT:-8080}:8080"
+    depends_on:
+      app-api: {condition: service_healthy}
+    restart: unless-stopped
 
   # The drain worker (F08): the only application code that reads the lakehouse, which it mounts read-only.
   app-worker:

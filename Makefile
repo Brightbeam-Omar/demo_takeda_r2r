@@ -13,6 +13,7 @@ help:
 install: ## Install Python and frontend dependencies
 	uv sync
 	cd frontend && npm ci
+	cd tests/e2e && npm ci && npx playwright install chromium
 
 # --- stack -------------------------------------------------------------------------------------
 up: ## Start the stack (needs .env: cp .env.example .env)
@@ -51,7 +52,7 @@ STACK_PROJECT := r2r_stacktest
 stack-test: ## Start an isolated copy of the stack, run the acceptance tests against it, tear it down
 	@test -f .env || cp .env.example .env
 	@export COMPOSE_PROJECT_NAME=$(STACK_PROJECT) POSTGRES_HOST_PORT=15432 SCENARIO_HOST_PORT=18100 \
-		ERP_HOST_PORT=18101 LIMS_HOST_PORT=18102 QMS_HOST_PORT=18103 DAGSTER_HOST_PORT=13001 APP_API_HOST_PORT=18000 \
+		ERP_HOST_PORT=18101 LIMS_HOST_PORT=18102 QMS_HOST_PORT=18103 DAGSTER_HOST_PORT=13001 APP_API_HOST_PORT=18000 FRONTEND_HOST_PORT=15173 \
 		LAKEHOUSE_HOST_DIR=$(CURDIR)/.stacktest-lakehouse; \
 	trap 'docker compose -p $(STACK_PROJECT) down -v --remove-orphans' EXIT; \
 	docker compose -p $(STACK_PROJECT) up -d --build --wait && uv run pytest -m stack tests/stack
@@ -64,6 +65,7 @@ check-frontend:
 	cd frontend && npm run lint
 	cd frontend && npm run typecheck
 	cd frontend && npm test -- --run
+	@if [ -d tests/e2e/node_modules ]; then cd tests/e2e && npx tsc --noEmit; fi
 
 # Scans the git file set, then commit messages on unpushed commits (skipped without an upstream).
 # Warns and passes when no denylist is configured, except in CI (see tools/leakscan).
@@ -78,11 +80,14 @@ leakscan:
 check: check-python coverage-core check-frontend leakscan ## Lint, types, tests, leak scan: one verdict
 
 # --- demo placeholders (implemented by the feature named in each message) --------------------
-e2e: ## Demo reset, then Playwright run-of-show
-	@echo "e2e: not yet implemented (F14)"
+# Until F13 exists there is no demo reset: this runs the Playwright specs against the already-running stack,
+# so run `make seed` first (the live-update spec changes B1042, and `make seed` puts it back).
+# F13/F14 switch this target to run `make demo-reset` first.
+e2e: ## Playwright specs against the running stack (run `make seed` first)
+	cd tests/e2e && npx playwright test
 
 e2e-headed: ## Same as e2e, in a visible browser
-	@echo "e2e-headed: not yet implemented (F14)"
+	cd tests/e2e && npx playwright test --headed
 
 demo-reset: ## Wipe state, regenerate seed data, run the pipeline once, sync
 	@echo "demo-reset: not yet implemented (F13)"
