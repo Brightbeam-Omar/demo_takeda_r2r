@@ -6,4 +6,4 @@
 - [x] T5 Explain popover everywhere (FR-04, AC-04)
 - [x] T6 Sync Status page (FR-05, AC-05)
 - [x] T7 Audit Log page (FR-06)
-- [ ] T8 Playwright specs AC-01–06
+- [x] T8 Playwright specs AC-01–06

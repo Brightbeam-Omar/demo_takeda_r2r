@@ -2,6 +2,14 @@ import { expect, test } from '@playwright/test'
 
 const B2077 = 'RM10031|B2077|'
 
+// `make seed` leaves human input in place, so start from a row without an override (a no-op on a fresh reset).
+test.beforeAll(async ({ request }) => {
+  await request.put(`/api/rows/${encodeURIComponent('RM10031|B2077|10000782')}/need-by`, {
+    data: { adjusted_date: null, expedite: false },
+    headers: { 'X-Demo-User': 'pat' },
+  })
+})
+
 test('F11-AC-01: Pat pulls B2077 forward; the preview shows 6/37/6 and 14 Oct amber before save, then the row is italic and highlighted', async ({ page }) => {
   await page.goto('/overview?q=B2077')
   const row = page.locator(`[data-testid=batch-row][data-row-key^="${B2077}"]`)
