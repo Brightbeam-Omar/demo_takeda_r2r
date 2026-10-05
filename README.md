@@ -57,6 +57,7 @@ delivers them.
 | `make integration` | Tests that need Postgres (starts the compose Postgres) |
 | `make stack-test` | Acceptance tests against an isolated copy of the stack (own project and ports, torn down afterwards); the demo stack is untouched |
 | `make coverage-core` | 100% branch-coverage gate on `r2r_core.sla` and `r2r_core.airgap` (part of `make check`) |
+| `uv run python -m app_api.openapi`, then `npm run gen:api` in `frontend/` | Re-export the API schema (`services/app_api/openapi.json`, a test keeps it current) and regenerate the TypeScript client types (F09) |
 | `make demo-reset` | Wipe state and rebuild the canonical opening state (F13) |
 | `make seed` | Regenerate the `site_a` source data with the profile seed (wipes the three source DBs) from the host against the running stack, then run `make pipeline` |
 | `make pipeline` | Trigger one pipeline run (F07); the worker mirrors it into the app within about 30 s (F08) |

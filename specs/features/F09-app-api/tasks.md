@@ -7,4 +7,4 @@
 - [x] T5 Row detail, metrics, reference, audit, export endpoints (AC-10)
 - [x] T6 [TDD] Explain service (FR-06, AC-06, AC-07)
 - [x] T7 Performance test and caching (FR-07, AC-09)
-- [ ] T8 OpenAPI export and TS client generation script (FR-08)
+- [x] T8 OpenAPI export and TS client generation script (FR-08)
