@@ -58,6 +58,7 @@ delivers them.
 | `make stack-test` | Acceptance tests against an isolated copy of the stack (own project and ports, torn down afterwards); the demo stack is untouched |
 | `make coverage-core` | 100% branch-coverage gate on `r2r_core.sla` and `r2r_core.airgap` (part of `make check`) |
 | `make demo-reset` | Wipe state and rebuild the canonical opening state (F13) |
+| `make seed` | Regenerate the `site_a` source data with the profile seed (wipes the three source DBs) from the host against the running stack, then run `make pipeline` |
 | `make pipeline` | Trigger one pipeline run (F07); the worker mirrors it into the app within about 30 s (F08) |
 | `make scenario STEP=<id>` | Apply a scripted scenario step (F13) |
 | `make e2e` / `make e2e-headed` | Playwright run-of-show (F14) |

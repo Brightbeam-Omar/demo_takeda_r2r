@@ -5,7 +5,7 @@ SHELL := /bin/bash
 SRC_DIRS := $(shell find packages services tools -type d -name src -not -path '*/node_modules/*' -not -path '*/.venv/*' 2>/dev/null)
 
 .PHONY: help install up down logs fmt test check check-python check-frontend coverage-core leakscan integration stack-test \
-        e2e e2e-headed demo-reset pipeline scenario record-agents record-video doctor
+        e2e e2e-headed demo-reset seed pipeline scenario record-agents record-video doctor
 
 help:
 	@grep -E '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  make %-14s %s\n", $$1, $$2}'
@@ -86,6 +86,15 @@ e2e-headed: ## Same as e2e, in a visible browser
 
 demo-reset: ## Wipe state, regenerate seed data, run the pipeline once, sync
 	@echo "demo-reset: not yet implemented (F13)"
+
+# Runs datagen from the host against the published Postgres port (the containers use POSTGRES_PORT=5432 on the
+# compose network; the host sees POSTGRES_HOST_PORT), then runs the pipeline so the app mirror picks the data up.
+seed: ## Regenerate site_a source data (profile seed) against the running stack, then run the pipeline
+	@test -f .env || { echo "Missing .env. Run: cp .env.example .env"; exit 1; }
+	@set -a; . ./.env; set +a; \
+		POSTGRES_HOST=localhost POSTGRES_PORT=$${POSTGRES_HOST_PORT:-5432} \
+		uv run python -m datagen generate --profile site_a
+	$(MAKE) pipeline
 
 # Runs the Dagster job through the scenario service and waits; a failed run fails the target (F07-FR-06).
 pipeline: ## Trigger one pipeline run now and wait for it
