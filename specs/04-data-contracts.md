@@ -94,7 +94,7 @@ Derivations (non-obvious columns):
 | `open_/closed_deviation_count` | Via `deviation_link` on `(material_no, batch_no)` |
 
 ### 3b. `staging.batch_stage` (output of the stage engine)
-One row per `row_key`, built by the SQL steps `50`–`90` from `batch_flat`: `row_key` plus the columns of §4.1 from `stage_key` to `inbound_light` (stage, rule id, sort, entry and exit dates per stage, flags, lights, `applicable_sla_json`, `source_refs_json`). `snapshot_date`, `run_id`, `published_at` and `system_need_by_locked` are added by F07, which joins `batch_flat` and `batch_stage` to publish `batch_pipeline_v`.
+One row per `row_key`, built by the SQL steps `50`–`90` from `batch_flat`: `row_key` plus the columns of §4.1 from `stage_key` to `inbound_light` (stage, rule id, the two derived rule inputs `cycle_start_date` and `ud_effective`, sort, entry and exit dates per stage, flags, lights, `applicable_sla_json`, `source_refs_json`). `snapshot_date`, `run_id`, `published_at` and `system_need_by_locked` are added by F07, which joins `batch_flat` and `batch_stage` to publish `batch_pipeline_v`.
 
 `source_refs_json` lists every material document of the batch (netted ones included), ordered by number. Example: `{"erp":{"mcha":"RM10023|B1042","qals":"10000042","mseg":["4900001234"]},"lims":{"sample":"S-77812"},"qms":{"deviation":["DEV-000123"]}}`
 
@@ -102,7 +102,7 @@ One row per `row_key`, built by the SQL steps `50`–`90` from `batch_flat`: `ro
 
 ### 4.1 `batch_pipeline_v`
 `row_key` (`material_no|batch_no|inspection_lot_no`), every `batch_flat` business column (including `erp_results_recorded_at`), plus:
-`stage_key, stage_rule_id, stage_sort, current_stage_entry_date, lims_rejected, receipt_entry, receipt_exit, call_off_entry, call_off_exit, sampling_entry, sampling_exit, qc_ship_entry, qc_ship_exit, qc_testing_entry, qc_testing_exit, qa_release_entry, qa_release_exit, applicable_sla_json, source_refs_json, system_need_by_locked, on_hold, erp_blocked, re_eval, offsite, full_spec, ud_rejected, deviation_light, inbound_light, snapshot_date, run_id, published_at`
+`stage_key, stage_rule_id, cycle_start_date, ud_effective, stage_sort, current_stage_entry_date, lims_rejected, receipt_entry, receipt_exit, call_off_entry, call_off_exit, sampling_entry, sampling_exit, qc_ship_entry, qc_ship_exit, qc_testing_entry, qc_testing_exit, qa_release_entry, qa_release_exit, applicable_sla_json, source_refs_json, system_need_by_locked, on_hold, erp_blocked, re_eval, offsite, full_spec, ud_rejected, deviation_light, inbound_light, snapshot_date, run_id, published_at`
 
 ### 4.2 `weekly_metrics_v`
 `metric_id, week_start (date), completed (int), on_time (int), pct (decimal 5,1 null), run_id`

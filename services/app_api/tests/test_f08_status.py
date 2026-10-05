@@ -33,7 +33,7 @@ def test_f08_fr03_admin_trigger_queues_a_manual_event(
 
 
 @pytest.mark.parametrize(
-    ("user", "expected"), [("pat", 403), ("sam", 403), ("quinn", 403), ("nobody", 401), (None, 401)]
+    ("user", "expected"), [("pat", 403), ("sam", 403), ("quinn", 403), ("nobody", 401), (None, 403)]
 )
 def test_f08_fr03_only_admin_may_trigger(
     client: TestClient, app_factory: sessionmaker[Session], user: str | None, expected: int

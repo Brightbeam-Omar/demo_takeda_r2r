@@ -1,0 +1,3834 @@
+{
+  "components": {
+    "schemas": {
+      "AlertOut": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "detail": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "default": {},
+            "title": "Detail",
+            "type": "object"
+          },
+          "kind": {
+            "enum": [
+              "air_gap",
+              "late",
+              "on_hold",
+              "rejected"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "rows": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/RowOut"
+            },
+            "title": "Rows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "kind",
+          "count"
+        ],
+        "title": "AlertOut",
+        "type": "object"
+      },
+      "AuditOut": {
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "actor_user_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor User Key"
+          },
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "details": {
+            "title": "Details"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "row_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Row Key"
+          }
+        },
+        "required": [
+          "id",
+          "at",
+          "actor_user_key",
+          "action",
+          "row_key",
+          "details"
+        ],
+        "title": "AuditOut",
+        "type": "object"
+      },
+      "AuditPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AuditOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "limit",
+          "offset",
+          "items"
+        ],
+        "title": "AuditPage",
+        "type": "object"
+      },
+      "ClockOut": {
+        "properties": {
+          "frozen": {
+            "title": "Frozen",
+            "type": "boolean"
+          },
+          "now_utc": {
+            "format": "date-time",
+            "title": "Now Utc",
+            "type": "string"
+          },
+          "today_local": {
+            "format": "date",
+            "title": "Today Local",
+            "type": "string"
+          }
+        },
+        "required": [
+          "now_utc",
+          "today_local",
+          "frozen"
+        ],
+        "title": "ClockOut",
+        "type": "object"
+      },
+      "CommentIn": {
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "title": "CommentIn",
+        "type": "object"
+      },
+      "CommentOut": {
+        "properties": {
+          "author_user_key": {
+            "title": "Author User Key",
+            "type": "string"
+          },
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "row_key": {
+            "title": "Row Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "row_key",
+          "body",
+          "author_user_key",
+          "created_at"
+        ],
+        "title": "CommentOut",
+        "type": "object"
+      },
+      "CompletionExplain": {
+        "properties": {
+          "adjusted_reason_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Adjusted Reason Code"
+          },
+          "applicable_slas": {
+            "title": "Applicable Slas"
+          },
+          "available_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Available Days"
+          },
+          "base_slas": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Base Slas",
+            "type": "object"
+          },
+          "budget_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Budget Days"
+          },
+          "compressed": {
+            "title": "Compressed",
+            "type": "boolean"
+          },
+          "compression_ratio": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Compression Ratio"
+          },
+          "days_remaining": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days Remaining"
+          },
+          "effective_slas": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Effective Slas",
+            "type": "object"
+          },
+          "entry_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry Date"
+          },
+          "expected_completion": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Completion"
+          },
+          "formula": {
+            "title": "Formula",
+            "type": "string"
+          },
+          "freshness": {
+            "$ref": "#/components/schemas/Freshness"
+          },
+          "kind": {
+            "const": "expected_completion",
+            "default": "expected_completion",
+            "title": "Kind",
+            "type": "string"
+          },
+          "must_complete_by": {
+            "additionalProperties": {
+              "format": "date",
+              "type": "string"
+            },
+            "title": "Must Complete By",
+            "type": "object"
+          },
+          "need_by_adjusted": {
+            "title": "Need By Adjusted",
+            "type": "boolean"
+          },
+          "operative_need_by": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operative Need By"
+          },
+          "rag": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rag"
+          },
+          "row_key": {
+            "title": "Row Key",
+            "type": "string"
+          },
+          "stage_key": {
+            "title": "Stage Key",
+            "type": "string"
+          },
+          "system_need_by": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "System Need By"
+          }
+        },
+        "required": [
+          "row_key",
+          "stage_key",
+          "entry_date",
+          "system_need_by",
+          "operative_need_by",
+          "need_by_adjusted",
+          "adjusted_reason_code",
+          "applicable_slas",
+          "base_slas",
+          "effective_slas",
+          "available_days",
+          "budget_days",
+          "compressed",
+          "compression_ratio",
+          "must_complete_by",
+          "expected_completion",
+          "days_remaining",
+          "rag",
+          "formula",
+          "freshness"
+        ],
+        "title": "CompletionExplain",
+        "type": "object"
+      },
+      "DeviationOut": {
+        "properties": {
+          "closed_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closed On"
+          },
+          "deviation_no": {
+            "title": "Deviation No",
+            "type": "string"
+          },
+          "opened_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Opened On"
+          },
+          "owner": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner"
+          },
+          "root_cause_category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Root Cause Category"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "required": [
+          "deviation_no",
+          "title",
+          "severity",
+          "status",
+          "opened_on",
+          "closed_on",
+          "root_cause_category",
+          "owner"
+        ],
+        "title": "DeviationOut",
+        "type": "object"
+      },
+      "FlagsOut": {
+        "properties": {
+          "air_gap": {
+            "title": "Air Gap",
+            "type": "boolean"
+          },
+          "erp_blocked": {
+            "title": "Erp Blocked",
+            "type": "boolean"
+          },
+          "expedite": {
+            "title": "Expedite",
+            "type": "boolean"
+          },
+          "full_spec": {
+            "title": "Full Spec",
+            "type": "boolean"
+          },
+          "late": {
+            "title": "Late",
+            "type": "boolean"
+          },
+          "lims_rejected": {
+            "title": "Lims Rejected",
+            "type": "boolean"
+          },
+          "offsite": {
+            "title": "Offsite",
+            "type": "boolean"
+          },
+          "on_hold": {
+            "title": "On Hold",
+            "type": "boolean"
+          },
+          "re_eval": {
+            "title": "Re Eval",
+            "type": "boolean"
+          },
+          "ud_rejected": {
+            "title": "Ud Rejected",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "on_hold",
+          "erp_blocked",
+          "re_eval",
+          "offsite",
+          "full_spec",
+          "expedite",
+          "ud_rejected",
+          "lims_rejected",
+          "air_gap",
+          "late"
+        ],
+        "title": "FlagsOut",
+        "type": "object"
+      },
+      "FlowEntry": {
+        "properties": {
+          "breached": {
+            "title": "Breached",
+            "type": "boolean"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "stage_key": {
+            "title": "Stage Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "stage_key",
+          "label",
+          "count",
+          "breached"
+        ],
+        "title": "FlowEntry",
+        "type": "object"
+      },
+      "FlowExplain": {
+        "properties": {
+          "breached": {
+            "title": "Breached",
+            "type": "boolean"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "filters": {
+            "additionalProperties": true,
+            "title": "Filters",
+            "type": "object"
+          },
+          "freshness": {
+            "$ref": "#/components/schemas/Freshness"
+          },
+          "kind": {
+            "const": "flow",
+            "default": "flow",
+            "title": "Kind",
+            "type": "string"
+          },
+          "mode": {
+            "enum": [
+              "snapshot",
+              "due_in_period"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "row_keys": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Row Keys",
+            "type": "array"
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/RuleOut"
+            },
+            "title": "Rules",
+            "type": "array"
+          },
+          "stage_key": {
+            "title": "Stage Key",
+            "type": "string"
+          },
+          "stage_label": {
+            "title": "Stage Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "stage_key",
+          "stage_label",
+          "count",
+          "breached",
+          "mode",
+          "filters",
+          "rules",
+          "row_keys",
+          "freshness"
+        ],
+        "title": "FlowExplain",
+        "type": "object"
+      },
+      "Freshness": {
+        "description": "Which contract run the answer is built from, and how old it is on the demo clock (F09-FR-07).",
+        "properties": {
+          "contract_run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contract Run Id"
+          },
+          "freshness_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Freshness Minutes"
+          },
+          "last_success_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Success At"
+          }
+        },
+        "required": [
+          "contract_run_id",
+          "last_success_at",
+          "freshness_minutes"
+        ],
+        "title": "Freshness",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "MetricExplain": {
+        "properties": {
+          "completed": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed"
+          },
+          "freshness": {
+            "$ref": "#/components/schemas/Freshness"
+          },
+          "kind": {
+            "const": "metric",
+            "default": "metric",
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "metric_id": {
+            "title": "Metric Id",
+            "type": "string"
+          },
+          "null_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Null Reason"
+          },
+          "on_time": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "On Time"
+          },
+          "pct": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pct"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/MetricRowOut"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "sla_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sla Days"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "week_start": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Week Start"
+          }
+        },
+        "required": [
+          "metric_id",
+          "label",
+          "status",
+          "null_reason",
+          "week_start",
+          "completed",
+          "on_time",
+          "pct",
+          "sla_days",
+          "rows",
+          "freshness"
+        ],
+        "title": "MetricExplain",
+        "type": "object"
+      },
+      "MetricOut": {
+        "properties": {
+          "computed_in": {
+            "title": "Computed In",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "metric_id": {
+            "title": "Metric Id",
+            "type": "string"
+          },
+          "null_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Null Reason"
+          },
+          "sla_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sla Days"
+          },
+          "stage_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage Key"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "weeks": {
+            "items": {
+              "$ref": "#/components/schemas/WeekOut"
+            },
+            "title": "Weeks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "metric_id",
+          "label",
+          "stage_key",
+          "sla_days",
+          "computed_in",
+          "status",
+          "null_reason",
+          "weeks"
+        ],
+        "title": "MetricOut",
+        "type": "object"
+      },
+      "MetricRowOut": {
+        "properties": {
+          "duration_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Days"
+          },
+          "entry_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry Date"
+          },
+          "exit_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Date"
+          },
+          "on_time": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "On Time"
+          },
+          "row_key": {
+            "title": "Row Key",
+            "type": "string"
+          },
+          "sla_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sla Days"
+          }
+        },
+        "required": [
+          "row_key",
+          "entry_date",
+          "exit_date",
+          "duration_days",
+          "sla_days",
+          "on_time"
+        ],
+        "title": "MetricRowOut",
+        "type": "object"
+      },
+      "MetricsOut": {
+        "properties": {
+          "filtered": {
+            "title": "Filtered",
+            "type": "boolean"
+          },
+          "freshness": {
+            "$ref": "#/components/schemas/Freshness"
+          },
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/MetricOut"
+            },
+            "title": "Metrics",
+            "type": "array"
+          },
+          "week_starts": {
+            "items": {
+              "format": "date",
+              "type": "string"
+            },
+            "title": "Week Starts",
+            "type": "array"
+          }
+        },
+        "required": [
+          "freshness",
+          "filtered",
+          "week_starts",
+          "metrics"
+        ],
+        "title": "MetricsOut",
+        "type": "object"
+      },
+      "NeedByIn": {
+        "properties": {
+          "adjusted_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Adjusted Date"
+          },
+          "expedite": {
+            "default": false,
+            "title": "Expedite",
+            "type": "boolean"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "reason_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Code"
+          }
+        },
+        "title": "NeedByIn",
+        "type": "object"
+      },
+      "OverrideOut": {
+        "properties": {
+          "author_user_key": {
+            "title": "Author User Key",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "is_current": {
+            "title": "Is Current",
+            "type": "boolean"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "reason_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Code"
+          },
+          "value": {
+            "title": "Value"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "field",
+          "value",
+          "reason_code",
+          "note",
+          "version",
+          "author_user_key",
+          "created_at",
+          "is_current"
+        ],
+        "title": "OverrideOut",
+        "type": "object"
+      },
+      "OverviewOut": {
+        "properties": {
+          "alerts": {
+            "items": {
+              "$ref": "#/components/schemas/AlertOut"
+            },
+            "title": "Alerts",
+            "type": "array"
+          },
+          "flow_strip": {
+            "items": {
+              "$ref": "#/components/schemas/FlowEntry"
+            },
+            "title": "Flow Strip",
+            "type": "array"
+          },
+          "freshness": {
+            "$ref": "#/components/schemas/Freshness"
+          },
+          "mode": {
+            "enum": [
+              "snapshot",
+              "due_in_period"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "on_hold_count": {
+            "title": "On Hold Count",
+            "type": "integer"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/RowOut"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "freshness",
+          "flow_strip",
+          "on_hold_count",
+          "total",
+          "mode",
+          "alerts",
+          "rows"
+        ],
+        "title": "OverviewOut",
+        "type": "object"
+      },
+      "PipelineStatusOut": {
+        "properties": {
+          "last_run_id": {
+            "title": "Last Run Id",
+            "type": "string"
+          },
+          "last_success_at": {
+            "format": "date-time",
+            "title": "Last Success At",
+            "type": "string"
+          },
+          "row_count": {
+            "title": "Row Count",
+            "type": "integer"
+          },
+          "source_freshness": {
+            "additionalProperties": true,
+            "title": "Source Freshness",
+            "type": "object"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "last_run_id",
+          "started_at",
+          "last_success_at",
+          "row_count",
+          "source_freshness"
+        ],
+        "title": "PipelineStatusOut",
+        "type": "object"
+      },
+      "PlanOut": {
+        "properties": {
+          "compressed": {
+            "title": "Compressed",
+            "type": "boolean"
+          },
+          "compression_ratio": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Compression Ratio"
+          },
+          "days_in_stage": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days In Stage"
+          },
+          "days_remaining": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days Remaining"
+          },
+          "effective_slas": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Effective Slas",
+            "type": "object"
+          },
+          "expected_completion": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Completion"
+          },
+          "late": {
+            "title": "Late",
+            "type": "boolean"
+          },
+          "late_reason_auto": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Late Reason Auto"
+          },
+          "must_complete_by": {
+            "additionalProperties": {
+              "format": "date",
+              "type": "string"
+            },
+            "title": "Must Complete By",
+            "type": "object"
+          },
+          "rag": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rag"
+          }
+        },
+        "required": [
+          "expected_completion",
+          "must_complete_by",
+          "effective_slas",
+          "compressed",
+          "compression_ratio",
+          "days_in_stage",
+          "days_remaining",
+          "rag",
+          "late",
+          "late_reason_auto"
+        ],
+        "title": "PlanOut",
+        "type": "object"
+      },
+      "ReferenceOut": {
+        "properties": {
+          "campaigns": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Campaigns",
+            "type": "array"
+          },
+          "classes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Classes",
+            "type": "array"
+          },
+          "flags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Flags",
+            "type": "array"
+          },
+          "metric_rag": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Metric Rag",
+            "type": "object"
+          },
+          "metrics": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Metrics",
+            "type": "array"
+          },
+          "molecule_types": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Molecule Types",
+            "type": "array"
+          },
+          "periods": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Periods",
+            "type": "array"
+          },
+          "reason_codes": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Reason Codes",
+            "type": "array"
+          },
+          "site_name": {
+            "title": "Site Name",
+            "type": "string"
+          },
+          "stages": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Stages",
+            "type": "array"
+          }
+        },
+        "required": [
+          "site_name",
+          "stages",
+          "metrics",
+          "reason_codes",
+          "molecule_types",
+          "classes",
+          "campaigns",
+          "flags",
+          "periods",
+          "metric_rag"
+        ],
+        "title": "ReferenceOut",
+        "type": "object"
+      },
+      "RowDetail": {
+        "description": "``GET /api/rows/{row_key}``: the row with every mirror column, its overrides, comments and siblings.",
+        "properties": {
+          "adjusted_need_by_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Adjusted Need By Date"
+          },
+          "adjusted_reason_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Adjusted Reason Code"
+          },
+          "air_gap": {
+            "title": "Air Gap",
+            "type": "boolean"
+          },
+          "air_gap_hours": {
+            "title": "Air Gap Hours",
+            "type": "integer"
+          },
+          "batch_no": {
+            "title": "Batch No",
+            "type": "string"
+          },
+          "campaign": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Campaign"
+          },
+          "comment_count": {
+            "title": "Comment Count",
+            "type": "integer"
+          },
+          "comments": {
+            "items": {
+              "$ref": "#/components/schemas/CommentOut"
+            },
+            "title": "Comments",
+            "type": "array"
+          },
+          "current_overrides": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/OverrideOut"
+            },
+            "title": "Current Overrides",
+            "type": "object"
+          },
+          "current_stage_entry_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Stage Entry Date"
+          },
+          "days_in_stage": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days In Stage"
+          },
+          "deviation_light": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deviation Light"
+          },
+          "deviations": {
+            "items": {
+              "$ref": "#/components/schemas/DeviationOut"
+            },
+            "title": "Deviations",
+            "type": "array"
+          },
+          "expedite": {
+            "title": "Expedite",
+            "type": "boolean"
+          },
+          "facts": {
+            "additionalProperties": true,
+            "title": "Facts",
+            "type": "object"
+          },
+          "flags": {
+            "$ref": "#/components/schemas/FlagsOut"
+          },
+          "freshness": {
+            "$ref": "#/components/schemas/Freshness"
+          },
+          "inbound_light": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inbound Light"
+          },
+          "inspection_lot_no": {
+            "title": "Inspection Lot No",
+            "type": "string"
+          },
+          "late": {
+            "title": "Late",
+            "type": "boolean"
+          },
+          "lims_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lims Status"
+          },
+          "lot_type": {
+            "title": "Lot Type",
+            "type": "string"
+          },
+          "manual_status": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manual Status"
+          },
+          "material_class": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Material Class"
+          },
+          "material_desc": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Material Desc"
+          },
+          "material_no": {
+            "title": "Material No",
+            "type": "string"
+          },
+          "molecule_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Molecule Type"
+          },
+          "operative_need_by": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operative Need By"
+          },
+          "override_history": {
+            "items": {
+              "$ref": "#/components/schemas/OverrideOut"
+            },
+            "title": "Override History",
+            "type": "array"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/PlanOut"
+          },
+          "row_key": {
+            "title": "Row Key",
+            "type": "string"
+          },
+          "siblings": {
+            "items": {
+              "$ref": "#/components/schemas/RowOut"
+            },
+            "title": "Siblings",
+            "type": "array"
+          },
+          "stage_key": {
+            "title": "Stage Key",
+            "type": "string"
+          },
+          "stage_label": {
+            "title": "Stage Label",
+            "type": "string"
+          },
+          "stage_rule_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage Rule Id"
+          },
+          "supplier_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supplier Name"
+          },
+          "system_need_by_locked": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "System Need By Locked"
+          },
+          "ud_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ud Code"
+          }
+        },
+        "required": [
+          "row_key",
+          "material_no",
+          "material_desc",
+          "material_class",
+          "molecule_type",
+          "supplier_name",
+          "batch_no",
+          "inspection_lot_no",
+          "lot_type",
+          "campaign",
+          "stage_key",
+          "stage_label",
+          "stage_rule_id",
+          "current_stage_entry_date",
+          "lims_status",
+          "ud_code",
+          "system_need_by_locked",
+          "adjusted_need_by_date",
+          "adjusted_reason_code",
+          "operative_need_by",
+          "expedite",
+          "manual_status",
+          "plan",
+          "air_gap",
+          "air_gap_hours",
+          "late",
+          "days_in_stage",
+          "deviation_light",
+          "inbound_light",
+          "flags",
+          "comment_count",
+          "freshness",
+          "facts",
+          "current_overrides",
+          "override_history",
+          "comments",
+          "deviations",
+          "siblings"
+        ],
+        "title": "RowDetail",
+        "type": "object"
+      },
+      "RowOut": {
+        "description": "One lot: the facts the table shows, the human input and the plan computed from both.",
+        "properties": {
+          "adjusted_need_by_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Adjusted Need By Date"
+          },
+          "adjusted_reason_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Adjusted Reason Code"
+          },
+          "air_gap": {
+            "title": "Air Gap",
+            "type": "boolean"
+          },
+          "air_gap_hours": {
+            "title": "Air Gap Hours",
+            "type": "integer"
+          },
+          "batch_no": {
+            "title": "Batch No",
+            "type": "string"
+          },
+          "campaign": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Campaign"
+          },
+          "comment_count": {
+            "title": "Comment Count",
+            "type": "integer"
+          },
+          "current_stage_entry_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Stage Entry Date"
+          },
+          "days_in_stage": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days In Stage"
+          },
+          "deviation_light": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deviation Light"
+          },
+          "expedite": {
+            "title": "Expedite",
+            "type": "boolean"
+          },
+          "flags": {
+            "$ref": "#/components/schemas/FlagsOut"
+          },
+          "inbound_light": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inbound Light"
+          },
+          "inspection_lot_no": {
+            "title": "Inspection Lot No",
+            "type": "string"
+          },
+          "late": {
+            "title": "Late",
+            "type": "boolean"
+          },
+          "lims_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lims Status"
+          },
+          "lot_type": {
+            "title": "Lot Type",
+            "type": "string"
+          },
+          "manual_status": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manual Status"
+          },
+          "material_class": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Material Class"
+          },
+          "material_desc": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Material Desc"
+          },
+          "material_no": {
+            "title": "Material No",
+            "type": "string"
+          },
+          "molecule_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Molecule Type"
+          },
+          "operative_need_by": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operative Need By"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/PlanOut"
+          },
+          "row_key": {
+            "title": "Row Key",
+            "type": "string"
+          },
+          "stage_key": {
+            "title": "Stage Key",
+            "type": "string"
+          },
+          "stage_label": {
+            "title": "Stage Label",
+            "type": "string"
+          },
+          "stage_rule_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage Rule Id"
+          },
+          "supplier_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supplier Name"
+          },
+          "system_need_by_locked": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "System Need By Locked"
+          },
+          "ud_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ud Code"
+          }
+        },
+        "required": [
+          "row_key",
+          "material_no",
+          "material_desc",
+          "material_class",
+          "molecule_type",
+          "supplier_name",
+          "batch_no",
+          "inspection_lot_no",
+          "lot_type",
+          "campaign",
+          "stage_key",
+          "stage_label",
+          "stage_rule_id",
+          "current_stage_entry_date",
+          "lims_status",
+          "ud_code",
+          "system_need_by_locked",
+          "adjusted_need_by_date",
+          "adjusted_reason_code",
+          "operative_need_by",
+          "expedite",
+          "manual_status",
+          "plan",
+          "air_gap",
+          "air_gap_hours",
+          "late",
+          "days_in_stage",
+          "deviation_light",
+          "inbound_light",
+          "flags",
+          "comment_count"
+        ],
+        "title": "RowOut",
+        "type": "object"
+      },
+      "RuleOut": {
+        "properties": {
+          "condition_sql": {
+            "title": "Condition Sql",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "inputs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Inputs",
+            "type": "array"
+          },
+          "stage_key": {
+            "title": "Stage Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "stage_key",
+          "condition_sql",
+          "description",
+          "inputs"
+        ],
+        "title": "RuleOut",
+        "type": "object"
+      },
+      "StageExplain": {
+        "properties": {
+          "freshness": {
+            "$ref": "#/components/schemas/Freshness"
+          },
+          "input_values": {
+            "additionalProperties": true,
+            "title": "Input Values",
+            "type": "object"
+          },
+          "kind": {
+            "const": "stage",
+            "default": "stage",
+            "title": "Kind",
+            "type": "string"
+          },
+          "row_key": {
+            "title": "Row Key",
+            "type": "string"
+          },
+          "rule": {
+            "$ref": "#/components/schemas/RuleOut"
+          },
+          "source_refs": {
+            "title": "Source Refs"
+          },
+          "stage_key": {
+            "title": "Stage Key",
+            "type": "string"
+          },
+          "stage_label": {
+            "title": "Stage Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "row_key",
+          "stage_key",
+          "stage_label",
+          "rule",
+          "input_values",
+          "source_refs",
+          "freshness"
+        ],
+        "title": "StageExplain",
+        "type": "object"
+      },
+      "StatusIn": {
+        "properties": {
+          "rag": {
+            "anyOf": [
+              {
+                "enum": [
+                  "red",
+                  "amber",
+                  "green"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rag"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "team": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Team"
+          }
+        },
+        "title": "StatusIn",
+        "type": "object"
+      },
+      "SyncEventOut": {
+        "properties": {
+          "age_seconds": {
+            "title": "Age Seconds",
+            "type": "integer"
+          },
+          "claimed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Claimed At"
+          },
+          "duration_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Ms"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "received_at": {
+            "format": "date-time",
+            "title": "Received At",
+            "type": "string"
+          },
+          "rows_upserted": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rows Upserted"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Id"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "source",
+          "run_id",
+          "status",
+          "received_at",
+          "claimed_at",
+          "finished_at",
+          "error",
+          "rows_upserted",
+          "age_seconds",
+          "duration_ms"
+        ],
+        "title": "SyncEventOut",
+        "type": "object"
+      },
+      "SyncStatusOut": {
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/SyncEventOut"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "freshness_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Freshness Minutes"
+          },
+          "pipeline_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PipelineStatusOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "watermarks": {
+            "items": {
+              "$ref": "#/components/schemas/WatermarkOut"
+            },
+            "title": "Watermarks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "events",
+          "watermarks",
+          "pipeline_status",
+          "freshness_minutes"
+        ],
+        "title": "SyncStatusOut",
+        "type": "object"
+      },
+      "UserOut": {
+        "properties": {
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "user_key": {
+            "title": "User Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_key",
+          "display_name",
+          "role"
+        ],
+        "title": "UserOut",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "WatermarkOut": {
+        "properties": {
+          "age_seconds": {
+            "title": "Age Seconds",
+            "type": "integer"
+          },
+          "object_name": {
+            "title": "Object Name",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "synced_at": {
+            "format": "date-time",
+            "title": "Synced At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "object_name",
+          "run_id",
+          "synced_at",
+          "age_seconds"
+        ],
+        "title": "WatermarkOut",
+        "type": "object"
+      },
+      "WeekOut": {
+        "properties": {
+          "completed": {
+            "title": "Completed",
+            "type": "integer"
+          },
+          "on_time": {
+            "title": "On Time",
+            "type": "integer"
+          },
+          "pct": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pct"
+          },
+          "rag": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rag"
+          },
+          "week_start": {
+            "format": "date",
+            "title": "Week Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "week_start",
+          "completed",
+          "on_time",
+          "pct",
+          "rag"
+        ],
+        "title": "WeekOut",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "R2R Intelligence application API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/audit": {
+      "get": {
+        "operationId": "audit_api_audit_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "row_key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Row Key"
+            }
+          },
+          {
+            "in": "query",
+            "name": "actor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Actor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "action",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Action"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Audit"
+      }
+    },
+    "/api/clock": {
+      "get": {
+        "description": "The scenario service's clock; if it is down, the same clock read from the app database.",
+        "operationId": "demo_clock_api_clock_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClockOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Demo Clock"
+      }
+    },
+    "/api/explain": {
+      "get": {
+        "operationId": "explain_figure_api_explain_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "field",
+            "required": true,
+            "schema": {
+              "title": "Field",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "week",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Week"
+            }
+          },
+          {
+            "in": "query",
+            "name": "type[]",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Type[]"
+            }
+          },
+          {
+            "in": "query",
+            "name": "class[]",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Class[]"
+            }
+          },
+          {
+            "in": "query",
+            "name": "campaign[]",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Campaign[]"
+            }
+          },
+          {
+            "in": "query",
+            "name": "flags[]",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Flags[]"
+            }
+          },
+          {
+            "in": "query",
+            "name": "stage",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Stage"
+            }
+          },
+          {
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "default": "all",
+              "title": "Period",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/MetricExplain"
+                    },
+                    {
+                      "$ref": "#/components/schemas/FlowExplain"
+                    }
+                  ],
+                  "title": "Response Explain Figure Api Explain Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Explain Figure"
+      }
+    },
+    "/api/export.csv": {
+      "get": {
+        "operationId": "export_csv_api_export_csv_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "type[]",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Type[]"
+            }
+          },
+          {
+            "in": "query",
+            "name": "class[]",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Class[]"
+            }
+          },
+          {
+            "in": "query",
+            "name": "campaign[]",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Campaign[]"
+            }
+          },
+          {
+            "in": "query",
+            "name": "flags[]",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Flags[]"
+            }
+          },
+          {
+            "in": "query",
+            "name": "stage",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Stage"
+            }
+          },
+          {
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "default": "all",
+              "title": "Period",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Csv"
+      }
+    },
+    "/api/health": {
+      "get": {
+        "operationId": "health_api_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Health Api Health Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health"
+      }
+    },
+    "/api/me": {
+      "get": {
+        "operationId": "me_api_me_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Me"
+      }
+    },
+    "/api/metrics": {
+      "get": {
+        "operationId": "metrics_api_metrics_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Metrics"
+      }
+    },
+    "/api/overview": {
+      "get": {
+        "operationId": "overview_api_overview_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "type[]",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Type[]"
+            }
+          },
+          {
+            "in": "query",
+            "name": "class[]",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Class[]"
+            }
+          },
+          {
+            "in": "query",
+            "name": "campaign[]",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Campaign[]"
+            }
+          },
+          {
+            "in": "query",
+            "name": "flags[]",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Flags[]"
+            }
+          },
+          {
+            "in": "query",
+            "name": "stage",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Stage"
+            }
+          },
+          {
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "default": "all",
+              "title": "Period",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OverviewOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Overview"
+      }
+    },
+    "/api/reference": {
+      "get": {
+        "operationId": "reference_api_reference_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferenceOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reference"
+      }
+    },
+    "/api/rows/{row_key}": {
+      "get": {
+        "operationId": "get_row_api_rows__row_key__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "row_key",
+            "required": true,
+            "schema": {
+              "title": "Row Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RowDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Row"
+      }
+    },
+    "/api/rows/{row_key}/comments": {
+      "post": {
+        "operationId": "post_comment_api_rows__row_key__comments_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "row_key",
+            "required": true,
+            "schema": {
+              "title": "Row Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommentIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Comment"
+      }
+    },
+    "/api/rows/{row_key}/explain": {
+      "get": {
+        "operationId": "explain_row_api_rows__row_key__explain_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "row_key",
+            "required": true,
+            "schema": {
+              "title": "Row Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "field",
+            "required": true,
+            "schema": {
+              "pattern": "^(stage|expected_completion)$",
+              "title": "Field",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/StageExplain"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CompletionExplain"
+                    }
+                  ],
+                  "title": "Response Explain Row Api Rows  Row Key  Explain Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Explain Row"
+      }
+    },
+    "/api/rows/{row_key}/need-by": {
+      "put": {
+        "operationId": "put_need_by_api_rows__row_key__need_by_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "row_key",
+            "required": true,
+            "schema": {
+              "title": "Row Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NeedByIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RowOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Need By"
+      }
+    },
+    "/api/rows/{row_key}/status": {
+      "put": {
+        "operationId": "put_status_api_rows__row_key__status_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "row_key",
+            "required": true,
+            "schema": {
+              "title": "Row Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RowOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Status"
+      }
+    },
+    "/api/sync/status": {
+      "get": {
+        "operationId": "sync_status_api_sync_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncStatusOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Sync Status"
+      }
+    },
+    "/api/sync/trigger": {
+      "post": {
+        "description": "Queue a manual sync (the worker mirrors whatever is published now).",
+        "operationId": "trigger_api_sync_trigger_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Trigger"
+      }
+    },
+    "/api/sync/webhook": {
+      "post": {
+        "operationId": "webhook_api_sync_webhook_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-signature",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Signature"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Webhook"
+      }
+    },
+    "/api/users": {
+      "get": {
+        "description": "The personas for the switcher. It needs no identity (the switcher runs before one is chosen).",
+        "operationId": "users_api_users_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/UserOut"
+                  },
+                  "title": "Response Users Api Users Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Users"
+      }
+    }
+  }
+}

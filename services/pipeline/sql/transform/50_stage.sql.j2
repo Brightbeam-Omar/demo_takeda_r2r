@@ -27,7 +27,7 @@ dated_{{ loop.index }} AS (
   FROM {{ 'ruled' if loop.first else 'dated_' ~ (loop.index - 1) }}
 ){% endfor %}
 
-SELECT row_key, stage_key, stage_rule_id,
+SELECT row_key, stage_key, stage_rule_id, cycle_start_date, ud_effective,
        CASE stage_key
 {% for key, number in stage_sort %}
          WHEN {{ key | sql }} THEN {{ number }}

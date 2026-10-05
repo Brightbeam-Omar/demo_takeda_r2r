@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 from app_api.db import get_session, migrate
 from app_api.main import create_app
+from app_api.services import store
 from fastapi.testclient import TestClient
 from r2r_core import clock
 from r2r_core.clock import FixedClock
@@ -38,9 +39,10 @@ def app_engine(app_dsn: str) -> Iterator[Engine]:
 def app_factory(app_engine: Engine) -> Iterator[sessionmaker[Session]]:
     """Empty sync, mirror and audit tables (users stay seeded) and a fixed demo clock."""
     clock.set_clock_source(FixedClock(DEMO_NOW))
+    store.clear_cache()
     with app_engine.begin() as connection:
         connection.execute(
-            text("TRUNCATE sync_event, watermark, audit_event, mirror_batch_pipeline, mirror_weekly_metrics, "
+            text("TRUNCATE sync_event, watermark, audit_event, override_value, comment, mirror_batch_pipeline, mirror_weekly_metrics, "
                  "mirror_weekly_metric_rows, mirror_pipeline_status, mirror_stage_reference, "
                  "mirror_metric_reference, mirror_reason_codes, mirror_deviations RESTART IDENTITY")
         )  # fmt: skip

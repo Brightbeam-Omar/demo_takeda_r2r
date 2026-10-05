@@ -177,7 +177,8 @@ def test_f06_fr04_pending_rows_have_no_dates(profile: SiteProfile, tmp_path: Pat
 def test_f06_fr04_the_output_columns_are_those_of_the_contract(profile: SiteProfile, tmp_path: Path) -> None:
     row = stage_of(profile, tmp_path)
     assert list(row) == [
-        "row_key", "stage_key", "stage_rule_id", "stage_sort", "current_stage_entry_date", "lims_rejected",
+        "row_key", "stage_key", "stage_rule_id", "cycle_start_date", "ud_effective", "stage_sort",
+        "current_stage_entry_date", "lims_rejected",
         "receipt_entry", "receipt_exit", "call_off_entry", "call_off_exit", "sampling_entry", "sampling_exit",
         "qc_ship_entry", "qc_ship_exit", "qc_testing_entry", "qc_testing_exit", "qa_release_entry",
         "qa_release_exit", "on_hold", "erp_blocked", "re_eval", "offsite", "full_spec", "ud_rejected",
