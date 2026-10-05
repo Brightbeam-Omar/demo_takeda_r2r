@@ -13,7 +13,7 @@ function Group({ title, items, collapsed }: { title: string; items: NavItem[]; c
   return (
     <div className="mb-4">
       {!collapsed && (
-        <div className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-ink-3">{title}</div>
+        <div className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-ink-2">{title}</div>
       )}
       <ul className="space-y-0.5">
         {items.map((item) => (

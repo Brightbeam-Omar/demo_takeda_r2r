@@ -7,7 +7,6 @@ const VIEWS = ['Overview', 'Reports & Metrics', 'Agents']
 const ADMIN = [
   'Team Dashboard', 'Audit Log', 'Schema Reference', 'Upload Data', 'Process / Campaign Mapping',
   'POC — Integrations', 'Configuration', 'SLA Configuration', 'Sync Status', 'Webhook Sync Status', 'Feedback',
-  'Demo Controls',
 ]
 
 test('F15-AC-01: the sidebar has VIEWS and ADMIN with every item and the ALPHA – LOCAL badge', async ({ page }) => {
@@ -16,15 +15,21 @@ test('F15-AC-01: the sidebar has VIEWS and ADMIN with every item and the ALPHA �
   const sidebar = page.getByTestId('sidebar')
   await expect(sidebar.getByText('VIEWS', { exact: true })).toBeVisible()
   await expect(sidebar.getByText('ADMIN', { exact: true })).toBeVisible()
-  for (const label of [...VIEWS, ...ADMIN]) await expect(sidebar.getByRole('link', { name: label })).toBeVisible()
+  for (const label of [...VIEWS, ...ADMIN]) await expect(sidebar.getByRole('link', { name: label, exact: true })).toBeVisible()
   await expect(page.getByTestId('release-badge')).toHaveText('ALPHA – LOCAL')
   await expect(sidebar.getByText('Phase 1: Trusted Data')).toBeVisible()
+  // Demo Controls: DEMO_MODE and admin only
+  await expect(sidebar.getByRole('link', { name: 'Demo Controls' })).toHaveCount(0)
   // The top bar: page title, feed pill, period, date-time and the user chip.
   await expect(page.getByRole('heading', { name: 'R2R Overview' })).toBeVisible()
   await expect(page.getByTestId('freshness-pill')).toContainText('last sync')
   await expect(page.getByTestId('demo-clock')).toHaveText(/^\d\d\/\d\d\/\d{4} \d\d:\d\d$/)
   await expect(page.getByTestId('feedback-button')).toBeVisible()
   await page.screenshot({ path: join(REPO_ROOT, 'docs/screenshots/shell.png') })
+
+  await page.getByRole('combobox', { name: 'Persona' }).selectOption('admin')
+  await expect(sidebar.getByRole('link', { name: 'Demo Controls' })).toBeVisible()
+  await page.getByRole('combobox', { name: 'Persona' }).selectOption('pat')
 })
 
 test('F15-AC-02: Last Month applies, and a custom range needs two clicks before Apply', async ({ page }) => {
@@ -43,10 +48,10 @@ test('F15-AC-02: Last Month applies, and a custom range needs two clicks before 
   await expect(page.getByRole('button', { name: 'Last Month', pressed: true })).toBeVisible()
   await expect(page.getByTestId('period-hint')).toHaveText('Click a date to start')
   await expect(page.getByRole('button', { name: 'Apply' })).toBeDisabled()
-  await page.getByRole('button', { name: '1 Oct 2026' }).click()
+  await page.getByRole('button', { name: '1 Oct 2026', exact: true }).click()
   await expect(page.getByTestId('period-hint')).toHaveText('Click an end date')
   await expect(page.getByRole('button', { name: 'Apply' })).toBeDisabled()
-  await page.getByRole('button', { name: '31 Oct 2026' }).click()
+  await page.getByRole('button', { name: '31 Oct 2026', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Apply' })).toBeEnabled()
   await page.getByRole('button', { name: 'Apply' }).click()
   await expect(page).toHaveURL(/period=custom&from=2026-10-01&to=2026-10-31/)
@@ -69,6 +74,7 @@ test('F15-AC-03: site_a reads SAP BLOCKED and QCL Testing; a profile with erp "E
   await page.reload()
   await expect(page.getByRole('button', { name: 'ERP BLOCKED' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'SAP BLOCKED' })).toHaveCount(0)
+  await page.unrouteAll({ behavior: 'ignoreErrors' })
 })
 
 test('F15-AC-04: feedback posted by Sam is stored and listed for Admin', async ({ page }) => {
