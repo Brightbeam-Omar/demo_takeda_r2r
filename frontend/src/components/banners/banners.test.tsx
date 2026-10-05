@@ -16,6 +16,15 @@ test('F16-FR-06: the adjusted banner counts, uses the singular for one and opens
   expect(screen.getByTestId('adjusted-banner')).not.toHaveTextContent('dates')
 })
 
+test('F16-FR-06: the adjusted banner is blue (info) with a count too; only Insights turns red; the icon is an SVG, not an emoji', () => {
+  render(<AdjustedBanner count={3} onView={vi.fn()} />)
+  const banner = screen.getByTestId('adjusted-banner')
+  expect(banner.className).toContain('bg-blue-50')
+  expect(banner.className).not.toMatch(/amber|red/)
+  expect(banner.querySelector('svg')).not.toBeNull()
+  expect(banner.textContent).not.toContain('📅')
+})
+
 test('F16-FR-06 / AC-06: with none the adjusted banner is the blue empty state with no button', () => {
   render(<AdjustedBanner count={0} onView={vi.fn()} />)
   const banner = screen.getByTestId('adjusted-banner')
