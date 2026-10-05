@@ -49,3 +49,9 @@ export function freshnessTone(minutes: number): FreshnessTone {
   if (minutes < 6 * 60) return 'green'
   return minutes <= 12 * 60 ? 'amber' : 'red'
 }
+
+/** `small_molecule` → `Small molecule`. */
+export function humanize(value: string): string {
+  const text = value.replace(/_/g, ' ')
+  return text.charAt(0).toUpperCase() + text.slice(1)
+}

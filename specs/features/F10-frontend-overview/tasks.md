@@ -2,7 +2,7 @@
 - [x] T1 Shell, routing, theme tokens, Inter font, API client wiring (FR-01)
 - [x] T2 Persona switcher + header injection (FR-02, AC-02)
 - [x] T3 Top bar freshness + clock (FR-03)
-- [ ] T4 Filters band + URL state (FR-04, AC-03)
+- [x] T4 Filters band + URL state (FR-04, AC-03)
 - [ ] T5 Period selector (FR-05, AC-04)
 - [ ] T6 Alerts band, flow strip, metrics ribbon (FR-06–08, AC-06, AC-07)
 - [ ] T7 Batch table with virtualisation, renderers, export (FR-09)
