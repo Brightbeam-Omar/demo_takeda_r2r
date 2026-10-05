@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { expect, test } from 'vitest'
-import { FiltersBand } from '../components/filters/FiltersBand'
+import { FilterBar } from '../components/filters/FilterBar'
 import { DEFAULT_TERMS, TermsContext } from './useTerms'
 import { MemoryRouter } from 'react-router-dom'
 import { vi } from 'vitest'
@@ -9,7 +9,7 @@ function band(erpBlockedTag: string) {
   render(
     <MemoryRouter>
       <TermsContext.Provider value={{ ...DEFAULT_TERMS, erp_blocked_tag: erpBlockedTag }}>
-        <FiltersBand
+        <FilterBar
           reference={undefined}
           rows={[]}
           filters={{
@@ -18,6 +18,7 @@ function band(erpBlockedTag: string) {
             campaigns: [],
             flags: [],
             stage: null,
+            bookmarked: false,
             q: '',
             period: 'all',
             from: null,

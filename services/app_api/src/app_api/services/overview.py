@@ -23,6 +23,7 @@ FLAG_NAMES = (
     "air_gap", "late",
 )  # fmt: skip
 TOP_AIR_GAPS = 5
+UNKNOWN_CLASS = "unknown"  # reserved key: rows whose material class is NULL (OQ-086)
 MONTH_OFFSETS = {"last_month": -1, "this_month": 0, "next_month": 1}
 
 
@@ -78,7 +79,7 @@ def _matches(row: ComposedRow, filters: Filters, period: tuple[dt.date, dt.date]
     facts = row.facts
     if filters.types and facts["molecule_type"] not in filters.types:
         return False
-    if filters.classes and facts["material_class"] not in filters.classes:
+    if filters.classes and (facts["material_class"] or UNKNOWN_CLASS) not in filters.classes:
         return False
     if filters.campaigns and facts["campaign"] not in filters.campaigns:
         return False

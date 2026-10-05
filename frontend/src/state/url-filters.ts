@@ -8,6 +8,7 @@ export interface Filters {
   campaigns: string[]
   flags: string[]
   stage: string | null
+  bookmarked: boolean
   q: string
   period: string
   from: string | null
@@ -20,6 +21,7 @@ export const EMPTY_FILTERS: Filters = {
   campaigns: [],
   flags: [],
   stage: null,
+  bookmarked: false,
   q: '',
   period: 'all',
   from: null,
@@ -28,6 +30,9 @@ export const EMPTY_FILTERS: Filters = {
 
 const LIST_KEYS = { types: 'type', classes: 'class', campaigns: 'campaign', flags: 'flag' } as const
 
+/** URL parameters that are view state, not filters: `update` carries them over. */
+const KEPT_PARAMS = ['row', 'filters'] as const
+
 export function parseFilters(search: URLSearchParams): Filters {
   return {
     types: search.getAll(LIST_KEYS.types),
@@ -35,6 +40,7 @@ export function parseFilters(search: URLSearchParams): Filters {
     campaigns: search.getAll(LIST_KEYS.campaigns),
     flags: search.getAll(LIST_KEYS.flags),
     stage: search.get('stage'),
+    bookmarked: search.get('bookmarked') === '1',
     q: search.get('q') ?? '',
     period: search.get('period') ?? 'all',
     from: search.get('from'),
@@ -48,6 +54,7 @@ export function serializeFilters(filters: Filters): URLSearchParams {
     for (const value of filters[field as keyof typeof LIST_KEYS]) search.append(key, value)
   }
   if (filters.stage) search.set('stage', filters.stage)
+  if (filters.bookmarked) search.set('bookmarked', '1')
   if (filters.q) search.set('q', filters.q)
   if (filters.period !== 'all') search.set('period', filters.period)
   if (filters.period === 'custom') {
@@ -65,6 +72,7 @@ export function toApiParams(filters: Filters): URLSearchParams {
   filters.campaigns.forEach((value) => params.append('campaign[]', value))
   filters.flags.forEach((value) => params.append('flags[]', value))
   if (filters.stage) params.set('stage', filters.stage)
+  if (filters.bookmarked) params.set('bookmarked', 'true')
   if (filters.q) params.set('q', filters.q)
   if (filters.period === 'custom') {
     if (filters.from && filters.to) {
@@ -86,6 +94,7 @@ export function activeFilterCount(filters: Filters): number {
     filters.campaigns.length +
     filters.flags.length +
     (filters.stage ? 1 : 0) +
+    (filters.bookmarked ? 1 : 0) +
     (filters.q ? 1 : 0)
   )
 }
@@ -98,8 +107,11 @@ export function useUrlFilters() {
       setSearch(
         (current) => {
           const next = serializeFilters({ ...parseFilters(current), ...patch })
-          const row = current.get('row') // the open drawer is not a filter, but it must survive one
-          if (row) next.set('row', row)
+          // The open drawer and the panel state are not filters, but they must survive one.
+          for (const key of KEPT_PARAMS) {
+            const value = current.get(key)
+            if (value) next.set(key, value)
+          }
           return next
         },
         { replace: true },
@@ -108,7 +120,7 @@ export function useUrlFilters() {
     [setSearch],
   )
   const clearAll = useCallback(
-    () => update({ types: [], classes: [], campaigns: [], flags: [], stage: null, q: '' }),
+    () => update({ types: [], classes: [], campaigns: [], flags: [], stage: null, bookmarked: false, q: '' }),
     [update],
   )
   return { filters, update, clearAll }
@@ -132,4 +144,23 @@ export function useDrawerRow() {
     [setSearch],
   )
   return { row, open }
+}
+
+/** The filter panel is open or closed (`?filters=open|closed`, F16-FR-01). Closed unless the URL says open. */
+export function useFilterPanel() {
+  const [search, setSearch] = useSearchParams()
+  const open = search.get('filters') === 'open'
+  const setOpen = useCallback(
+    (next: boolean) =>
+      setSearch(
+        (current) => {
+          const params = new URLSearchParams(current)
+          params.set('filters', next ? 'open' : 'closed')
+          return params
+        },
+        { replace: true },
+      ),
+    [setSearch],
+  )
+  return { open, setOpen }
 }

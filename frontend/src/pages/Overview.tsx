@@ -5,7 +5,7 @@ import { EmptyState, ErrorState, Skeleton } from '../components/common/States'
 import { BatchDrawer } from '../components/drawer/BatchDrawer'
 import { NeedByModal } from '../components/edit/NeedByModal'
 import { Section } from '../components/common/Section'
-import { FiltersBand } from '../components/filters/FiltersBand'
+import { FilterBar } from '../components/filters/FilterBar'
 import { AlertsBand } from '../components/flow-strip/AlertsBand'
 import { FlowStrip } from '../components/flow-strip/FlowStrip'
 import { BatchTable } from '../components/table/BatchTable'
@@ -56,7 +56,7 @@ export function Overview() {
   return (
     <>
       <main className="flex-1 space-y-5 overflow-auto p-6 pb-20">
-        <FiltersBand
+        <FilterBar
           reference={reference.data}
           rows={data?.rows ?? []}
           filters={filters}
