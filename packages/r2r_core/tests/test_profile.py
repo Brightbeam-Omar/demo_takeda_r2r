@@ -233,3 +233,9 @@ def test_f15_oq082_type_and_class_lists_normalise_to_key_and_label(tmp_path: Pat
         ("drug_substance", "Drug Substance"),
         ("consumable", "Consumables"),
     ]
+
+
+def test_f17_fr04_stages_show_a_card_unless_the_profile_says_otherwise() -> None:
+    """F17-FR-04: `show_card` defaults to true; site_a hides only the pending card."""
+    profile = load_profile("site_a")
+    assert {stage.key for stage in profile.stages if not stage.show_card} == {"pending"}

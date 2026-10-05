@@ -20,11 +20,11 @@ from r2r_core import clock
 from r2r_core.db import allocate_number, row_dict
 from r2r_core.errors import Conflict, Invalid
 from r2r_core.profile import UdCodes, load_profile
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from erp_sim import schemas
-from erp_sim.models import Counter, Lfa1, Mara, Mcha, Mchb, Mdez, Mseg, Qals, T001l, Zinbchk
+from erp_sim.models import Counter, Ekpo, Lfa1, Mara, Mcha, Mchb, Mdez, Mseg, Qals, T001l, Zinbchk
 
 ZERO = Decimal(0)
 
@@ -118,6 +118,7 @@ def _post(
     budat: date,
     menge: Decimal,
     explicit: str | None,
+    po_line: tuple[str, str] | None = None,
 ) -> Mseg:
     """Add one material document line (one line per document in Tier 1)."""
     line = Mseg(
@@ -130,9 +131,37 @@ def _post(
         umlgo=umlgo,
         budat=budat,
         menge=menge,
+        ebeln=po_line[0] if po_line else None,
+        ebelp=po_line[1] if po_line else None,
     )
     session.add(line)
     return line
+
+
+def _receivable_line(session: Session, body: schemas.GoodsReceiptIn) -> Ekpo | None:
+    """The open PO line a goods receipt closes (both references or neither)."""
+    if body.ebeln is None and body.ebelp is None:
+        return None
+    if body.ebeln is None or body.ebelp is None:
+        raise Invalid("give both ebeln and ebelp, or neither")
+    found = session.get(Ekpo, (body.ebeln, body.ebelp))
+    if found is None:
+        raise Invalid(f"unknown purchase order line {body.ebeln}/{body.ebelp}")
+    if not found.is_open:
+        raise Invalid(f"purchase order line {body.ebeln}/{body.ebelp} is already closed")
+    if found.matnr != body.matnr:
+        raise Invalid(f"purchase order line {body.ebeln}/{body.ebelp} is for material {found.matnr}")
+    return found
+
+
+def _reopen_line(session: Session, receipt: Mseg, reversed_quantity: Decimal) -> Ekpo | None:
+    """A reversal that cancels a whole 101 reopens the PO line it closed. No reference: nothing to reopen."""
+    if receipt.ebeln is None or receipt.ebelp is None or reversed_quantity < receipt.menge:
+        return None
+    found = session.get(Ekpo, (receipt.ebeln, receipt.ebelp))
+    if found is not None:
+        found.is_open = True
+    return found
 
 
 # --- events ------------------------------------------------------------------------------------
@@ -147,6 +176,7 @@ def goods_receipt(session: Session, body: schemas.GoodsReceiptIn) -> dict[str, A
     if session.get(Mcha, (body.matnr, body.charg)) is not None:
         raise Conflict(f"batch {body.matnr}/{body.charg} already exists")
     posted = _today(body.budat)
+    po_line = _receivable_line(session, body)
     batch = Mcha(
         matnr=body.matnr,
         charg=body.charg,
@@ -167,7 +197,10 @@ def goods_receipt(session: Session, body: schemas.GoodsReceiptIn) -> dict[str, A
         budat=posted,
         menge=body.menge,
         explicit=body.mblnr,
+        po_line=(po_line.ebeln, po_line.ebelp) if po_line else None,
     )
+    if po_line is not None:
+        po_line.is_open = False
     stock = Mchb(
         matnr=body.matnr, charg=body.charg, lgort=body.lgort, insme=body.menge, speme=ZERO, clabs=ZERO
     )
@@ -224,8 +257,12 @@ def goods_receipt_reversal(session: Session, body: schemas.ReversalIn) -> dict[s
     )
     changed = row_dict(stock)
     _drop_if_empty(session, stock)
+    reopened = _reopen_line(session, receipt, quantity)
     session.flush()
-    return {"mseg": row_dict(movement), "mchb": changed}
+    result: dict[str, Any] = {"mseg": row_dict(movement), "mchb": changed}
+    if reopened is not None:
+        result["ekpo"] = row_dict(reopened)
+    return result
 
 
 def transfer(session: Session, body: schemas.TransferIn) -> dict[str, Any]:
@@ -410,3 +447,47 @@ def demand(session: Session, body: schemas.DemandIn) -> dict[str, Any]:
     row.bdter, row.bdmng, row.is_open = body.requirement_date, body.quantity, body.is_open
     session.flush()
     return {"mdez": row_dict(row)}
+
+
+def po_line_created(session: Session, body: schemas.PoLineCreatedIn) -> dict[str, Any]:
+    """Open a purchase-order line: a new order (`45` + 8 digits) or the next line of an existing one."""
+    _material(session, body.matnr)
+    if session.get(Lfa1, body.lifnr) is None:
+        raise Invalid(f"unknown supplier (lifnr) {body.lifnr}")
+    _location(session, body.lgort)
+    if body.ebeln is None:
+        if body.ebelp is not None:
+            raise Invalid("ebelp needs ebeln")
+        number = allocate_number(
+            session,
+            Counter,
+            "ebeln",
+            lambda n: f"45{n:08d}",
+            exists=lambda n: session.scalar(select(Ekpo.ebeln).where(Ekpo.ebeln == n).limit(1)) is not None,
+        )
+        item = "00010"
+    else:
+        number = body.ebeln
+        last = session.scalar(select(func.max(Ekpo.ebelp)).where(Ekpo.ebeln == number))
+        item = body.ebelp or (f"{int(last) + 10:05d}" if last is not None else "00010")
+        if session.get(Ekpo, (number, item)) is not None:
+            raise Conflict(f"purchase order line {number}/{item} already exists")
+    row = Ekpo(
+        ebeln=number, ebelp=item, matnr=body.matnr, lifnr=body.lifnr, eindt=body.scheduled_date,
+        menge=body.menge, lgort=body.lgort, is_open=True,
+    )  # fmt: skip
+    session.add(row)
+    session.flush()
+    return {"ekpo": row_dict(row)}
+
+
+def po_line_closed(session: Session, body: schemas.PoLineClosedIn) -> dict[str, Any]:
+    """Close a purchase-order line without a goods receipt (cancelled or delivered elsewhere)."""
+    row = session.get(Ekpo, (body.ebeln, body.ebelp))
+    if row is None:
+        raise Invalid(f"unknown purchase order line {body.ebeln}/{body.ebelp}")
+    if not row.is_open:
+        raise Invalid(f"purchase order line {body.ebeln}/{body.ebelp} is already closed")
+    row.is_open = False
+    session.flush()
+    return {"ekpo": row_dict(row)}

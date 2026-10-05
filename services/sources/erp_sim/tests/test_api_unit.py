@@ -20,6 +20,8 @@ def test_f04_fr03_the_expected_write_endpoints_exist() -> None:
         "/events/goods-receipt-reversal",
         "/events/hold",
         "/events/inbound-check",
+        "/events/po-line-closed",
+        "/events/po-line-created",
         "/events/reeval-lot",
         "/events/results-recorded",
         "/events/stock-block",

@@ -100,6 +100,8 @@ class Mseg(TimestampMixin, Base):
     umlgo: Mapped[str | None] = mapped_column(ForeignKey("t001l.lgort"))  # 311 destination
     budat: Mapped[date] = mapped_column(Date)  # posting date
     menge: Mapped[Decimal] = mapped_column(QTY)  # quantity
+    ebeln: Mapped[str | None] = mapped_column(Text)  # purchase order the 101 was received against
+    ebelp: Mapped[str | None] = mapped_column(Text)  # purchase order line
     __table_args__ = (
         ForeignKeyConstraint(["matnr", "charg"], ["mcha.matnr", "mcha.charg"]),
         Index("ix_mseg_matnr_charg", "matnr", "charg"),
@@ -149,6 +151,21 @@ class Mdez(TimestampMixin, Base):
     bdmng: Mapped[Decimal] = mapped_column(QTY)  # requirement quantity
     is_open: Mapped[bool] = mapped_column(Boolean)
     __table_args__ = (Index("ix_mdez_matnr", "matnr"),)
+
+
+class Ekpo(TimestampMixin, Base):
+    """Purchase-order lines still to be delivered (a pre-batch grain). A goods receipt closes a line."""
+
+    __tablename__ = "ekpo"
+    ebeln: Mapped[str] = mapped_column(Text, primary_key=True)  # purchase order, 10 digits starting 45
+    ebelp: Mapped[str] = mapped_column(Text, primary_key=True)  # line: 00010, 00020, ...
+    matnr: Mapped[str] = mapped_column(ForeignKey("mara.matnr"))
+    lifnr: Mapped[str] = mapped_column(ForeignKey("lfa1.lifnr"))
+    eindt: Mapped[date] = mapped_column(Date)  # scheduled delivery date
+    menge: Mapped[Decimal] = mapped_column(QTY)
+    lgort: Mapped[str] = mapped_column(ForeignKey("t001l.lgort"))  # planned receiving location
+    is_open: Mapped[bool] = mapped_column(Boolean)
+    __table_args__ = (Index("ix_ekpo_matnr", "matnr"),)
 
 
 class Counter(CounterMixin, Base):

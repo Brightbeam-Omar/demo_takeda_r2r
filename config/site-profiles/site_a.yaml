@@ -6,7 +6,7 @@ demo:
   start_datetime: "2026-10-12T08:00:00+01:00"   # canonical opening: a Monday morning
   seed: 4242
 stages:            # sort order = list order; key is stable and used in code/data
-  - {key: pending,     label: "Pending",      sla_days: 0,  team: "Logistics",     action: "Awaiting goods receipt"}
+  - {key: pending,     label: "Pending",      sla_days: 0,  team: "Logistics",     action: "Awaiting goods receipt", show_card: false}
   - {key: receipt,     label: "Receipt",      sla_days: 10, team: "Warehouse",     action: "Complete inbound check"}
   - {key: call_off,    label: "Call Off",     sla_days: 5,  team: "Warehouse",     action: "Call off from 3PL to site", applies_if: "received_location_type == '3pl'"}
   - {key: sampling,    label: "Sampling",     sla_days: 7,  team: "Manufacturing", action: "Collect QC sample"}
