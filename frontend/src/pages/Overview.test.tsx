@@ -97,3 +97,33 @@ test('F11-FR-07 / OQ-072: an unknown ?row= shows "Batch not found" and Escape re
   await waitFor(() => expect(screen.queryByText(/Batch not found/)).not.toBeInTheDocument())
   expect(window.location.search).toBe('?q=RM')
 })
+
+test('F16-FR-06/08: the banners show the counts and open their windows; zero counts are the blue empty states', async () => {
+  const overview = (adjusted: number, gaps: number) => ({
+    freshness, flow_strip: [], on_hold_count: 0, adjusted_count: adjusted, total: 0, mode: 'snapshot', bookmarks: [],
+    alerts: [{ kind: 'air_gap', count: gaps, rows: [], detail: {} }], rows: [],
+  })
+  let body = overview(2, 4)
+  vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+    if (url.startsWith('/api/overview/insights')) {
+      return new Response(JSON.stringify({ total: 1, rows: [{ row_key: 'k', batch_no: 'B5003', material_no: 'RM1', material_desc: 'One', stage_key: 'qa_release', stage_label: 'QA Release', air_gap_hours: 25, days_gap: 1 }] }))
+    }
+    if (url.startsWith('/api/overview/adjusted')) return new Response(JSON.stringify({ total: 0, rows: [] }))
+    if (url.startsWith('/api/overview')) return new Response(JSON.stringify(body))
+    if (url.startsWith('/api/metrics')) return new Response(JSON.stringify({ freshness, filtered: false, week_starts: [], metrics: [] }))
+    return new Response('nf', { status: 404 })
+  }))
+  const first = render(<App />)
+  expect(await screen.findByTestId('adjusted-banner')).toHaveTextContent('2 adjusted needs-by dates')
+  expect(screen.getByTestId('insights-banner')).toHaveTextContent('LIMS–ERP Insights (4 batches)')
+  await userEvent.click(screen.getByRole('button', { name: 'View all 4 →' }))
+  expect(await screen.findByText('B5003')).toBeInTheDocument()
+  await userEvent.keyboard('{Escape}')
+  await waitFor(() => expect(screen.queryByText('B5003')).not.toBeInTheDocument())
+  first.unmount()
+
+  body = overview(0, 0)
+  render(<App />)
+  expect(await screen.findByText(/No adjusted needs-by dates in this period/)).toBeInTheDocument()
+  expect(screen.getByText(/No LIMS–ERP Insights in this period/)).toBeInTheDocument()
+})

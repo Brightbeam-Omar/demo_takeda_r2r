@@ -1,5 +1,5 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { apiGet, type Schemas } from './client'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { apiDelete, apiGet, apiSend, type Schemas } from './client'
 import { usePersona } from '../state/persona'
 
 export const POLL_MS = 10_000
@@ -12,6 +12,9 @@ export type Overview = Schemas['OverviewOut']
 export type Row = Schemas['RowOut']
 export type Metrics = Schemas['MetricsOut']
 export type RowDetail = Schemas['RowDetail']
+export type Preset = Schemas['PresetOut']
+export type Adjusted = Schemas['AdjustedOut']
+export type Insights = Schemas['InsightsOut']
 
 /** Query keys carry the persona so a switch refetches everything (F10-FR-02). */
 function useKey(...parts: unknown[]) {
@@ -72,5 +75,61 @@ export function useRowDetail(rowKey: string | null) {
     enabled: rowKey !== null,
     refetchInterval: POLL_MS,
     retry: false,
+  })
+}
+
+/** Stars and un-stars a row for the current user, then refreshes everything the overview shows (F16-FR-04). */
+export function useToggleBookmark() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: ({ rowKey, on }: { rowKey: string; on: boolean }) =>
+      on ? apiSend('POST', `/bookmarks/${encodeURIComponent(rowKey)}`, {}) : apiDelete(`/bookmarks/${encodeURIComponent(rowKey)}`),
+    onSuccess: () => client.invalidateQueries({ predicate: (query) => String(query.queryKey[0]).startsWith('overview') }),
+  })
+}
+
+export function usePresets() {
+  return useQuery({ queryKey: useKey('presets'), queryFn: () => apiGet<Preset[]>('/presets') })
+}
+
+/** Saves the current filters under a name. A name the user already has answers 409 (ApiError.status). */
+export function useSavePreset() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (body: { name: string; query: string }) => apiSend<Preset>('POST', '/presets', body),
+    onSuccess: () => client.invalidateQueries({ queryKey: ['presets'] }),
+  })
+}
+
+export function useOverwritePreset() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, query }: { id: number; query: string }) => apiSend<Preset>('PUT', `/presets/${id}`, { query }),
+    onSuccess: () => client.invalidateQueries({ queryKey: ['presets'] }),
+  })
+}
+
+export function useDeletePreset() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => apiDelete(`/presets/${id}`),
+    onSuccess: () => client.invalidateQueries({ queryKey: ['presets'] }),
+  })
+}
+
+/** The two banner windows load only while open, with the same filters as the Overview minus stage (F16-FR-07, FR-09). */
+export function useAdjusted(params: URLSearchParams, enabled: boolean) {
+  return useQuery({
+    queryKey: useKey('overview-adjusted', params.toString()),
+    queryFn: () => apiGet<Adjusted>('/overview/adjusted', params),
+    enabled,
+  })
+}
+
+export function useInsights(params: URLSearchParams, enabled: boolean) {
+  return useQuery({
+    queryKey: useKey('overview-insights', params.toString()),
+    queryFn: () => apiGet<Insights>('/overview/insights', params),
+    enabled,
   })
 }

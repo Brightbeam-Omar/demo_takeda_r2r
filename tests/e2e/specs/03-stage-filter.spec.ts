@@ -10,7 +10,7 @@ test('F10-AC-03: clicking QCL Testing filters the table, puts stage= in the URL 
   await expect(page.getByTestId('flow-qc_testing')).toHaveAttribute('aria-pressed', 'true')
   const count = await page.getByTestId('flow-qc_testing').locator('div').nth(1).innerText()
   await expect(page.getByTestId('row-count')).toContainText(`${count} lots`)
-  for (const cell of await page.getByTestId('batch-row').locator('[role=cell]:nth-child(7)').allInnerTexts()) {
+  for (const cell of await page.getByTestId('batch-row').locator('[role=cell]:nth-child(8)').allInnerTexts()) {
     expect(cell).toContain('QCL Testing')
   }
 

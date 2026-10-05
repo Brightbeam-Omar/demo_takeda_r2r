@@ -24,6 +24,7 @@ from sqlalchemy import (
     Numeric,
     Table,
     Text,
+    UniqueConstraint,
     false,
     func,
     text,
@@ -155,6 +156,31 @@ class Feedback(Base):
     __table_args__ = (
         CheckConstraint("char_length(message) BETWEEN 1 AND 2000", name="ck_feedback_message_length"),
         CheckConstraint("char_length(page) <= 200", name="ck_feedback_page_length"),
+    )
+
+
+class Bookmark(Base):
+    """A user's star on one row (F16-FR-04). Personal, so not audited (OQ-091)."""
+
+    __tablename__ = "bookmark"
+    user_key: Mapped[str] = mapped_column(ForeignKey("app_user.user_key"), primary_key=True)
+    row_key: Mapped[str] = mapped_column(Text, primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(STAMP)  # demo clock
+
+
+class FilterPreset(Base):
+    """A saved Overview filter query, per user (F16-FR-05). ``period`` is stored literally (OQ-089)."""
+
+    __tablename__ = "filter_preset"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    user_key: Mapped[str] = mapped_column(ForeignKey("app_user.user_key"))
+    name: Mapped[str] = mapped_column(Text)
+    query: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(STAMP)  # demo clock
+    __table_args__ = (
+        UniqueConstraint("user_key", "name", name="uq_filter_preset_user_name"),
+        CheckConstraint("char_length(name) BETWEEN 1 AND 60", name="ck_filter_preset_name_length"),
+        CheckConstraint("char_length(query) <= 2000", name="ck_filter_preset_query_length"),
     )
 
 

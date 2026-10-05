@@ -1,15 +1,18 @@
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
+import { renderWithProviders } from '../test-utils'
 import { expect, test } from 'vitest'
-import { FiltersBand } from '../components/filters/FiltersBand'
+import { FilterBar } from '../components/filters/FilterBar'
 import { DEFAULT_TERMS, TermsContext } from './useTerms'
 import { MemoryRouter } from 'react-router-dom'
 import { vi } from 'vitest'
 
+vi.stubGlobal('fetch', vi.fn(async () => new Response('[]')))
+
 function band(erpBlockedTag: string) {
-  render(
+  renderWithProviders(
     <MemoryRouter>
       <TermsContext.Provider value={{ ...DEFAULT_TERMS, erp_blocked_tag: erpBlockedTag }}>
-        <FiltersBand
+        <FilterBar
           reference={undefined}
           rows={[]}
           filters={{
@@ -18,12 +21,14 @@ function band(erpBlockedTag: string) {
             campaigns: [],
             flags: [],
             stage: null,
+            bookmarked: false,
             q: '',
             period: 'all',
             from: null,
             to: null,
           }}
           stageLabel={(key) => key}
+          bookmarks={[]}
           onChange={vi.fn()}
           onClear={vi.fn()}
         />

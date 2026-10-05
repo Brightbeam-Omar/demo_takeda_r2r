@@ -475,3 +475,45 @@ Add entries as: `## OQ-NNN · <feature> · <date>` then context, question, optio
 **Question:** Is T1 reduced to those remaining edits?
 **Proposal:** Yes. T1 becomes a second small `docs(specs)` commit with only the 03/04/F09/constitution changes, then F15 is set to `in_progress`.
 **Decision:** Accepted: T1 becomes a small second `docs(specs)` commit covering only the 03 `terms` block and §9 rule, the 04 `feedback` table, the F09 additions and one P5 sentence; then F15 is set to `in_progress`.
+
+## OQ-085 · F16 · 2026-10-05
+**Context:** F16-FR-10 removes F10's alert-chip band (Air gap / Late / On hold / Rejected), saying late, rejected and on-hold are reachable through the LATE, REJECTED and ON HOLD tags. Those tags are F17-FR-08. F16 has no tag row, so removing the band in F16 would leave Late, Rejected and On hold with no way to filter to them until F17 ships.
+**Question:** Does F16 remove the band?
+**Proposal:** No. F16 keeps the F10 alert band and F10's inline tag chips untouched; F16-FR-10 moves to F17, which removes the band in the same PR that adds the LATE, REJECTED and ON HOLD tags.
+**Decision:** Accepted: F16 does not remove the F10 alert-chip band. F16-FR-10 moves to F17 as F17-FR-09, done in the same PR that adds the LATE, REJECTED and ON HOLD tags. Both specs updated. F10's inline tag chips stay where they are in F16 (below the filter bar) until F17's tag row replaces them.
+
+## OQ-086 · F16 · 2026-10-05
+**Context:** F16-FR-02 lists a Class pill "Unknown", but `material_classes` in the profile has no such key, and a row's class can be NULL.
+**Question:** What does "Unknown" filter on, and does it come from the profile?
+**Proposal:** The reserved key `unknown` means rows whose class is NULL. It is always shown, with its count, and is not added to the profile.
+**Decision:** Accepted: reserved key `unknown` = rows whose `material_class` is NULL (`class[]=unknown`, URL `class=unknown`). The pill is always shown with its count (even 0) and is not added to the profile.
+
+## OQ-087 · F16 · 2026-10-05
+**Context:** F16-FR-06 and FR-08 define the two banner counts as passing "every filter except stage". The new `bookmarked` filter (FR-04) is not mentioned.
+**Question:** Does `bookmarked` narrow the banner counts?
+**Proposal:** Yes. `bookmarked` applies to both banner counts. Banners use every filter except stage.
+**Decision:** Accepted: both banner counts honour `bookmarked`, and every other filter except stage (period, type, class, campaign, search).
+
+## OQ-088 · F16 · 2026-10-05
+**Context:** F16-FR-09 defines Days Gap = floor(hours / 24) with chips green < 2, amber 2–5, red > 5. A row flagged as an air gap has at least `air_gap.threshold_hours` (24 in site_a).
+**Question:** Can a row show `0d`, and does AC-05 depend on the seed?
+**Proposal:** Rows under the air-gap threshold are not air gaps, so they are excluded and the smallest chip is `1d` (for a 24 h threshold). AC-05 relies on the deterministic seed, which is fine.
+**Decision:** Accepted: rows under the threshold are not air gaps and are excluded, so the minimum chip is `1d`. AC-05 relies on the deterministic seed (4 batches, B5003 last at `1d`).
+
+## OQ-089 · F16 · 2026-10-05
+**Context:** F16-FR-05 stores a preset's filter query but does not say how `period` is stored (a relative value such as `this_week`, or the dates it resolves to), or what happens when a name is reused. The spec lists only `GET/POST/DELETE /api/presets`.
+**Question:** How is `period` stored, and what is a duplicate name?
+**Proposal:** Store `period` literally, so `this_week` stays relative. `POST` with a name the user already has returns 409. The UI then asks "Replace existing preset?", and confirming overwrites it through `PUT /api/presets/{id}`.
+**Decision:** Accepted: `period` is stored literally (`this_week` stays relative); a duplicate name returns 409; the UI asks "Replace existing preset?" and confirming overwrites through `PUT /api/presets/{id}`, which F09 gains.
+
+## OQ-090 · F16 · 2026-10-05
+**Context:** F16-FR-07 says the Adjusted Needs-by window is "sorted by most recent change" and shows "Set By (display name)" without saying which timestamp or user.
+**Question:** What is the sort key and the Set By source?
+**Proposal:** Sort by the current override version's `created_at`, newest first. Set By is `app_user.display_name` of that version's author.
+**Decision:** Accepted: sort by the current `adjusted_need_by_date` override version's `created_at`, newest first; Set By is `app_user.display_name` of that version's `author_user_key`.
+
+## OQ-091 · F16 · 2026-10-05
+**Context:** F16-FR-04 does not say who may bookmark. F09's RBAC gives viewers no write access, and every override is audited.
+**Question:** Can any persona bookmark, and is it audited?
+**Proposal:** Any persona, including viewer, can bookmark. A bookmark is personal, not a business change, so it is not audited.
+**Decision:** Accepted: any persona including viewer may bookmark; bookmarks are not written to `audit_event`.

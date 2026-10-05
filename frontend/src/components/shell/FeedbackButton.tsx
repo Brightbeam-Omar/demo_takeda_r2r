@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { apiSend } from '../../api/client'
 import { useToast } from '../common/Toasts'
+import { ChatIcon } from '../common/icons'
 
 const MAX_LENGTH = 2000
 
@@ -36,7 +37,9 @@ export function FeedbackButton() {
           data-testid="feedback-button"
           className="fixed bottom-4 right-4 z-30 rounded-pill bg-accent px-4 py-2 text-sm font-medium text-white shadow-lg hover:opacity-90"
         >
-          <span aria-hidden>💬</span> Feedback
+          <span className="inline-flex items-center gap-1.5">
+            <ChatIcon /> Feedback
+          </span>
         </button>
       </Dialog.Trigger>
       <Dialog.Portal>

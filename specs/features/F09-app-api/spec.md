@@ -9,8 +9,8 @@ The REST API behind the UI. It composes the mirror with current overrides and ap
 | `GET /api/me` | any | Current user and role (from `X-Demo-User`, default `pat` in DEMO_MODE) |
 | `GET /api/clock` | any | Proxy of scenario `/clock` (demo now, today, frozen) |
 | `GET /api/users` | any (DEMO_MODE) | Personas for the switcher |
-| `GET /api/reference` | any | Stages, metrics, reason codes, molecule types and classes (`{key, label}`), campaigns (distinct from mirror), profile site name, profile `terms`, `release_badge` (env `RELEASE_BADGE`) |
-| `GET /api/overview` | any | Query: `type[]`, `class[]`, `campaign[]`, `stage`, `flags[]`, `period` (`all`,`this_week`,`last_week`,`next_week`,`this_month`,`last_month`,`next_month`,`custom`), `from`, `to`, `q` (search material/batch). Returns `{freshness, flow_strip:[{stage_key,count,breached}], on_hold_count, total, mode:'snapshot'|'due_in_period', alerts:[…], rows:[…]}` |
+| `GET /api/reference` | any | Stages, metrics, reason codes, molecule types and classes (`{key, label}`), campaigns (distinct from mirror), profile site name, profile `terms`, `release_badge` (env `RELEASE_BADGE`), `air_gap_threshold_hours` (F16) |
+| `GET /api/overview` | any | Query: `type[]`, `class[]`, `campaign[]`, `stage`, `flags[]`, `period` (`all`,`this_week`,`last_week`,`next_week`,`this_month`,`last_month`,`next_month`,`custom`), `from`, `to`, `q` (search material/batch), `bookmarked` (true = only the user's bookmarks; `class[]=unknown` matches a NULL class, OQ-086). Returns `{freshness, flow_strip:[{stage_key,count,breached}], on_hold_count, total, mode:'snapshot'|'due_in_period', alerts:[…], adjusted_count, bookmarks:[row_key…], rows:[…]}` |
 | `GET /api/metrics` | any | Weekly metrics (12 weeks + current) and reference, honouring the same filters where computable (Tier 1: unfiltered, flag `filtered:false`) |
 | `GET /api/rows/{row_key}` | any | Full row: facts, plan, overrides (current + history), comments, deviations, sibling lots of same batch (history) |
 | `GET /api/rows/{row_key}/explain?field=stage|expected_completion` | any | Row explanation payload (see FR-06) |
@@ -20,6 +20,12 @@ The REST API behind the UI. It composes the mirror with current overrides and ap
 | `POST /api/rows/{row_key}/comments` | all except viewer | `{body}` |
 | `GET /api/audit` | any | Paginated audit events, filter by row_key/actor/action and a demo-date range (`from`, `to`, inclusive, site timezone; F11, OQ-068) |
 | `GET /api/export.csv` | any | Current overview rows (filters applied) |
+| `GET /api/bookmarks` | any | The current user's bookmarked `row_key`s (F16) |
+| `POST /api/bookmarks/{row_key}` · `DELETE /api/bookmarks/{row_key}` | any (incl. viewer) | Set / remove a personal bookmark. Idempotent. Not audited (OQ-091) |
+| `GET /api/presets` · `POST /api/presets` | any (incl. viewer) | The user's saved filter presets · `{name, query}` → 201, or 409 when the user already has that name (F16, OQ-089) |
+| `PUT /api/presets/{id}` · `DELETE /api/presets/{id}` | owner | Overwrite a preset's query (`{query}`, name unchanged) · delete it. Another user's id is 404 |
+| `GET /api/overview/adjusted` | any | Non-released rows with a current adjusted need-by, honouring every overview filter except `stage`; newest override first (F16-FR-07, OQ-090) |
+| `GET /api/overview/insights` | any | Every air-gap row honouring every filter except `stage`, worst-first, with `days_gap` (F16-FR-09) |
 | `POST /api/feedback` | any (incl. viewer) | `{page, message}` → stores a `feedback` row (F15). Not audited |
 | `GET /api/feedback` | admin | Feedback, newest first (F15) |
 

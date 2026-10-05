@@ -16,6 +16,7 @@ from r2r_core.sla import in_period, month_window
 
 from app_api.schemas import Freshness, RowOut
 from app_api.services.compose import ComposedRow
+from app_api.services.windows import adjusted_rows, air_gap_rows
 
 PERIODS = ("all", "this_week", "last_week", "next_week", "this_month", "last_month", "next_month", "custom")
 FLAG_NAMES = (
@@ -23,6 +24,7 @@ FLAG_NAMES = (
     "air_gap", "late",
 )  # fmt: skip
 TOP_AIR_GAPS = 5
+UNKNOWN_CLASS = "unknown"  # reserved key: rows whose material class is NULL (OQ-086)
 MONTH_OFFSETS = {"last_month": -1, "this_month": 0, "next_month": 1}
 
 
@@ -41,6 +43,7 @@ class Filters:
     date_from: dt.date | None = None
     date_to: dt.date | None = None
     q: str | None = None
+    bookmarked_keys: frozenset[str] | None = None  # the user's bookmarks when `bookmarked` is on (F16-FR-04)
     extra: dict[str, str] = field(default_factory=dict)
 
 
@@ -78,11 +81,13 @@ def _matches(row: ComposedRow, filters: Filters, period: tuple[dt.date, dt.date]
     facts = row.facts
     if filters.types and facts["molecule_type"] not in filters.types:
         return False
-    if filters.classes and facts["material_class"] not in filters.classes:
+    if filters.classes and (facts["material_class"] or UNKNOWN_CLASS) not in filters.classes:
         return False
     if filters.campaigns and facts["campaign"] not in filters.campaigns:
         return False
     if stage and filters.stage and facts["stage_key"] != filters.stage:
+        return False
+    if filters.bookmarked_keys is not None and row.row_key not in filters.bookmarked_keys:
         return False
     if filters.flags and not any(has_flag(row, name) for name in filters.flags):
         return False
@@ -122,14 +127,21 @@ class OverviewOut(BaseModel):
     freshness: Freshness
     flow_strip: list[FlowEntry]
     on_hold_count: int
+    adjusted_count: int  # F16-FR-06: non-released rows with a current adjusted need-by
     total: int
     mode: Literal["snapshot", "due_in_period"]
     alerts: list[AlertOut]
+    bookmarks: list[str]  # every row the current user bookmarked, whatever the filters
     rows: list[RowOut]
 
 
 def build_overview(
-    rows: Sequence[ComposedRow], filters: Filters, profile: SiteProfile, today: dt.date, fresh: Freshness
+    rows: Sequence[ComposedRow],
+    filters: Filters,
+    profile: SiteProfile,
+    today: dt.date,
+    fresh: Freshness,
+    bookmarks: Sequence[str] = (),
 ) -> OverviewOut:
     labels = {stage.key: stage.label for stage in profile.stages}
     shown = select(rows, filters, today)
@@ -144,7 +156,7 @@ def build_overview(
         )
         for stage in profile.stages
     ]
-    gaps = sorted((row for row in unstaged if row.air_gap), key=lambda row: (-row.air_gap_hours, row.row_key))
+    gaps = air_gap_rows(unstaged)
     ud_rejected = sum(1 for row in unstaged if row.facts["ud_rejected"])
     lims_rejected = sum(1 for row in unstaged if row.facts["lims_rejected"])
     on_hold = sum(1 for row in unstaged if row.facts["on_hold"])
@@ -162,8 +174,10 @@ def build_overview(
         freshness=fresh,
         flow_strip=flow,
         on_hold_count=on_hold,
+        adjusted_count=len(adjusted_rows(unstaged)),
         total=len(shown),
         mode="snapshot" if filters.period == "all" else "due_in_period",
         alerts=alerts,
+        bookmarks=list(bookmarks),
         rows=[RowOut.of(row, labels) for row in shown],
     )

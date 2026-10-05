@@ -155,3 +155,22 @@ export function LocationCell({ row }: { row: Row }) {
     </span>
   )
 }
+
+/** The star at the start of a row (F16-FR-04). A click bookmarks without opening the drawer. */
+export function BookmarkStar({ rowKey, on, onToggle }: { rowKey: string; on: boolean; onToggle: (rowKey: string, on: boolean) => void }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={on}
+      aria-label={`${on ? 'Remove bookmark from' : 'Bookmark'} ${rowKey}`}
+      className={`rounded-chip px-1 text-base leading-none ${on ? 'text-amber-500' : 'text-slate-300 hover:text-amber-400'}`}
+      onClick={(event) => {
+        event.stopPropagation()
+        onToggle(rowKey, !on)
+      }}
+      onKeyDown={(event) => event.stopPropagation()}
+    >
+      {on ? '★' : '☆'}
+    </button>
+  )
+}

@@ -60,3 +60,32 @@ test('F10 review: a batch with a re-evaluation lot is two lots but one batch', (
   renderWithProviders(<BatchTable rows={rows} stageIndex={new Map()} canEdit={false} changedKeys={new Set()} />)
   expect(screen.getByTestId('row-count')).toHaveTextContent('3 lots · 2 batches')
 })
+
+test('F16-FR-04: the star column bookmarks a row without opening the drawer', async () => {
+  const opened: string[] = []
+  const toggled: [string, boolean][] = []
+  renderWithProviders(
+    <BatchTable
+      rows={[makeRow(1), makeRow(2)]}
+      stageIndex={new Map()}
+      canEdit={false}
+      changedKeys={new Set()}
+      bookmarks={new Set(['RM2|B2|1'])}
+      onToggleBookmark={(rowKey, on) => toggled.push([rowKey, on])}
+      onOpenRow={(rowKey) => opened.push(rowKey)}
+    />,
+  )
+  expect(screen.getByRole('button', { name: 'Remove bookmark from RM2|B2|1' })).toHaveAttribute('aria-pressed', 'true')
+  await userEvent.click(screen.getByRole('button', { name: 'Bookmark RM1|B1|1' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Remove bookmark from RM2|B2|1' }))
+  expect(toggled).toEqual([
+    ['RM1|B1|1', true],
+    ['RM2|B2|1', false],
+  ])
+  expect(opened).toEqual([])
+})
+
+test('F16-FR-04: without a toggle handler there is no star column', () => {
+  renderWithProviders(<BatchTable rows={[makeRow(1)]} stageIndex={new Map()} canEdit={false} changedKeys={new Set()} />)
+  expect(screen.queryByRole('button', { name: /Bookmark/ })).not.toBeInTheDocument()
+})

@@ -33,6 +33,7 @@ class ReferenceOut(BaseModel):
     metric_rag: dict[str, int]
     terms: dict[str, str]
     release_badge: str
+    air_gap_threshold_hours: int
 
 
 def _rows(session: Session, sql: str) -> list[dict[str, Any]]:
@@ -63,5 +64,6 @@ def reference(
             "amber_min_pct": profile.metric_rag.amber_min_pct,
         },
         terms=profile.terms.model_dump(),
+        air_gap_threshold_hours=profile.air_gap.threshold_hours,
         release_badge=os.environ.get("RELEASE_BADGE", "").strip() or DEFAULT_RELEASE_BADGE,
     )
