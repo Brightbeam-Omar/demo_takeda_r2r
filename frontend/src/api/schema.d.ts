@@ -514,6 +514,8 @@ export interface components {
             count: number;
             /** Label */
             label: string;
+            /** Late Count */
+            late_count: number;
             /** Stage Key */
             stage_key: string;
         };

@@ -81,7 +81,10 @@ interface AdjustedProps {
   canEdit: boolean
 }
 
-/** Overridden need-by: italic with a pencil. The pencil is disabled for read-only roles; F11 wires the modal. */
+/**
+ * Overridden need-by: italic with a pencil that is always shown. Otherwise the pencil appears on row hover.
+ * It is disabled for read-only roles; F11 wires the modal.
+ */
 export function AdjustedNeedBy({ row, canEdit }: AdjustedProps) {
   const overridden = row.adjusted_need_by_date !== null
   return (
@@ -98,7 +101,9 @@ export function AdjustedNeedBy({ row, canEdit }: AdjustedProps) {
         aria-label="Edit need-by"
         disabled={!canEdit}
         title={canEdit ? 'Edit need-by' : 'Read-only role'}
-        className="rounded-chip px-1 text-slate-500 enabled:hover:bg-slate-100 enabled:hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-40"
+        className={`rounded-chip px-1 text-slate-500 focus-visible:opacity-100 enabled:hover:bg-slate-100 enabled:hover:text-indigo-600 disabled:cursor-not-allowed ${
+          overridden ? '' : 'opacity-0 group-hover:opacity-100'
+        }`}
         onClick={(event) => event.stopPropagation()}
       >
         ✎

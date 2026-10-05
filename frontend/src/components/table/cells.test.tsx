@@ -24,6 +24,8 @@ test('F10-AC-07: an overridden need-by is italic with the system date struck thr
   expect(screen.getByTestId('system-need-by')).toHaveClass('line-through')
   expect(screen.getByTestId('adjusted-need-by')).toHaveClass('italic')
   expect(screen.getByTestId('adjusted-need-by')).toHaveTextContent('26 Nov')
+  // An overridden need-by always shows its pencil.
+  expect(screen.getByRole('button', { name: 'Edit need-by' })).not.toHaveClass('opacity-0')
 })
 
 test('F10-AC-07: without an override the system date is plain; the pencil is disabled for read-only roles', () => {
@@ -37,6 +39,8 @@ test('F10-AC-07: without an override the system date is plain; the pencil is dis
   const pencil = screen.getByRole('button', { name: 'Edit need-by' })
   expect(pencil).toBeDisabled()
   expect(pencil).toHaveAttribute('title', 'Read-only role')
+  // Without an override the pencil only appears on row hover.
+  expect(pencil).toHaveClass('opacity-0', 'group-hover:opacity-100')
 })
 
 test('F10-AC-07: the RAG cell shows the date, days remaining and the colour; tag chips and lights read as text', () => {

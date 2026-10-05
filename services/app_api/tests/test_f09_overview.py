@@ -104,6 +104,9 @@ def test_f09_fr02_the_flow_strip_ignores_the_stage_filter_and_marks_breaches(
     strip = {e["stage_key"]: e for e in body["flow_strip"]}
     assert strip["sampling"]["count"] == 2 and strip["sampling"]["breached"]  # B1, B2 (B2 is late)
     assert strip["qa_release"]["count"] == 5 and not strip["qa_release"]["breached"]
+    assert (
+        strip["sampling"]["late_count"] == 1 and strip["qa_release"]["late_count"] == 0
+    )  # F10 review: "N late" on the card
     assert strip["released"]["count"] == 1
     assert body["total"] == 5 and {r["stage_key"] for r in body["rows"]} == {"qa_release"}
 

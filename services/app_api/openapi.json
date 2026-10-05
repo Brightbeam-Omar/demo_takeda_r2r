@@ -564,6 +564,10 @@
             "title": "Label",
             "type": "string"
           },
+          "late_count": {
+            "title": "Late Count",
+            "type": "integer"
+          },
           "stage_key": {
             "title": "Stage Key",
             "type": "string"
@@ -573,7 +577,8 @@
           "stage_key",
           "label",
           "count",
-          "breached"
+          "breached",
+          "late_count"
         ],
         "title": "FlowEntry",
         "type": "object"

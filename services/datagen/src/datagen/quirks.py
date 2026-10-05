@@ -197,8 +197,9 @@ def _lims_retests(plan: Plan, rng: random.Random, used: set[int]) -> None:
 def _results_recorded(plan: Plan, params: Params, rng: random.Random) -> None:
     """The interface records a lot's LIMS results in the ERP 1-6 hours after approval, except air gaps.
 
-    The air-gap quirk withholds the transfer on a few lots that have waited at least a day; B5003, fixed
-    by the story at 30 hours, is one of them. No other approved lot lacks the record.
+    The air-gap quirk withholds the transfer on a few lots that have waited at least two days; B5003, fixed
+    by the story at 30 hours, is one of them. The others are at most `air_gap_max_age_days` old, so at the
+    canonical opening every air gap is 24 to 96 hours old. No other approved lot lacks the record.
     """
     cal = plan.calendar
     pool = [
@@ -208,7 +209,7 @@ def _results_recorded(plan: Plan, params: Params, rng: random.Random) -> None:
         and lot.ud_code is None
         and lot.latest is not None
         and lot.latest.closed_on is not None
-        and (cal.today - lot.latest.closed_on).days >= 2
+        and 2 <= (cal.today - lot.latest.closed_on).days <= params.quirks.air_gap_max_age_days
     ]
     fixed = sum(1 for _, lot in plan.lots() if "air_gap" in lot.tags)
     for lot in rng.sample(pool, max(0, params.quirks.air_gap_lots - fixed)):

@@ -1,8 +1,8 @@
-// Saves the Overview at 1440x900 to artifacts/screenshots/overview.png (npm run screenshot, stack running).
+// Saves the Overview at 1440x900 to docs/screenshots/overview.png (npm run screenshot, stack running).
 import { mkdirSync } from 'node:fs'
 import { chromium } from '@playwright/test'
 
-const out = new URL('../../artifacts/screenshots/', import.meta.url)
+const out = new URL('../../docs/screenshots/', import.meta.url)
 mkdirSync(out, { recursive: true })
 const browser = await chromium.launch()
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } })

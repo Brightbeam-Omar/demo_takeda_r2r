@@ -78,4 +78,5 @@ quirks:                      # F05-FR-05 (minimum is 3 of each; these are what t
   released_holds: 4          # batches held and released again (noise)
   erp_blocked_batches: 8
   air_gap_lots: 4            # LIMS approved and never transferred to the ERP (B5003 is one); target 3-5
+  air_gap_max_age_days: 3    # generated air gaps are 2-3 days old at demo start (49-73 h); with B5003 at 30 h all sit in 24-96 h
   quantities: [25, 50, 100, 200, 500, 1000, 2500]

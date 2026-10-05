@@ -108,6 +108,7 @@ class FlowEntry(BaseModel):
     label: str
     count: int
     breached: bool
+    late_count: int
 
 
 class AlertOut(BaseModel):
@@ -139,6 +140,7 @@ def build_overview(
             label=stage.label,
             count=sum(1 for row in unstaged if row.facts["stage_key"] == stage.key),
             breached=any(row.plan.late for row in unstaged if row.facts["stage_key"] == stage.key),
+            late_count=sum(1 for row in unstaged if row.facts["stage_key"] == stage.key and row.plan.late),
         )
         for stage in profile.stages
     ]

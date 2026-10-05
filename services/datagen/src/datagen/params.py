@@ -81,6 +81,7 @@ class Quirks(_Model):
     released_holds: int
     erp_blocked_batches: int
     air_gap_lots: int
+    air_gap_max_age_days: int
     quantities: list[int]
 
 

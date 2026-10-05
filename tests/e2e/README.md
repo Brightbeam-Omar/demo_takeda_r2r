@@ -10,4 +10,4 @@ make e2e                 # or: make e2e-headed
 
 `make e2e` runs against the already-running stack. The live-update spec (F10-AC-05) approves B1042's sample, so run
 `make seed` again before the next run. F13/F14 switch `make e2e` to run `make demo-reset` first.
-`npm run screenshot` (in this folder) writes `artifacts/screenshots/overview.png` at 1440×900.
+`npm run screenshot` (in this folder) writes `docs/screenshots/overview.png` at 1440×900.

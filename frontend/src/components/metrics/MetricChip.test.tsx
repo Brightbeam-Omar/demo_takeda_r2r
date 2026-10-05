@@ -29,10 +29,11 @@ test('F10-AC-07: the headline is the last complete week, week to date is seconda
   expect(screen.getByText('SLA 7 d')).toBeInTheDocument()
 })
 
-test('F10-AC-06: an awaiting-signal metric shows "–" with the reason as tooltip and a Tier 2 tag', () => {
-  const waiting = { ...active, metric_id: 'M1', status: 'awaiting_signal', weeks: [], null_reason: 'Comes from the 3PL feed' } as unknown as Metric
+test('F10-AC-06: an awaiting-signal metric is a compact "M1 · Tier 2" chip with label and reason in the tooltip', () => {
+  const waiting = { ...active, metric_id: 'M1', label: 'Receipt On-Time', status: 'awaiting_signal', weeks: [], null_reason: 'Comes from the 3PL feed' } as unknown as Metric
   render(<MetricChip metric={waiting} />)
-  expect(screen.getByTestId('metric-M1')).toHaveAttribute('title', 'Comes from the 3PL feed')
-  expect(screen.getByText('–')).toBeInTheDocument()
-  expect(screen.getByText('Tier 2')).toBeInTheDocument()
+  const chip = screen.getByTestId('metric-M1')
+  expect(chip).toHaveTextContent('M1 · Tier 2')
+  expect(chip).not.toHaveTextContent('Receipt On-Time')
+  expect(chip).toHaveAttribute('title', 'Receipt On-Time: Comes from the 3PL feed')
 })

@@ -18,9 +18,11 @@ export const MODE_CAPTION: Record<Overview['mode'], string> = {
   due_in_period: 'due in period',
 }
 
-/** F10-FR-07. One card per stage, plus Total and On Hold. A red outline marks a stage with late rows. */
+/** F10-FR-07. One card per stage, plus the open-pipeline total and On Hold. Late rows show as a small red count. */
 export function FlowStrip({ entries, stages, mode, onHoldCount, activeStage, onHoldActive, onToggleStage, onToggleHold }: Props) {
-  const total = entries.reduce((sum, entry) => sum + entry.count, 0)
+  const terminal = new Set(stages.filter((stage) => stage.terminal).map((stage) => String(stage.stage_key)))
+  // Released lots have left the pipeline, so the total counts open rows only.
+  const total = entries.filter((entry) => !terminal.has(entry.stage_key)).reduce((sum, entry) => sum + entry.count, 0)
   const sla = new Map(stages.map((stage) => [String(stage.stage_key), Number(stage.sla_days ?? 0)]))
   return (
     <div className="space-y-1">
@@ -29,7 +31,7 @@ export function FlowStrip({ entries, stages, mode, onHoldCount, activeStage, onH
       </p>
       <div className="flex gap-2 overflow-x-auto pb-1">
         <div className="min-w-24 rounded-card border border-slate-200 bg-white px-3 py-2">
-          <div className="text-xs text-slate-500">Total</div>
+          <div className="text-xs text-slate-500">Open pipeline</div>
           <div className="text-xl font-semibold tabular-nums" data-testid="flow-total">
             {total}
           </div>
@@ -44,15 +46,22 @@ export function FlowStrip({ entries, stages, mode, onHoldCount, activeStage, onH
               aria-pressed={active}
               onClick={() => onToggleStage(entry.stage_key)}
               style={{ borderTopColor: `var(--color-stage-${(index % 8) + 1})` }}
-              className={`min-w-28 flex-1 rounded-card border border-t-4 bg-white px-3 py-2 text-left hover:shadow ${
-                entry.breached ? 'border-red-500' : 'border-slate-200'
-              } ${active ? 'ring-2 ring-indigo-600' : ''}`}
+              className={`min-w-28 flex-1 rounded-card border border-t-4 border-slate-200 bg-white px-3 py-2 text-left hover:shadow ${
+                active ? 'ring-2 ring-indigo-600' : ''
+              }`}
             >
               <div className="text-xs text-slate-600">{entry.label}</div>
               <div className="text-xl font-semibold tabular-nums">{entry.count}</div>
-              {(sla.get(entry.stage_key) ?? 0) > 0 && (
-                <div className="text-xs text-slate-500">SLA {sla.get(entry.stage_key)} d</div>
-              )}
+              <div className="flex flex-wrap items-center justify-between gap-x-2 text-xs whitespace-nowrap">
+                <span className="text-slate-500">
+                  {(sla.get(entry.stage_key) ?? 0) > 0 ? `SLA ${sla.get(entry.stage_key)} d` : ''}
+                </span>
+                {entry.late_count > 0 && (
+                  <span className="font-semibold text-red-700" data-testid={`late-${entry.stage_key}`}>
+                    {entry.late_count} late
+                  </span>
+                )}
+              </div>
             </button>
           )
         })}

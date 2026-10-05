@@ -55,6 +55,8 @@ export function BatchTable({ rows, stageIndex, canEdit, changedKeys, toolbar }: 
   // Unsorted = the server's exceptions-first order (F09-FR-02).
   const [sorting, setSorting] = useState<SortingState>([])
   const scroller = useRef<HTMLDivElement>(null)
+  // Column filters sit behind a small icon in each header; this is the column whose input is open.
+  const [filterOpen, setFilterOpen] = useState<string | null>(null)
 
   const columns = useMemo(
     () => [
@@ -132,6 +134,8 @@ export function BatchTable({ rows, stageIndex, canEdit, changedKeys, toolbar }: 
   })
 
   const tableRows = table.getRowModel().rows
+  // A batch with a re-evaluation lot appears twice, so distinct batches are counted on material + batch (03 section 3).
+  const batches = new Set(tableRows.map((row) => `${row.original.material_no}|${row.original.batch_no}`)).size
   const virtualizer = useVirtualizer({
     count: tableRows.length,
     getScrollElement: () => scroller.current,
@@ -149,7 +153,7 @@ export function BatchTable({ rows, stageIndex, canEdit, changedKeys, toolbar }: 
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <span className="text-sm text-slate-500" data-testid="row-count">
-          {tableRows.length} {tableRows.length === 1 ? 'batch' : 'batches'}
+          {tableRows.length} {tableRows.length === 1 ? 'lot' : 'lots'} · {batches} {batches === 1 ? 'batch' : 'batches'}
         </span>
         {toolbar}
       </div>
@@ -170,22 +174,37 @@ export function BatchTable({ rows, stageIndex, canEdit, changedKeys, toolbar }: 
                     key={header.id}
                     role="columnheader"
                     aria-sort={sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : 'none'}
-                    className="px-2 py-1.5"
+                    className="relative px-2 py-1.5"
                   >
-                    <button
-                      type="button"
-                      className="flex w-full items-center gap-1 text-left text-xs font-semibold text-slate-600 uppercase"
-                      onClick={header.column.getToggleSortingHandler()}
-                    >
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                      <span aria-hidden>{sorted === 'asc' ? '▲' : sorted === 'desc' ? '▼' : ''}</span>
-                    </button>
-                    <input
-                      aria-label={`Filter ${String(header.column.columnDef.header)}`}
-                      className="mt-1 w-full rounded-chip border border-slate-200 bg-white px-1.5 py-0.5 text-xs font-normal"
-                      value={(header.column.getFilterValue() as string | undefined) ?? ''}
-                      onChange={(event) => header.column.setFilterValue(event.target.value || undefined)}
-                    />
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        className="flex min-w-0 flex-1 items-center gap-1 text-left text-xs font-semibold text-slate-600 uppercase"
+                        onClick={header.column.getToggleSortingHandler()}
+                      >
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        <span aria-hidden>{sorted === 'asc' ? '▲' : sorted === 'desc' ? '▼' : ''}</span>
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`Filter by ${String(header.column.columnDef.header)}`}
+                        aria-expanded={filterOpen === header.column.id}
+                        className={`rounded-chip px-1 text-xs ${header.column.getFilterValue() ? 'bg-indigo-100 text-indigo-700' : 'text-slate-400 hover:bg-slate-200 hover:text-slate-700'}`}
+                        onClick={() => setFilterOpen(filterOpen === header.column.id ? null : header.column.id)}
+                      >
+                        ⏷
+                      </button>
+                    </div>
+                    {filterOpen === header.column.id && (
+                      <input
+                        autoFocus
+                        aria-label={`Filter ${String(header.column.columnDef.header)}`}
+                        className="absolute top-full left-1 z-20 mt-0.5 w-40 rounded-chip border border-slate-300 bg-white px-2 py-1 text-xs font-normal shadow-md"
+                        value={(header.column.getFilterValue() as string | undefined) ?? ''}
+                        onChange={(event) => header.column.setFilterValue(event.target.value || undefined)}
+                        onKeyDown={(event) => event.key === 'Escape' && setFilterOpen(null)}
+                      />
+                    )}
                   </div>
                 )
               })}
@@ -203,7 +222,7 @@ export function BatchTable({ rows, stageIndex, canEdit, changedKeys, toolbar }: 
                 data-testid="batch-row"
                 data-row-key={row.original.row_key}
                 aria-rowindex={item.index + 1}
-                className={`absolute left-0 w-full items-center border-b border-slate-100 hover:bg-slate-50 ${changed ? 'row-changed' : ''}`}
+                className={`group absolute left-0 w-full items-center border-b border-slate-100 hover:bg-slate-50 ${changed ? 'row-changed' : ''}`}
                 style={{ ...grid, height: ROW_HEIGHT, transform: `translateY(${item.start}px)` }}
               >
                 {row.getVisibleCells().map((cell) => (

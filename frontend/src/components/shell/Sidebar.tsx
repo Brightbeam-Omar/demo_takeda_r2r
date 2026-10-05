@@ -40,8 +40,11 @@ export function Sidebar() {
               </span>
               R2R Intelligence
             </div>
-            <span className="mt-2 inline-block rounded-chip bg-slate-800 px-2 py-0.5 text-xs text-slate-300">
-              DEMO · Phase 1 Trusted Data
+            <span
+              title="DEMO · Phase 1 Trusted Data"
+              className="mt-2 inline-block rounded-chip bg-slate-800 px-2 py-0.5 text-xs text-slate-300"
+            >
+              DEMO · Phase 1
             </span>
           </div>
         )}
