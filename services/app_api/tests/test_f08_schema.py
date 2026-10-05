@@ -10,7 +10,7 @@ from sqlalchemy import inspect, text
 
 SECTION_5_TABLES = {
     "app_user", "demo_clock", "sync_event", "watermark", "override_value", "comment", "audit_event",
-    "proposal", "action_log", "agent_trace", "mirror_batch_pipeline", "mirror_weekly_metrics",
+    "feedback", "proposal", "action_log", "agent_trace", "mirror_batch_pipeline", "mirror_weekly_metrics",
     "mirror_weekly_metric_rows", "mirror_pipeline_status", "mirror_stage_reference",
     "mirror_metric_reference", "mirror_reason_codes", "mirror_deviations",
 }  # fmt: skip

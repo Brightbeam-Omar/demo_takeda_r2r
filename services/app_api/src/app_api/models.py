@@ -143,6 +143,21 @@ class AuditEvent(Base):
     details_json: Mapped[Any] = mapped_column(JSONB, nullable=True)
 
 
+class Feedback(Base):
+    """Free-text feedback from the floating button (F15-FR-06). Insert-only and not audited (OQ-083)."""
+
+    __tablename__ = "feedback"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    at: Mapped[datetime] = mapped_column(STAMP, index=True)  # demo clock
+    user_key: Mapped[str] = mapped_column(ForeignKey("app_user.user_key"))
+    page: Mapped[str] = mapped_column(Text)
+    message: Mapped[str] = mapped_column(Text)
+    __table_args__ = (
+        CheckConstraint("char_length(message) BETWEEN 1 AND 2000", name="ck_feedback_message_length"),
+        CheckConstraint("char_length(page) <= 200", name="ck_feedback_page_length"),
+    )
+
+
 class Proposal(Base):
     __tablename__ = "proposal"
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
