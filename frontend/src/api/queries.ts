@@ -11,6 +11,7 @@ export type SyncStatus = Schemas['SyncStatusOut']
 export type Overview = Schemas['OverviewOut']
 export type Row = Schemas['RowOut']
 export type Metrics = Schemas['MetricsOut']
+export type RowDetail = Schemas['RowDetail']
 
 /** Query keys carry the persona so a switch refetches everything (F10-FR-02). */
 function useKey(...parts: unknown[]) {
@@ -37,11 +38,11 @@ export function useClock() {
   })
 }
 
-export function useSyncStatus() {
+export function useSyncStatus(intervalMs: number = POLL_MS) {
   return useQuery({
     queryKey: useKey('sync-status'),
     queryFn: () => apiGet<SyncStatus>('/sync/status'),
-    refetchInterval: POLL_MS,
+    refetchInterval: intervalMs,
   })
 }
 
@@ -60,5 +61,16 @@ export function useMetrics(contractRunId: string | null | undefined) {
     queryKey: useKey('metrics', contractRunId),
     queryFn: () => apiGet<Metrics>('/metrics'),
     enabled: contractRunId !== undefined,
+  })
+}
+
+/** The drawer loads one row by itself, so it works when the row is filtered out of the table (OQ-072). */
+export function useRowDetail(rowKey: string | null) {
+  return useQuery({
+    queryKey: useKey('row', rowKey),
+    queryFn: () => apiGet<RowDetail>(`/rows/${encodeURIComponent(rowKey ?? '')}`),
+    enabled: rowKey !== null,
+    refetchInterval: POLL_MS,
+    retry: false,
   })
 }

@@ -13,8 +13,9 @@ from app_api.auth import current_user, require_role
 from app_api.db import get_session
 from app_api.deps import get_profile
 from app_api.models import AppUser, Comment, OverrideValue
-from app_api.schemas import CommentOut, DeviationOut, OverrideOut, RowDetail, RowOut
+from app_api.schemas import CommentOut, DeviationOut, OverrideOut, PlanOut, RowDetail, RowOut
 from app_api.services import overrides
+from app_api.services.compose import ADJUSTED, EXPEDITE, CurrentOverride, compose_row
 from app_api.services.store import load_composed
 
 router = APIRouter()
@@ -29,6 +30,15 @@ class NeedByIn(BaseModel):
     reason_code: str | None = None
     expedite: bool = False
     note: str | None = None
+
+
+class PreviewOut(BaseModel):
+    """The plan now and the plan as it would be after the change; nothing is stored (F11-FR-02, OQ-067)."""
+
+    current: PlanOut
+    preview: PlanOut
+    system_need_by_locked: dt.date | None
+    operative_need_by: dt.date | None
 
 
 class StatusIn(BaseModel):
@@ -118,6 +128,43 @@ def put_need_by(
         session, user, row_key, body.adjusted_date, body.reason_code, body.expedite, body.note
     )
     return recomputed(session, profile, row_key)
+
+
+@router.post("/rows/{row_key}/need-by/preview", dependencies=[Depends(current_user)])
+def preview_need_by(
+    row_key: str,
+    body: NeedByIn,
+    session: Annotated[Session, Depends(get_session)],
+    profile: Annotated[SiteProfile, Depends(get_profile)],
+) -> PreviewOut:
+    """Recompute the row with the proposed override, through the composition a read uses. Writes nothing."""
+    overrides.require_open_row(session, row_key)
+    if body.reason_code is not None:
+        codes = set(session.scalars(text("SELECT code FROM mirror_reason_codes")))
+        if body.reason_code not in codes:
+            raise HTTPException(status_code=422, detail=f"unknown reason_code {body.reason_code!r}")
+    composed = load_composed(session, profile)
+    found = next((row for row in composed.rows if row.row_key == row_key), None)
+    if found is None:
+        raise HTTPException(status_code=404, detail=f"unknown row {row_key}")
+    now = composed.now
+    proposed = dict(found.overrides)
+    proposed[ADJUSTED] = CurrentOverride(
+        body.adjusted_date.isoformat() if body.adjusted_date else None,
+        body.reason_code if body.adjusted_date else None,
+        body.note,
+        0,
+        "preview",
+        now,
+    )
+    proposed[EXPEDITE] = CurrentOverride(body.expedite, None, body.note, 0, "preview", now)
+    after = compose_row(found.facts, proposed, found.comment_count, profile, now)
+    return PreviewOut(
+        current=PlanOut.of(found.plan),
+        preview=PlanOut.of(after.plan),
+        system_need_by_locked=found.facts["system_need_by_locked"],
+        operative_need_by=after.operative_need_by,
+    )
 
 
 @router.put("/rows/{row_key}/status")

@@ -41,3 +41,13 @@ export async function apiBlob(path: string, params?: URLSearchParams): Promise<B
   if (!response.ok) throw await failure(response)
   return response.blob()
 }
+
+export async function apiSend<T>(method: 'POST' | 'PUT', path: string, body: unknown): Promise<T> {
+  const response = await fetch(`/api${path}`, {
+    method,
+    headers: { 'Content-Type': 'application/json', ...apiHeaders() },
+    body: JSON.stringify(body),
+  })
+  if (!response.ok) throw await failure(response)
+  return (await response.json()) as T
+}

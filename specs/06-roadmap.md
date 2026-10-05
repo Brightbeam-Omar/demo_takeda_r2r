@@ -31,7 +31,7 @@ Claude Code updates `in_progress` and `review`. Only the human sets `done`.
 | F08 | Sync layer: webhook, queue, drain, mirror | F07 | 1 | done |
 | F09 | Application API: reads, overrides, audit, RBAC, explain | F08 | 1 | done |
 | F10 | Frontend shell & Overview | F09 | 1 | done |
-| F11 | Editing, batch drawer, Explain, Sync & Audit pages | F10 | 1 | ready |
+| F11 | Editing, batch drawer, Explain, Sync & Audit pages | F10 | 1 | review |
 | F12 | Agent harness & Air-gap agent | F09 (API), F11 (UI tasks) | 1 | ready |
 | F13 | Scenario engine & demo reset | F07, F09, F10, F12 | 1 | ready |
 | F14 | Run-of-show E2E, README, rehearsal kit | all Tier 1 | 1 | ready |

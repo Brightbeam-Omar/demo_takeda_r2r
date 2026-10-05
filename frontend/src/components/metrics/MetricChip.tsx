@@ -1,4 +1,5 @@
 import type { Metrics } from '../../api/queries'
+import { ExplainPopover } from '../explain/ExplainPopover'
 import { Sparkline } from './Sparkline'
 
 type Metric = Metrics['metrics'][number]
@@ -37,8 +38,15 @@ export function MetricChip({ metric }: { metric: Metric }) {
   const toDate = weeks[weeks.length - 1]
   const tone = TONES[headline?.rag ?? ''] ?? 'border-slate-200 bg-slate-50 text-slate-700'
   return (
-    <div data-testid={`metric-${metric.metric_id}`} className={`min-w-0 flex-1 rounded-card border px-3 py-2 ${tone}`}>
-      <div className="text-xs whitespace-nowrap">{metric.metric_id} · {metric.label}</div>
+    <div data-testid={`metric-${metric.metric_id}`} className={`relative min-w-0 flex-1 rounded-card border px-3 py-2 ${tone}`}>
+      <div className="pr-5 text-xs whitespace-nowrap">{metric.metric_id} · {metric.label}</div>
+      <span className="absolute top-1.5 right-1.5">
+        <ExplainPopover
+          what={metric.metric_id}
+          path="/explain"
+          params={new URLSearchParams({ field: `metric:${metric.metric_id}`, ...(headline ? { week: headline.week_start } : {}) })}
+        />
+      </span>
       <div className="flex items-baseline gap-2">
         <span className="text-xl font-semibold tabular-nums" data-testid="metric-headline">
           {headline && headline.pct !== null ? `${Number(headline.pct).toFixed(0)}%` : '–'}

@@ -95,7 +95,15 @@ export function useUrlFilters() {
   const filters = useMemo(() => parseFilters(search), [search])
   const update = useCallback(
     (patch: Partial<Filters>) => {
-      setSearch((current) => serializeFilters({ ...parseFilters(current), ...patch }), { replace: true })
+      setSearch(
+        (current) => {
+          const next = serializeFilters({ ...parseFilters(current), ...patch })
+          const row = current.get('row') // the open drawer is not a filter, but it must survive one
+          if (row) next.set('row', row)
+          return next
+        },
+        { replace: true },
+      )
     },
     [setSearch],
   )
@@ -104,4 +112,24 @@ export function useUrlFilters() {
     [update],
   )
   return { filters, update, clearAll }
+}
+
+/** The batch whose drawer is open (`?row=<row_key>`, F11-FR-07). Closing removes only this parameter. */
+export function useDrawerRow() {
+  const [search, setSearch] = useSearchParams()
+  const row = search.get('row')
+  const open = useCallback(
+    (rowKey: string | null) =>
+      setSearch(
+        (current) => {
+          const next = new URLSearchParams(current)
+          if (rowKey) next.set('row', rowKey)
+          else next.delete('row')
+          return next
+        },
+        { replace: true },
+      ),
+    [setSearch],
+  )
+  return { row, open }
 }

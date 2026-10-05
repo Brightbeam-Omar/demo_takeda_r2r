@@ -10,6 +10,7 @@ import {
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useMemo, useRef, useState, type ReactNode } from 'react'
 import type { Row } from '../../api/queries'
+import { ExplainPopover } from '../explain/ExplainPopover'
 import {
   AdjustedNeedBy,
   LocationCell,
@@ -46,12 +47,14 @@ interface Props {
   canEdit: boolean
   changedKeys: ReadonlySet<string>
   toolbar?: ReactNode
+  onOpenRow?: (rowKey: string) => void
+  onEditRow?: (rowKey: string) => void
 }
 
 /** A text for the per-column filter and the sort, taken from what the cell shows. */
 const text = (value: string | number | null | undefined) => (value === null || value === undefined ? '' : String(value))
 
-export function BatchTable({ rows, stageIndex, canEdit, changedKeys, toolbar }: Props) {
+export function BatchTable({ rows, stageIndex, canEdit, changedKeys, toolbar, onOpenRow, onEditRow }: Props) {
   // Unsorted = the server's exceptions-first order (F09-FR-02).
   const [sorting, setSorting] = useState<SortingState>([])
   const scroller = useRef<HTMLDivElement>(null)
@@ -86,7 +89,15 @@ export function BatchTable({ rows, stageIndex, canEdit, changedKeys, toolbar }: 
         id: 'stage',
         header: 'Stage',
         cell: ({ row }) => (
-          <StageChip label={row.original.stage_label} index={stageIndex.get(row.original.stage_key) ?? 0} />
+          <span className="inline-flex items-center gap-1">
+            <StageChip label={row.original.stage_label} index={stageIndex.get(row.original.stage_key) ?? 0} />
+            <ExplainPopover
+              what="stage"
+              path={`/rows/${encodeURIComponent(row.original.row_key)}/explain`}
+              params={new URLSearchParams({ field: 'stage' })}
+              className="opacity-0 group-hover:opacity-100"
+            />
+          </span>
         ),
       }),
       helper.accessor((row) => text(row.system_need_by_locked), {
@@ -97,12 +108,24 @@ export function BatchTable({ rows, stageIndex, canEdit, changedKeys, toolbar }: 
       helper.accessor((row) => text(row.adjusted_need_by_date), {
         id: 'adjusted_need_by',
         header: 'Adjusted need-by',
-        cell: ({ row }) => <AdjustedNeedBy row={row.original} canEdit={canEdit} />,
+        cell: ({ row }) => <AdjustedNeedBy row={row.original} canEdit={canEdit} onEdit={onEditRow} />,
       }),
       helper.accessor((row) => text(row.plan.expected_completion), {
         id: 'expected',
         header: 'Expected completion',
-        cell: ({ row }) => <RagCell row={row.original} />,
+        cell: ({ row }) => (
+          <span className="inline-flex items-center gap-1">
+            <RagCell row={row.original} />
+            {row.original.plan.expected_completion ? (
+              <ExplainPopover
+                what="expected completion"
+                path={`/rows/${encodeURIComponent(row.original.row_key)}/explain`}
+                params={new URLSearchParams({ field: 'expected_completion' })}
+                className="opacity-0 group-hover:opacity-100"
+              />
+            ) : null}
+          </span>
+        ),
       }),
       helper.accessor((row) => row.days_in_stage ?? -1, {
         id: 'days',
@@ -116,7 +139,7 @@ export function BatchTable({ rows, stageIndex, canEdit, changedKeys, toolbar }: 
         cell: ({ row }) => <StatusCell row={row.original} />,
       }),
     ],
-    [stageIndex, canEdit],
+    [stageIndex, canEdit, onEditRow],
   )
 
   // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table v8 hands back unmemoised functions; nothing here depends on their identity
@@ -222,7 +245,12 @@ export function BatchTable({ rows, stageIndex, canEdit, changedKeys, toolbar }: 
                 data-testid="batch-row"
                 data-row-key={row.original.row_key}
                 aria-rowindex={item.index + 1}
-                className={`group absolute left-0 w-full items-center border-b border-slate-100 hover:bg-slate-50 ${changed ? 'row-changed' : ''}`}
+                tabIndex={0}
+                onClick={() => onOpenRow?.(row.original.row_key)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && event.target === event.currentTarget) onOpenRow?.(row.original.row_key)
+                }}
+                className={`group absolute left-0 w-full cursor-pointer items-center border-b border-slate-100 hover:bg-slate-50 ${changed ? 'row-changed' : ''}`}
                 style={{ ...grid, height: ROW_HEIGHT, transform: `translateY(${item.start}px)` }}
               >
                 {row.getVisibleCells().map((cell) => (

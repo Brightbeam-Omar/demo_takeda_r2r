@@ -2,6 +2,8 @@ import { useCallback, useMemo, useState } from 'react'
 import { apiBlob } from '../api/client'
 import { useClock, useMe, useMetrics, useOverview, useReference } from '../api/queries'
 import { EmptyState, ErrorState, Skeleton } from '../components/common/States'
+import { BatchDrawer } from '../components/drawer/BatchDrawer'
+import { NeedByModal } from '../components/edit/NeedByModal'
 import { Section } from '../components/common/Section'
 import { FiltersBand } from '../components/filters/FiltersBand'
 import { PeriodSelector } from '../components/filters/PeriodSelector'
@@ -9,14 +11,19 @@ import { AlertsBand } from '../components/flow-strip/AlertsBand'
 import { FlowStrip } from '../components/flow-strip/FlowStrip'
 import { BatchTable } from '../components/table/BatchTable'
 import { useToast } from '../components/common/Toasts'
+import { canEditNeedBy } from '../lib/roles'
 import { saveBlob } from '../lib/download'
 import { MetricsRibbon } from '../components/metrics/MetricsRibbon'
 import { TopBar } from '../components/shell/TopBar'
+import { useJustSaved } from '../state/just-saved'
 import { useRowChanges } from '../state/row-changes'
-import { activeFilterCount, toApiParams, useUrlFilters } from '../state/url-filters'
+import { activeFilterCount, toApiParams, useDrawerRow, useUrlFilters } from '../state/url-filters'
 
 export function Overview() {
   const { filters, update, clearAll } = useUrlFilters()
+  const drawer = useDrawerRow()
+  const [editRow, setEditRow] = useState<string | null>(null)
+  const justSaved = useJustSaved()
   const reference = useReference()
   const clock = useClock()
   const params = toApiParams(filters)
@@ -28,11 +35,12 @@ export function Overview() {
     [reference.data],
   )
   const data = overview.data
+  const changedKeys = useMemo(() => new Set([...changed, ...justSaved]), [changed, justSaved])
   const me = useMe()
   const { notify } = useToast()
   const [exporting, setExporting] = useState(false)
   // Only planners and admins may adjust a need-by (F09); everyone else sees the pencil disabled (OQ-063).
-  const canEdit = me.data?.role === 'planner' || me.data?.role === 'admin'
+  const canEdit = canEditNeedBy(me.data?.role)
   const stageIndex = useMemo(
     () => new Map((reference.data?.stages ?? []).map((stage, index) => [String(stage.stage_key), index])),
     [reference.data],
@@ -76,6 +84,7 @@ export function Overview() {
               onHoldCount={data.on_hold_count}
               activeStage={filters.stage}
               onHoldActive={filters.flags.includes('on_hold')}
+              explainParams={toApiParams({ ...filters, stage: null })}
               onToggleStage={(key) => update({ stage: filters.stage === key ? null : key })}
               onToggleHold={() =>
                 update({
@@ -109,7 +118,9 @@ export function Overview() {
                 rows={data.rows}
                 stageIndex={stageIndex}
                 canEdit={canEdit}
-                changedKeys={changed}
+                changedKeys={changedKeys}
+                onEditRow={setEditRow}
+                onOpenRow={drawer.open}
                 toolbar={
                   <button
                     type="button"
@@ -127,6 +138,8 @@ export function Overview() {
           )}
         </Section>
       </main>
+      <BatchDrawer rowKey={drawer.row} onOpenRow={drawer.open} canEdit={canEdit} onEdit={setEditRow} />
+      {editRow ? <NeedByModal rowKey={editRow} onClose={() => setEditRow(null)} /> : null}
     </>
   )
 }
