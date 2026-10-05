@@ -72,7 +72,7 @@ One published row per **material + batch + inspection lot** (ADR-004). A batch w
 ## 4. Stage engine
 Inputs are the flattened row fields defined in `04-data-contracts.md` §3 (`staging.batch_flat`). Rules are **evaluated top-down and the first match wins**. Every row gets exactly one `stage_key` and the `stage_rule_id` that matched. Rules are generated from this table, and the profile can only change SLAs, labels and `applies_if`, not rule logic (Tier 1).
 
-Helper definitions:
+Helper definitions (`cycle_start_date` and `ud_effective` are derived by the stage engine and **published** in `batch_pipeline_v`, so Explain shows them without recomputing; each `StageRule` lists the columns it reads in `inputs`, and every one is a published column):
 - `cycle_start_date = CASE WHEN lot_type = '09' THEN lot_start_date ELSE gr_date END`. A batch whose only receipt was netted out by a same-day reversal has `gr_date = NULL` and so falls to `pending`. This is how the pending population arises
 - `received_location_type`: location type of the storage location of the (netted) `101` goods receipt. It is fixed for the life of the lot. `location_type` is the *current* location and is used for display only
 - `offsite_test` is always read as `COALESCE(offsite_test, false)`

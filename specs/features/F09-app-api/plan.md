@@ -5,3 +5,5 @@
 - The mirror is small, so cache composed rows per `contract_run_id` + override max(id) for 5 s.
 
 ## Deviations
+- OQ-060: F09 touches F06/F07/F08 to publish `cycle_start_date` and `ud_effective` and to add `StageRule.inputs`, instead of recomputing them in Python. The mirror gets them through a new migration `0003_mirror_rule_inputs`.
+- Cache key and its inputs follow OQ-061.
