@@ -30,7 +30,7 @@ Claude Code updates `in_progress` and `review`. Only the human sets `done`.
 | F07 | Pipeline II: snapshot, metrics, publish, notify (Dagster) | F06 | 1 | done |
 | F08 | Sync layer: webhook, queue, drain, mirror | F07 | 1 | done |
 | F09 | Application API: reads, overrides, audit, RBAC, explain | F08 | 1 | done |
-| F10 | Frontend shell & Overview | F09 | 1 | ready |
+| F10 | Frontend shell & Overview | F09 | 1 | review |
 | F11 | Editing, batch drawer, Explain, Sync & Audit pages | F10 | 1 | ready |
 | F12 | Agent harness & Air-gap agent | F09 (API), F11 (UI tasks) | 1 | ready |
 | F13 | Scenario engine & demo reset | F07, F09, F10, F12 | 1 | ready |
