@@ -141,3 +141,46 @@ class RowOut(BaseModel):
             ),
             comment_count=row.comment_count,
         )
+
+
+class OverrideOut(BaseModel):
+    id: int
+    field: str
+    value: Any
+    reason_code: str | None
+    note: str | None
+    version: int
+    author_user_key: str
+    created_at: dt.datetime
+    is_current: bool
+
+
+class CommentOut(BaseModel):
+    id: int
+    row_key: str
+    body: str
+    author_user_key: str
+    created_at: dt.datetime
+
+
+class DeviationOut(BaseModel):
+    deviation_no: str
+    title: str | None
+    severity: str | None
+    status: str | None
+    opened_on: dt.date | None
+    closed_on: dt.date | None
+    root_cause_category: str | None
+    owner: str | None
+
+
+class RowDetail(RowOut):
+    """``GET /api/rows/{row_key}``: the row with every mirror column, its overrides, comments and siblings."""
+
+    freshness: Freshness
+    facts: dict[str, Any]
+    current_overrides: dict[str, OverrideOut]
+    override_history: list[OverrideOut]
+    comments: list[CommentOut]
+    deviations: list[DeviationOut]
+    siblings: list[RowOut]
