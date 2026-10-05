@@ -85,7 +85,7 @@ def test_f07_fr03_batch_pipeline_has_the_contract_columns_and_the_run_columns(
     assert len(rows) == 2
     row = rows[0]
     for column in (
-        "row_key", "material_no", "erp_results_recorded_at", "stage_key", "stage_rule_id", "stage_sort",
+        "row_key", "material_no", "erp_results_recorded_at", "stage_key", "stage_rule_id", "cycle_start_date", "ud_effective", "stage_sort",
         "current_stage_entry_date", "lims_rejected", "receipt_entry", "qa_release_exit", "applicable_sla_json",
         "system_need_by_locked", "on_hold", "erp_blocked", "re_eval", "offsite", "full_spec", "ud_rejected",
         "deviation_light", "inbound_light", "snapshot_date", "run_id", "published_at",

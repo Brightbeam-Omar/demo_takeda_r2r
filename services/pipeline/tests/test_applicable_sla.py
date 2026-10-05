@@ -105,15 +105,17 @@ def test_f06_fr10_batch_stage_has_the_contract_columns_in_order(profile: SitePro
     world.write(tmp_path)
     transform(new_context(profile, tmp_path, snapshot_date=D(2026, 10, 12)))
     names = read_delta(tmp_path, "staging.batch_stage").column_names
-    assert names[:6] == [
+    assert names[:8] == [
         "row_key",
         "stage_key",
         "stage_rule_id",
+        "cycle_start_date",
+        "ud_effective",
         "stage_sort",
         "current_stage_entry_date",
         "lims_rejected",
     ]
-    assert names[17:19] == ["qa_release_exit", "applicable_sla_json"]
+    assert names[19:21] == ["qa_release_exit", "applicable_sla_json"]
     assert names[-1] == "source_refs_json" and "inbound_light" in names
 
 
