@@ -3,7 +3,7 @@
 - [x] T1 Auth/persona dependency, `require_role`, `/me`, `/users` (FR-05, AC-01)
 - [x] T2 [TDD] Row composition service (FR-01)
 - [x] T3 [TDD] Overview: filters, period, ordering, flow strip, alerts (FR-02, FR-03, AC-04, AC-05, AC-08)
-- [ ] T4 [TDD] Overrides with versioning + audit. need-by, status, comments (FR-04, AC-02, AC-03)
+- [x] T4 [TDD] Overrides with versioning + audit. need-by, status, comments (FR-04, AC-02, AC-03)
 - [ ] T5 Row detail, metrics, reference, audit, export endpoints (AC-10)
 - [ ] T6 [TDD] Explain service (FR-06, AC-06, AC-07)
 - [ ] T7 Performance test and caching (FR-07, AC-09)
