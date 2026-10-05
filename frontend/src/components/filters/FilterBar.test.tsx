@@ -24,21 +24,21 @@ const rows = [
   { campaign: 'CMP-BRAVO', material_class: null },
 ] as unknown as Row[]
 
-function Harness() {
+function Harness({ bookmarks = [] }: { bookmarks?: string[] }) {
   const { filters, update, clearAll } = useUrlFilters()
   const location = useLocation()
   return (
     <>
-      <FilterBar reference={reference} rows={rows} filters={filters} stageLabel={(k) => k} onChange={update} onClear={clearAll} />
+      <FilterBar reference={reference} rows={rows} filters={filters} stageLabel={(k) => k} bookmarks={bookmarks} onChange={update} onClear={clearAll} />
       <output data-testid="url">{location.search}</output>
     </>
   )
 }
 
-const renderAt = (entry = '/overview') =>
+const renderAt = (entry = '/overview', bookmarks: string[] = []) =>
   render(
     <MemoryRouter initialEntries={[entry]}>
-      <Harness />
+      <Harness bookmarks={bookmarks} />
     </MemoryRouter>,
   )
 
@@ -151,4 +151,24 @@ test('F15-FR-05: Type options show the labels from the reference, not the keys',
   renderAt('/overview?filters=open')
   expect(within(screen.getByRole('group', { name: 'Type' })).getByRole('button', { name: 'Peptides' })).toBeInTheDocument()
   expect(screen.queryByText('small_molecule')).not.toBeInTheDocument()
+})
+
+test('F16-AC-02: Bookmarked is greyed until the user has a bookmark, then toggles bookmarked=1 in the URL', async () => {
+  const first = renderAt()
+  expect(screen.getByRole('button', { name: /^[☆★] Bookmarked$/ })).toBeDisabled()
+  first.unmount()
+  renderAt('/overview', ['RM1|B1|1', 'RM2|B2|1'])
+  const button = screen.getByRole('button', { name: /^[☆★] Bookmarked$/ })
+  expect(button).toBeEnabled()
+  await userEvent.click(button)
+  expect(screen.getByTestId('url')).toHaveTextContent('bookmarked=1')
+  expect(screen.getByRole('button', { name: /^[☆★] Bookmarked$/ })).toHaveAttribute('aria-pressed', 'true')
+  expect(screen.getByText('Bookmarked', { selector: 'span' })).toBeInTheDocument() // the chip
+  await userEvent.click(screen.getByRole('button', { name: 'Remove Bookmarked' }))
+  expect(screen.getByTestId('url')).not.toHaveTextContent('bookmarked')
+})
+
+test('F16-FR-04: with the filter on and no bookmarks left, the button stays usable so it can be switched off', () => {
+  renderAt('/overview?bookmarked=1', [])
+  expect(screen.getByRole('button', { name: /^[☆★] Bookmarked$/ })).toBeEnabled()
 })

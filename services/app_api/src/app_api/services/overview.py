@@ -42,6 +42,7 @@ class Filters:
     date_from: dt.date | None = None
     date_to: dt.date | None = None
     q: str | None = None
+    bookmarked_keys: frozenset[str] | None = None  # the user's bookmarks when `bookmarked` is on (F16-FR-04)
     extra: dict[str, str] = field(default_factory=dict)
 
 
@@ -85,6 +86,8 @@ def _matches(row: ComposedRow, filters: Filters, period: tuple[dt.date, dt.date]
         return False
     if stage and filters.stage and facts["stage_key"] != filters.stage:
         return False
+    if filters.bookmarked_keys is not None and row.row_key not in filters.bookmarked_keys:
+        return False
     if filters.flags and not any(has_flag(row, name) for name in filters.flags):
         return False
     if filters.q:
@@ -126,11 +129,17 @@ class OverviewOut(BaseModel):
     total: int
     mode: Literal["snapshot", "due_in_period"]
     alerts: list[AlertOut]
+    bookmarks: list[str]  # every row the current user bookmarked, whatever the filters
     rows: list[RowOut]
 
 
 def build_overview(
-    rows: Sequence[ComposedRow], filters: Filters, profile: SiteProfile, today: dt.date, fresh: Freshness
+    rows: Sequence[ComposedRow],
+    filters: Filters,
+    profile: SiteProfile,
+    today: dt.date,
+    fresh: Freshness,
+    bookmarks: Sequence[str] = (),
 ) -> OverviewOut:
     labels = {stage.key: stage.label for stage in profile.stages}
     shown = select(rows, filters, today)
@@ -166,5 +175,6 @@ def build_overview(
         total=len(shown),
         mode="snapshot" if filters.period == "all" else "due_in_period",
         alerts=alerts,
+        bookmarks=list(bookmarks),
         rows=[RowOut.of(row, labels) for row in shown],
     )

@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { apiBlob } from '../api/client'
-import { useMe, useMetrics, useOverview, useReference } from '../api/queries'
+import { useMe, useMetrics, useOverview, useReference, useToggleBookmark } from '../api/queries'
 import { EmptyState, ErrorState, Skeleton } from '../components/common/States'
 import { BatchDrawer } from '../components/drawer/BatchDrawer'
 import { NeedByModal } from '../components/edit/NeedByModal'
@@ -34,6 +34,9 @@ export function Overview() {
   const data = overview.data
   const changedKeys = useMemo(() => new Set([...changed, ...justSaved]), [changed, justSaved])
   const me = useMe()
+  const bookmarks = useMemo(() => data?.bookmarks ?? [], [data])
+  const bookmarkSet = useMemo(() => new Set(bookmarks), [bookmarks])
+  const toggleBookmark = useToggleBookmark()
   const { notify } = useToast()
   const [exporting, setExporting] = useState(false)
   // Only planners and admins may adjust a need-by (F09); everyone else sees the pencil disabled (OQ-063).
@@ -61,6 +64,7 @@ export function Overview() {
           rows={data?.rows ?? []}
           filters={filters}
           stageLabel={stageLabel}
+          bookmarks={bookmarks}
           onChange={update}
           onClear={clearAll}
         />
@@ -115,6 +119,13 @@ export function Overview() {
                 changedKeys={changedKeys}
                 onEditRow={setEditRow}
                 onOpenRow={drawer.open}
+                bookmarks={bookmarkSet}
+                onToggleBookmark={(rowKey, on) =>
+                  toggleBookmark.mutate(
+                    { rowKey, on },
+                    { onError: (error) => notify(`Could not update the bookmark: ${error.message}`, 'error') },
+                  )
+                }
                 toolbar={
                   <button
                     type="button"

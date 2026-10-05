@@ -815,6 +815,8 @@ export interface components {
         OverviewOut: {
             /** Alerts */
             alerts: components["schemas"]["AlertOut"][];
+            /** Bookmarks */
+            bookmarks: string[];
             /** Flow Strip */
             flow_strip: components["schemas"]["FlowEntry"][];
             freshness: components["schemas"]["Freshness"];
@@ -1434,6 +1436,7 @@ export interface operations {
                 from?: string | null;
                 to?: string | null;
                 q?: string | null;
+                bookmarked?: boolean;
             };
             header?: {
                 "x-demo-user"?: string | null;
@@ -1475,6 +1478,7 @@ export interface operations {
                 from?: string | null;
                 to?: string | null;
                 q?: string | null;
+                bookmarked?: boolean;
             };
             header?: {
                 "x-demo-user"?: string | null;
@@ -1666,6 +1670,7 @@ export interface operations {
                 from?: string | null;
                 to?: string | null;
                 q?: string | null;
+                bookmarked?: boolean;
             };
             header?: {
                 "x-demo-user"?: string | null;

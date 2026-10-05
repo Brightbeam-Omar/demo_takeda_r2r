@@ -1,5 +1,5 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { apiGet, type Schemas } from './client'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { apiDelete, apiGet, apiSend, type Schemas } from './client'
 import { usePersona } from '../state/persona'
 
 export const POLL_MS = 10_000
@@ -72,5 +72,15 @@ export function useRowDetail(rowKey: string | null) {
     enabled: rowKey !== null,
     refetchInterval: POLL_MS,
     retry: false,
+  })
+}
+
+/** Stars and un-stars a row for the current user, then refreshes everything the overview shows (F16-FR-04). */
+export function useToggleBookmark() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: ({ rowKey, on }: { rowKey: string; on: boolean }) =>
+      on ? apiSend('POST', `/bookmarks/${encodeURIComponent(rowKey)}`, {}) : apiDelete(`/bookmarks/${encodeURIComponent(rowKey)}`),
+    onSuccess: () => client.invalidateQueries({ predicate: (query) => query.queryKey[0] === 'overview' }),
   })
 }

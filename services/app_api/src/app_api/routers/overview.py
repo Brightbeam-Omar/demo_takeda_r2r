@@ -10,6 +10,8 @@ from sqlalchemy.orm import Session
 from app_api.auth import current_user
 from app_api.db import get_session
 from app_api.deps import get_profile
+from app_api.models import AppUser
+from app_api.services.bookmarks import bookmarked_keys
 from app_api.services.overview import FLAG_NAMES, Filters, InvalidFilter, OverviewOut, build_overview
 from app_api.services.store import load_composed
 
@@ -26,6 +28,10 @@ def overview_filters(
     date_from: Annotated[dt.date | None, Query(alias="from")] = None,
     date_to: Annotated[dt.date | None, Query(alias="to")] = None,
     q: str | None = None,
+    bookmarked: bool = False,
+    *,
+    session: Annotated[Session, Depends(get_session, scope="function")],
+    user: Annotated[AppUser, Depends(current_user)],
 ) -> Filters:
     unknown = [name for name in flags or [] if name not in FLAG_NAMES]
     if unknown:
@@ -40,6 +46,7 @@ def overview_filters(
         date_from=date_from,
         date_to=date_to,
         q=q or None,
+        bookmarked_keys=frozenset(bookmarked_keys(session, user.user_key)) if bookmarked else None,
     )
 
 
@@ -48,9 +55,17 @@ def overview(
     filters: Annotated[Filters, Depends(overview_filters)],
     session: Annotated[Session, Depends(get_session, scope="function")],
     profile: Annotated[SiteProfile, Depends(get_profile)],
+    user: Annotated[AppUser, Depends(current_user)],
 ) -> OverviewOut:
     composed = load_composed(session, profile)
     try:
-        return build_overview(composed.rows, filters, profile, composed.today, composed.freshness)
+        return build_overview(
+            composed.rows,
+            filters,
+            profile,
+            composed.today,
+            composed.freshness,
+            bookmarks=bookmarked_keys(session, user.user_key),
+        )
     except InvalidFilter as error:
         raise HTTPException(status_code=422, detail=str(error)) from error

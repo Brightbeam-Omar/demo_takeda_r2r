@@ -25,6 +25,7 @@ function band(erpBlockedTag: string) {
             to: null,
           }}
           stageLabel={(key) => key}
+          bookmarks={[]}
           onChange={vi.fn()}
           onClear={vi.fn()}
         />

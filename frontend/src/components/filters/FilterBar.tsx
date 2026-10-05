@@ -11,6 +11,8 @@ interface Props {
   rows: Row[]
   filters: Filters
   stageLabel: (key: string) => string
+  /** The current user's bookmarked rows, whatever the filters. */
+  bookmarks: string[]
   onChange: (patch: Partial<Filters>) => void
   onClear: () => void
 }
@@ -19,7 +21,7 @@ const button = (on: boolean) =>
   `rounded-chip border px-3 py-1.5 text-sm ${on ? 'border-indigo-300 bg-indigo-50 text-indigo-700' : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'}`
 
 /** F16-FR-01..03: the bar `[Filters] [Bookmarked] [Presets]`, the panel it toggles, and the chips shown when it is closed. */
-export function FilterBar({ reference, rows, filters, stageLabel, onChange, onClear }: Props) {
+export function FilterBar({ reference, rows, filters, stageLabel, bookmarks, onChange, onClear }: Props) {
   const terms = useTerms()
   const panel = useFilterPanel()
   const [search, setSearch] = useState(filters.q)
@@ -48,6 +50,17 @@ export function FilterBar({ reference, rows, filters, stageLabel, onChange, onCl
           onClick={() => panel.setOpen(!panel.open)}
         >
           {panel.open ? '▴' : '▾'} Filters
+        </button>
+        <button
+          type="button"
+          aria-pressed={filters.bookmarked}
+          // Greyed until the user has a bookmark; stays usable while on, so it can always be switched off.
+          disabled={bookmarks.length === 0 && !filters.bookmarked}
+          title={bookmarks.length === 0 ? 'Star a batch to bookmark it' : undefined}
+          className={`${button(filters.bookmarked)} disabled:cursor-not-allowed disabled:opacity-50`}
+          onClick={() => onChange({ bookmarked: !filters.bookmarked })}
+        >
+          {filters.bookmarked ? '★' : '☆'} Bookmarked
         </button>
         <input
           type="search"

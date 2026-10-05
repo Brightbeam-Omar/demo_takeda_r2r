@@ -14,6 +14,7 @@ import { ExplainPopover } from '../explain/ExplainPopover'
 import {
   AdjustedNeedBy,
   LocationCell,
+  BookmarkStar,
   Light,
   MaterialCell,
   RagCell,
@@ -28,8 +29,9 @@ const helper = createColumnHelper<Row>()
 // These cells end in the hover-only explain button. Clipping (not an ellipsis) keeps its hidden box from
 // printing a stray "." when the cell is narrow.
 const CLIPPED = new Set(['stage', 'expected'])
-const MIN_WIDTH = 1134
+const MIN_WIDTH = 1170
 const WIDTHS: Record<string, string> = {
+  star: '36px',
   material: 'minmax(190px, 2.4fr)',
   campaign: 'minmax(90px, 1fr)',
   batch: 'minmax(64px, 0.7fr)',
@@ -52,12 +54,15 @@ interface Props {
   toolbar?: ReactNode
   onOpenRow?: (rowKey: string) => void
   onEditRow?: (rowKey: string) => void
+  /** The current user's bookmarked row keys; with `onToggleBookmark` it adds the star column (F16-FR-04). */
+  bookmarks?: ReadonlySet<string>
+  onToggleBookmark?: (rowKey: string, on: boolean) => void
 }
 
 /** A text for the per-column filter and the sort, taken from what the cell shows. */
 const text = (value: string | number | null | undefined) => (value === null || value === undefined ? '' : String(value))
 
-export function BatchTable({ rows, stageIndex, canEdit, changedKeys, toolbar, onOpenRow, onEditRow }: Props) {
+export function BatchTable({ rows, stageIndex, canEdit, changedKeys, toolbar, onOpenRow, onEditRow, bookmarks, onToggleBookmark }: Props) {
   // Unsorted = the server's exceptions-first order (F09-FR-02).
   const [sorting, setSorting] = useState<SortingState>([])
   const scroller = useRef<HTMLDivElement>(null)
@@ -66,6 +71,23 @@ export function BatchTable({ rows, stageIndex, canEdit, changedKeys, toolbar, on
 
   const columns = useMemo(
     () => [
+      ...(onToggleBookmark
+        ? [
+            helper.display({
+              id: 'star',
+              header: () => <span aria-hidden>★</span>,
+              enableSorting: false,
+              enableColumnFilter: false,
+              cell: ({ row }) => (
+                <BookmarkStar
+                  rowKey={row.original.row_key}
+                  on={bookmarks?.has(row.original.row_key) ?? false}
+                  onToggle={onToggleBookmark}
+                />
+              ),
+            }),
+          ]
+        : []),
       helper.accessor((row) => `${row.material_no} ${row.material_desc ?? ''}`, {
         id: 'material',
         header: 'Material',
@@ -142,7 +164,7 @@ export function BatchTable({ rows, stageIndex, canEdit, changedKeys, toolbar, on
         cell: ({ row }) => <StatusCell row={row.original} />,
       }),
     ],
-    [stageIndex, canEdit, onEditRow],
+    [stageIndex, canEdit, onEditRow, bookmarks, onToggleBookmark],
   )
 
   // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table v8 hands back unmemoised functions; nothing here depends on their identity
@@ -203,14 +225,21 @@ export function BatchTable({ rows, stageIndex, canEdit, changedKeys, toolbar, on
                     className="relative px-2 py-1.5"
                   >
                     <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        className="flex min-w-0 flex-1 items-center gap-1 text-left text-xs font-semibold text-slate-600 uppercase"
-                        onClick={header.column.getToggleSortingHandler()}
-                      >
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                        <span aria-hidden>{sorted === 'asc' ? '▲' : sorted === 'desc' ? '▼' : ''}</span>
-                      </button>
+                      {header.column.getCanSort() ? (
+                        <button
+                          type="button"
+                          className="flex min-w-0 flex-1 items-center gap-1 text-left text-xs font-semibold text-slate-600 uppercase"
+                          onClick={header.column.getToggleSortingHandler()}
+                        >
+                          {flexRender(header.column.columnDef.header, header.getContext())}
+                          <span aria-hidden>{sorted === 'asc' ? '▲' : sorted === 'desc' ? '▼' : ''}</span>
+                        </button>
+                      ) : (
+                        <span className="flex-1 text-xs font-semibold text-slate-400" title="Bookmarked">
+                          {flexRender(header.column.columnDef.header, header.getContext())}
+                        </span>
+                      )}
+                      {header.column.getCanFilter() && (
                       <button
                         type="button"
                         aria-label={`Filter by ${String(header.column.columnDef.header)}`}
@@ -220,6 +249,7 @@ export function BatchTable({ rows, stageIndex, canEdit, changedKeys, toolbar, on
                       >
                         ⏷
                       </button>
+                      )}
                     </div>
                     {filterOpen === header.column.id && (
                       <input

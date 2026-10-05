@@ -51,3 +51,9 @@ export async function apiSend<T>(method: 'POST' | 'PUT', path: string, body: unk
   if (!response.ok) throw await failure(response)
   return (await response.json()) as T
 }
+
+/** For endpoints that answer 204 with no body (removing a bookmark or a preset). */
+export async function apiDelete(path: string): Promise<void> {
+  const response = await fetch(`/api${path}`, { method: 'DELETE', headers: apiHeaders() })
+  if (!response.ok) throw await failure(response)
+}

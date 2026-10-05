@@ -9,20 +9,17 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Response
 from r2r_core import clock
 from r2r_core.profile import SiteProfile
-from sqlalchemy import delete, select
+from sqlalchemy import delete
 from sqlalchemy.orm import Session
 
 from app_api.auth import current_user
 from app_api.db import get_session
 from app_api.deps import get_profile
 from app_api.models import AppUser, Bookmark
+from app_api.services.bookmarks import bookmarked_keys
 from app_api.services.store import load_composed
 
 router = APIRouter()
-
-
-def bookmarked_keys(session: Session, user_key: str) -> list[str]:
-    return list(session.scalars(select(Bookmark.row_key).where(Bookmark.user_key == user_key)))
 
 
 @router.get("/bookmarks")
@@ -30,7 +27,7 @@ def list_bookmarks(
     session: Annotated[Session, Depends(get_session, scope="function")],
     user: Annotated[AppUser, Depends(current_user)],
 ) -> list[str]:
-    return sorted(bookmarked_keys(session, user.user_key))
+    return bookmarked_keys(session, user.user_key)
 
 
 @router.post("/bookmarks/{row_key}", status_code=201)

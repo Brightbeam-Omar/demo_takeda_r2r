@@ -1183,6 +1183,13 @@
             "title": "Alerts",
             "type": "array"
           },
+          "bookmarks": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Bookmarks",
+            "type": "array"
+          },
           "flow_strip": {
             "items": {
               "$ref": "#/components/schemas/FlowEntry"
@@ -1224,6 +1231,7 @@
           "total",
           "mode",
           "alerts",
+          "bookmarks",
           "rows"
         ],
         "title": "OverviewOut",
@@ -3202,6 +3210,16 @@
             }
           },
           {
+            "in": "query",
+            "name": "bookmarked",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Bookmarked",
+              "type": "boolean"
+            }
+          },
+          {
             "in": "header",
             "name": "x-demo-user",
             "required": false,
@@ -3405,6 +3423,16 @@
                 }
               ],
               "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "bookmarked",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Bookmarked",
+              "type": "boolean"
             }
           },
           {
@@ -3819,6 +3847,16 @@
                 }
               ],
               "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "bookmarked",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Bookmarked",
+              "type": "boolean"
             }
           },
           {
