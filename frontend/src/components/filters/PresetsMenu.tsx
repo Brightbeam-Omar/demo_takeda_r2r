@@ -39,6 +39,11 @@ export function PresetsMenu({ filters, onApply }: Props) {
     setName('')
     setReplacing(null)
   }
+  // Once a preset is saved the menu has done its job; leaving it open would cover the chips below it.
+  const finish = () => {
+    reset()
+    setOpen(false)
+  }
   // Stored literally, so a "this_week" preset stays relative (OQ-089).
   const query = serializeFilters(filters).toString()
   const fail = (error: Error) => notify(`Could not save the preset: ${error.message}`, 'error')
@@ -52,7 +57,7 @@ export function PresetsMenu({ filters, onApply }: Props) {
       {
         onSuccess: () => {
           notify(`Saved preset “${trimmed}”`)
-          reset()
+          finish()
         },
         onError: (error) => (error instanceof ApiError && error.status === 409 ? setReplacing(trimmed) : fail(error)),
       },
@@ -67,7 +72,7 @@ export function PresetsMenu({ filters, onApply }: Props) {
       {
         onSuccess: () => {
           notify(`Replaced preset “${existing.name}”`)
-          reset()
+          finish()
         },
         onError: fail,
       },

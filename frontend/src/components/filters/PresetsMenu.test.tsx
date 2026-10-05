@@ -81,6 +81,7 @@ test('F16-AC-03: save, clear everything, apply: the URL filters come back and th
   await open()
   await save('My small molecules')
   await waitFor(() => expect(store).toHaveLength(1))
+  expect(screen.queryByRole('menu')).not.toBeInTheDocument() // saved: the menu closes so it never covers the chips
   expect(store[0]!.query).toBe('type=small_molecule&class=consumable&period=this_week')
 
   await userEvent.click(screen.getByRole('button', { name: 'clear' }))
@@ -110,6 +111,7 @@ test('F16-OQ-089: a duplicate name asks "Replace existing preset?" and confirmin
   await userEvent.click(screen.getByRole('button', { name: 'Replace' }))
   await waitFor(() => expect(store[0]!.query).toBe('type=small_molecule&class=consumable&period=this_week'))
   expect(store).toHaveLength(1)
+  expect(screen.queryByRole('menu')).not.toBeInTheDocument()
 })
 
 test('F16-OQ-089: cancelling the replacement leaves the preset alone', async () => {

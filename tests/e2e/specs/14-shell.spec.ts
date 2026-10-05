@@ -132,7 +132,7 @@ test('F15 review: no stray "." in the stage cell, and the Feedback button never 
   await expect(row).toBeVisible()
   await page.mouse.move(0, 0)
   // The hover-only explain button must not leave an ellipsis behind: the stage cell clips, it does not truncate.
-  const overflow = await row.locator('[role=cell]').nth(6).evaluate((node) => getComputedStyle(node).textOverflow)
+  const overflow = await row.locator('[role=cell]').nth(7).evaluate((node) => getComputedStyle(node).textOverflow)
   expect(overflow).toBe('clip')
 
   // Scrolled to the bottom, the page content ends above the floating button.
