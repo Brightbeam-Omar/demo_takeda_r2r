@@ -46,7 +46,7 @@ def overview_filters(
 @router.get("/overview")
 def overview(
     filters: Annotated[Filters, Depends(overview_filters)],
-    session: Annotated[Session, Depends(get_session)],
+    session: Annotated[Session, Depends(get_session, scope="function")],
     profile: Annotated[SiteProfile, Depends(get_profile)],
 ) -> OverviewOut:
     composed = load_composed(session, profile)

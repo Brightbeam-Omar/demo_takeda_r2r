@@ -41,7 +41,7 @@ def _rows(session: Session, sql: str) -> list[dict[str, Any]]:
 
 @router.get("/reference")
 def reference(
-    session: Annotated[Session, Depends(get_session)],
+    session: Annotated[Session, Depends(get_session, scope="function")],
     profile: Annotated[SiteProfile, Depends(get_profile)],
 ) -> ReferenceOut:
     campaigns = session.scalars(

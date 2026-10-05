@@ -35,7 +35,7 @@ class AuditPage(BaseModel):
 
 @router.get("/audit")
 def audit(
-    session: Annotated[Session, Depends(get_session)],
+    session: Annotated[Session, Depends(get_session, scope="function")],
     profile: Annotated[SiteProfile, Depends(get_profile)],
     row_key: str | None = None,
     actor: str | None = None,

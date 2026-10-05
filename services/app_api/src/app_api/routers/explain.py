@@ -34,7 +34,7 @@ router = APIRouter(dependencies=[Depends(current_user)])
 def explain_row(
     row_key: str,
     field: Annotated[str, Query(pattern="^(stage|expected_completion)$")],
-    session: Annotated[Session, Depends(get_session)],
+    session: Annotated[Session, Depends(get_session, scope="function")],
     profile: Annotated[SiteProfile, Depends(get_profile)],
 ) -> StageExplain | CompletionExplain:
     composed = load_composed(session, profile)
@@ -50,7 +50,7 @@ def explain_row(
 def explain_figure(
     field: str,
     filters: Annotated[Filters, Depends(overview_filters)],
-    session: Annotated[Session, Depends(get_session)],
+    session: Annotated[Session, Depends(get_session, scope="function")],
     profile: Annotated[SiteProfile, Depends(get_profile)],
     week: dt.date | None = None,
 ) -> MetricExplain | FlowExplain:

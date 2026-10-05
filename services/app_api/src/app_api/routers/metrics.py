@@ -60,7 +60,7 @@ def metric_rag(pct: Decimal | None, profile: SiteProfile) -> str | None:
 
 @router.get("/metrics")
 def metrics(
-    session: Annotated[Session, Depends(get_session)],
+    session: Annotated[Session, Depends(get_session, scope="function")],
     profile: Annotated[SiteProfile, Depends(get_profile)],
 ) -> MetricsOut:
     weeks: dict[str, list[WeekOut]] = {}

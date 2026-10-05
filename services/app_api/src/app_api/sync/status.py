@@ -60,7 +60,7 @@ class SyncStatusOut(BaseModel):
 
 
 @router.get("/status")
-def sync_status(session: Annotated[Session, Depends(get_session)]) -> SyncStatusOut:
+def sync_status(session: Annotated[Session, Depends(get_session, scope="function")]) -> SyncStatusOut:
     events = session.execute(
         text(
             """
@@ -115,7 +115,7 @@ def sync_status(session: Annotated[Session, Depends(get_session)]) -> SyncStatus
 
 @router.post("/trigger")
 def trigger(
-    session: Annotated[Session, Depends(get_session)],
+    session: Annotated[Session, Depends(get_session, scope="function")],
     admin: Annotated[AppUser, Depends(require_role("admin"))],
 ) -> JSONResponse:
     """Queue a manual sync (the worker mirrors whatever is published now)."""

@@ -43,7 +43,7 @@ class FeedbackOut(BaseModel):
 @router.post("/feedback", status_code=201)
 def post_feedback(
     body: FeedbackIn,
-    session: Annotated[Session, Depends(get_session)],
+    session: Annotated[Session, Depends(get_session, scope="function")],
     user: Annotated[AppUser, Depends(current_user)],
 ) -> FeedbackOut:
     entry = Feedback(at=clock.now(), user_key=user.user_key, page=body.page, message=body.message)
@@ -53,6 +53,6 @@ def post_feedback(
 
 
 @router.get("/feedback", dependencies=[Depends(require_role("admin"))])
-def list_feedback(session: Annotated[Session, Depends(get_session)]) -> list[FeedbackOut]:
+def list_feedback(session: Annotated[Session, Depends(get_session, scope="function")]) -> list[FeedbackOut]:
     entries = session.scalars(select(Feedback).order_by(Feedback.id.desc()))
     return [FeedbackOut.model_validate(entry, from_attributes=True) for entry in entries]

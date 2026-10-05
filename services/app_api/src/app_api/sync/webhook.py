@@ -56,7 +56,7 @@ def _run_id(body: bytes) -> str | None:
 @router.post("/webhook")
 async def webhook(
     request: Request,
-    session: Annotated[Session, Depends(get_session)],
+    session: Annotated[Session, Depends(get_session, scope="function")],
     x_signature: Annotated[str | None, Header()] = None,
 ) -> JSONResponse:
     declared = request.headers.get("content-length", "")

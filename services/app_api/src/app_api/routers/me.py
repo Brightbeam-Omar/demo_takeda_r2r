@@ -38,7 +38,7 @@ def me(user: Annotated[AppUser, Depends(current_user)]) -> UserOut:
 
 
 @router.get("/users")
-def users(session: Annotated[Session, Depends(get_session)]) -> list[UserOut]:
+def users(session: Annotated[Session, Depends(get_session, scope="function")]) -> list[UserOut]:
     """The personas for the switcher. It needs no identity (the switcher runs before one is chosen)."""
     if not demo_mode():
         raise HTTPException(status_code=404, detail="personas exist only in demo mode")

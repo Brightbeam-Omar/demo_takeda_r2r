@@ -23,7 +23,7 @@ def demo_mode() -> bool:
 
 
 def current_user(
-    session: Annotated[Session, Depends(get_session)],
+    session: Annotated[Session, Depends(get_session, scope="function")],
     x_demo_user: Annotated[str | None, Header()] = None,
 ) -> AppUser:
     if not demo_mode():
@@ -59,7 +59,7 @@ def require_role(*roles: str) -> Callable[[Request, Session, AppUser], AppUser]:
 
     def check(
         request: Request,
-        session: Annotated[Session, Depends(get_session)],
+        session: Annotated[Session, Depends(get_session, scope="function")],
         user: Annotated[AppUser, Depends(current_user)],
     ) -> AppUser:
         if user.role not in roles:

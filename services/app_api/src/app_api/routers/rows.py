@@ -77,7 +77,7 @@ def _override_out(entry: OverrideValue) -> OverrideOut:
 @router.get("/rows/{row_key}", dependencies=[Depends(current_user)])
 def get_row(
     row_key: str,
-    session: Annotated[Session, Depends(get_session)],
+    session: Annotated[Session, Depends(get_session, scope="function")],
     profile: Annotated[SiteProfile, Depends(get_profile)],
 ) -> RowDetail:
     composed = load_composed(session, profile)
@@ -120,7 +120,7 @@ def get_row(
 def put_need_by(
     row_key: str,
     body: NeedByIn,
-    session: Annotated[Session, Depends(get_session)],
+    session: Annotated[Session, Depends(get_session, scope="function")],
     user: Annotated[AppUser, Depends(require_role(*PLANNERS))],
     profile: Annotated[SiteProfile, Depends(get_profile)],
 ) -> RowOut:
@@ -134,7 +134,7 @@ def put_need_by(
 def preview_need_by(
     row_key: str,
     body: NeedByIn,
-    session: Annotated[Session, Depends(get_session)],
+    session: Annotated[Session, Depends(get_session, scope="function")],
     profile: Annotated[SiteProfile, Depends(get_profile)],
 ) -> PreviewOut:
     """Recompute the row with the proposed override, through the composition a read uses. Writes nothing."""
@@ -171,7 +171,7 @@ def preview_need_by(
 def put_status(
     row_key: str,
     body: StatusIn,
-    session: Annotated[Session, Depends(get_session)],
+    session: Annotated[Session, Depends(get_session, scope="function")],
     user: Annotated[AppUser, Depends(require_role(*STATUS_SETTERS))],
     profile: Annotated[SiteProfile, Depends(get_profile)],
 ) -> RowOut:
@@ -183,7 +183,7 @@ def put_status(
 def post_comment(
     row_key: str,
     body: CommentIn,
-    session: Annotated[Session, Depends(get_session)],
+    session: Annotated[Session, Depends(get_session, scope="function")],
     user: Annotated[AppUser, Depends(require_role(*COMMENTERS))],
 ) -> CommentOut:
     comment = overrides.add_comment(session, user, row_key, body.body)
