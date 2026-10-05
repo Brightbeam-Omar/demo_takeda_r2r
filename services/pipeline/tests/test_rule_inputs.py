@@ -11,7 +11,11 @@ SQL_WORDS = {"AND", "OR", "NOT", "IS", "NULL", "IN", "TRUE", "FALSE"}
 
 def referenced_columns(condition_sql: str) -> set[str]:
     without_strings = re.sub(r"'[^']*'", "", condition_sql)
-    return {word for word in re.findall(r"[A-Za-z_][A-Za-z_0-9]*", without_strings) if word.upper() not in SQL_WORDS}
+    return {
+        word
+        for word in re.findall(r"[A-Za-z_][A-Za-z_0-9]*", without_strings)
+        if word.upper() not in SQL_WORDS
+    }
 
 
 def test_f09_fr06_every_column_in_a_condition_is_listed_in_the_rule_inputs() -> None:

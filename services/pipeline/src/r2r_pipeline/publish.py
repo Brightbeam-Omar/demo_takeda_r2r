@@ -23,7 +23,8 @@ STAMP = pa.timestamp("us", tz="UTC")
 
 # Columns of batch_pipeline_v after the batch_flat business columns (04 section 4.1), in contract order.
 STAGE_COLUMNS = (
-    "stage_key", "stage_rule_id", "cycle_start_date", "ud_effective", "stage_sort", "current_stage_entry_date", "lims_rejected",
+    "stage_key", "stage_rule_id", "cycle_start_date", "ud_effective", "stage_sort",
+    "current_stage_entry_date", "lims_rejected",
     "receipt_entry", "receipt_exit", "call_off_entry", "call_off_exit", "sampling_entry", "sampling_exit",
     "qc_ship_entry", "qc_ship_exit", "qc_testing_entry", "qc_testing_exit", "qa_release_entry",
     "qa_release_exit", "applicable_sla_json", "source_refs_json", "system_need_by_locked", "on_hold",

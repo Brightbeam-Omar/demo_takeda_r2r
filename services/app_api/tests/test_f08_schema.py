@@ -73,3 +73,15 @@ def test_f08_fr01_migration_creates_tables_and_seeds_users(make_test_database: C
         assert "ix_mirror_batch_pipeline_stage_key" in indexes
     finally:
         engine.dispose()
+
+
+@pytest.mark.integration
+def test_f09_fr06_the_mirror_has_the_published_rule_inputs(make_test_database: Callable[[str], str]) -> None:
+    dsn = make_test_database("app_rule_inputs")
+    migrate(dsn)
+    engine = make_engine(dsn)
+    try:
+        columns = {c["name"]: str(c["type"]) for c in inspect(engine).get_columns("mirror_batch_pipeline")}
+    finally:
+        engine.dispose()
+    assert columns["cycle_start_date"] == "DATE" and columns["ud_effective"] == "BOOLEAN"
