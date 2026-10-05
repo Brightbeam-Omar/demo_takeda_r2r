@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { afterEach, expect, test, vi } from 'vitest'
 import { renderWithProviders } from '../../test-utils'
 import { AdjustedNeedByWindow } from './AdjustedNeedByWindow'
+import { ExpectedDeliveriesWindow } from './ExpectedDeliveriesWindow'
 import { InsightsWindow, gapTone } from './InsightsWindow'
 
 afterEach(() => vi.unstubAllGlobals())
@@ -115,4 +116,34 @@ test('F16-FR-09 / AC-05: the insights window title, explanation, worst-first ord
 
 test('F16-FR-09: the chip thresholds are green < 2, amber 2–5, red > 5', () => {
   expect([1, 2, 5, 6].map(gapTone)).toEqual(['green', 'amber', 'amber', 'red'])
+})
+
+test('F17-FR-05: the Expected Deliveries window lists the PO lines with the spec columns and an overdue chip', async () => {
+  const seen: string[] = []
+  stub(
+    {
+      '/api/expected-deliveries': {
+        count: 2,
+        overdue_count: 1,
+        mode: 'snapshot',
+        rows: [
+          { ebeln: '4500000001', ebelp: '00010', material_no: 'RM10010', material_desc: 'Excipient 010', supplier_name: 'Supplier 001', scheduled_date: '2026-10-09', quantity: 500, planned_location: '0100', planned_location_type: 'onsite', overdue: true },
+          { ebeln: '4500000002', ebelp: '00010', material_no: 'RM10011', material_desc: 'Buffer 011', supplier_name: 'Supplier 002', scheduled_date: '2026-10-20', quantity: 100, planned_location: '0200', planned_location_type: '3pl', overdue: false },
+        ],
+      },
+    },
+    seen,
+  )
+  wrap(<ExpectedDeliveriesWindow open onClose={vi.fn()} params={new URLSearchParams('type[]=peptide')} />)
+  expect(await screen.findByRole('heading', { name: 'Expected Deliveries — 2 open PO lines' })).toBeInTheDocument()
+  await screen.findAllByTestId('window-row')
+  expect(screen.getAllByRole('columnheader').map((h) => h.textContent?.replace(/[▲▼]/g, ''))).toEqual([
+    'PO', 'Line', 'Material', 'Supplier', 'Scheduled', 'Quantity', 'Planned Location', 'Status',
+  ])
+  const [first, second] = screen.getAllByTestId('window-row')
+  expect(within(first!).getByText('4500000001')).toBeInTheDocument()
+  expect(within(first!).getByText('9 Oct 2026')).toBeInTheDocument()
+  expect(within(first!).getByText('Overdue')).toBeInTheDocument()
+  expect(within(second!).getByText('Due')).toBeInTheDocument()
+  expect(seen[0]).toContain('/api/expected-deliveries?type%5B%5D=peptide')
 })

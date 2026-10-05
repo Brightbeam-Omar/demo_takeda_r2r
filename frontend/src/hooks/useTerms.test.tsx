@@ -20,7 +20,7 @@ function band(erpBlockedTag: string) {
             classes: [],
             campaigns: [],
             flags: [],
-            stage: null,
+            stages: [],
             bookmarked: false,
             q: '',
             period: 'all',

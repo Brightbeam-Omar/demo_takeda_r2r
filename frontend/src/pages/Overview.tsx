@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { apiBlob } from '../api/client'
-import { useMe, useMetrics, useOverview, useReference, useToggleBookmark } from '../api/queries'
+import { useExpectedDeliveries, useMe, useMetrics, useOverview, useReference, useToggleBookmark } from '../api/queries'
 import { EmptyState, ErrorState, Skeleton } from '../components/common/States'
 import { BatchDrawer } from '../components/drawer/BatchDrawer'
 import { NeedByModal } from '../components/edit/NeedByModal'
@@ -10,8 +10,8 @@ import { InsightsBanner } from '../components/banners/InsightsBanner'
 import { AdjustedNeedByWindow } from '../components/windows/AdjustedNeedByWindow'
 import { InsightsWindow } from '../components/windows/InsightsWindow'
 import { FilterBar } from '../components/filters/FilterBar'
-import { AlertsBand } from '../components/flow-strip/AlertsBand'
-import { FlowStrip } from '../components/flow-strip/FlowStrip'
+import { StageStrip, activeTotal } from '../components/pipeline/StageStrip'
+import { ExpectedDeliveriesWindow } from '../components/windows/ExpectedDeliveriesWindow'
 import { BatchTable } from '../components/table/BatchTable'
 import { useToast } from '../components/common/Toasts'
 import { canEditNeedBy } from '../lib/roles'
@@ -19,13 +19,13 @@ import { saveBlob } from '../lib/download'
 import { MetricsRibbon } from '../components/metrics/MetricsRibbon'
 import { useJustSaved } from '../state/just-saved'
 import { useRowChanges } from '../state/row-changes'
-import { activeFilterCount, toApiParams, useDrawerRow, useUrlFilters } from '../state/url-filters'
+import { EMPTY_FILTERS, activeFilterCount, toApiParams, useDrawerRow, useUrlFilters } from '../state/url-filters'
 
 export function Overview() {
   const { filters, update, clearAll } = useUrlFilters()
   const drawer = useDrawerRow()
   const [editRow, setEditRow] = useState<string | null>(null)
-  const [openWindow, setOpenWindow] = useState<'adjusted' | 'insights' | null>(null)
+  const [openWindow, setOpenWindow] = useState<'adjusted' | 'insights' | 'deliveries' | null>(null)
   const justSaved = useJustSaved()
   const reference = useReference()
   const params = toApiParams(filters)
@@ -40,7 +40,13 @@ export function Overview() {
   const changedKeys = useMemo(() => new Set([...changed, ...justSaved]), [changed, justSaved])
   const me = useMe()
   // Both banners and their windows use every filter except stage (OQ-059(5), OQ-087).
-  const bannerParams = useMemo(() => toApiParams({ ...filters, stage: null }), [filters])
+  const bannerParams = useMemo(() => toApiParams({ ...filters, stages: [] }), [filters])
+  // Stage 0 follows type, class, campaign and period only: stage, tags, search and bookmarks never apply (OQ-094).
+  const deliveryParams = useMemo(
+    () => toApiParams({ ...EMPTY_FILTERS, types: filters.types, classes: filters.classes, campaigns: filters.campaigns, period: filters.period, from: filters.from, to: filters.to }),
+    [filters],
+  )
+  const deliveries = useExpectedDeliveries(deliveryParams)
   const airGapCount = data?.alerts.find((alert) => alert.kind === 'air_gap')?.count ?? 0
   const bookmarks = useMemo(() => data?.bookmarks ?? [], [data])
   const bookmarkSet = useMemo(() => new Set(bookmarks), [bookmarks])
@@ -86,18 +92,36 @@ export function Overview() {
             <InsightsBanner count={airGapCount} onView={() => setOpenWindow('insights')} />
           </section>
         )}
-        {data && <AlertsBand alerts={data.alerts} onFilter={update} />}
         {data && reference.data && (
-          <Section title="Pipeline by Stage">
-            <FlowStrip
+          <Section
+            title="Pipeline by Stage"
+            aside={
+              <span className="flex items-center gap-3 text-sm">
+                {filters.stages.length > 0 && (
+                  <button type="button" className="text-accent hover:underline" onClick={() => update({ stages: [] })}>
+                    ✕ Clear {filters.stages.length} {filters.stages.length === 1 ? 'stage' : 'stages'}
+                  </button>
+                )}
+                <span className="text-ink-2" data-testid="active-batches">
+                  {activeTotal(data.flow_strip, reference.data.stages)} active batches
+                </span>
+              </span>
+            }
+          >
+            <StageStrip
               entries={data.flow_strip}
               stages={reference.data.stages}
               mode={data.mode}
               onHoldCount={data.on_hold_count}
-              activeStage={filters.stage}
+              activeStages={filters.stages}
               onHoldActive={filters.flags.includes('on_hold')}
-              explainParams={toApiParams({ ...filters, stage: null })}
-              onToggleStage={(key) => update({ stage: filters.stage === key ? null : key })}
+              deliveries={deliveries.data?.count ?? 0}
+              onOpenDeliveries={() => setOpenWindow('deliveries')}
+              explainParams={toApiParams({ ...filters, stages: [] })}
+              onToggleStage={(key) =>
+                update({ stages: filters.stages.includes(key) ? filters.stages.filter((stage) => stage !== key) : [...filters.stages, key] })
+              }
+              onClearStages={() => update({ stages: [] })}
               onToggleHold={() =>
                 update({
                   flags: filters.flags.includes('on_hold')
@@ -159,6 +183,7 @@ export function Overview() {
       </main>
       <BatchDrawer rowKey={drawer.row} onOpenRow={drawer.open} canEdit={canEdit} onEdit={setEditRow} />
       <AdjustedNeedByWindow open={openWindow === 'adjusted'} onClose={() => setOpenWindow(null)} params={bannerParams} />
+      <ExpectedDeliveriesWindow open={openWindow === 'deliveries'} onClose={() => setOpenWindow(null)} params={deliveryParams} />
       <InsightsWindow open={openWindow === 'insights'} onClose={() => setOpenWindow(null)} params={bannerParams} />
       {editRow ? <NeedByModal rowKey={editRow} onClose={() => setEditRow(null)} /> : null}
     </>
