@@ -3,7 +3,19 @@
 from fastapi import FastAPI
 from r2r_core.web import health_router
 
-from app_api.routers import audit, explain, export, feedback, me, metrics, overview, reference, rows
+from app_api.routers import (
+    audit,
+    bookmarks,
+    explain,
+    export,
+    feedback,
+    me,
+    metrics,
+    overview,
+    presets,
+    reference,
+    rows,
+)
 from app_api.sync import status, webhook
 
 
@@ -12,7 +24,7 @@ def create_app() -> FastAPI:
     app.include_router(health_router("app-api"), prefix="/api")
     app.include_router(me.router, prefix="/api")
     app.include_router(overview.router, prefix="/api")
-    routers = (audit, explain, export, feedback, metrics, reference, rows)
+    routers = (audit, bookmarks, explain, export, feedback, metrics, presets, reference, rows)
     for router in (module.router for module in routers):
         app.include_router(router, prefix="/api")
     app.include_router(webhook.router, prefix="/api/sync")
