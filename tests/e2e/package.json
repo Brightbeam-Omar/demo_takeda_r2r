@@ -6,7 +6,8 @@
   "scripts": {
     "test": "playwright test",
     "typecheck": "tsc --noEmit",
-    "screenshot": "node screenshot.mjs"
+    "screenshot": "node screenshot.mjs",
+    "screenshots": "node screenshots.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

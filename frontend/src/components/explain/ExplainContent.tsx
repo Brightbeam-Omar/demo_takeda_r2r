@@ -1,5 +1,5 @@
 import type { Schemas } from '../../api/client'
-import { formatDate, humanize } from '../../lib/format'
+import { formatDate, formatShortDate, humanize } from '../../lib/format'
 
 export type Explanation =
   | Schemas['StageExplain']
@@ -105,7 +105,7 @@ export function describeExplanation(data: Explanation): Content {
       ],
       rows: {
         columns: ['Lot', 'Entered', 'Left', 'Days', 'SLA', 'On time'],
-        data: data.rows.map((r) => [r.row_key, show(r.entry_date), show(r.exit_date), show(r.duration_days), show(r.sla_days), show(r.on_time)]),
+        data: data.rows.map((r) => [r.row_key, formatShortDate(r.entry_date), formatShortDate(r.exit_date), show(r.duration_days), show(r.sla_days), show(r.on_time)]),
       },
       provenance: provenance(data.freshness),
     }
@@ -182,7 +182,7 @@ export function ExplainBody({ content }: { content: Content }) {
                 {content.rows.data.map((row) => (
                   <tr key={row[0]} className="border-t border-slate-100">
                     {row.map((cell, index) => (
-                      <td key={index} className="px-2 py-1">
+                      <td key={index} className="px-2 py-1 whitespace-nowrap">
                         {cell}
                       </td>
                     ))}

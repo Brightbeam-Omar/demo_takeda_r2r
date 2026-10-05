@@ -58,7 +58,7 @@ export function ExplainPopover({ what, path, params, className = '' }: Props) {
           sideOffset={6}
           collisionPadding={12}
           data-testid="explain-popover"
-          className="z-[80] w-[26rem] max-w-[90vw] rounded-card border border-slate-200 bg-white p-4 shadow-xl"
+          className="z-[80] w-[34rem] max-w-[90vw] rounded-card border border-slate-200 bg-white p-4 shadow-xl"
           onClick={(event) => event.stopPropagation()}
         >
           {query.isPending ? <p className="text-[13px] text-slate-500">Loading explanation…</p> : null}
