@@ -10,6 +10,7 @@ import {
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useMemo, useRef, useState, type ReactNode } from 'react'
 import type { Row } from '../../api/queries'
+import { ExplainPopover } from '../explain/ExplainPopover'
 import {
   AdjustedNeedBy,
   LocationCell,
@@ -88,7 +89,15 @@ export function BatchTable({ rows, stageIndex, canEdit, changedKeys, toolbar, on
         id: 'stage',
         header: 'Stage',
         cell: ({ row }) => (
-          <StageChip label={row.original.stage_label} index={stageIndex.get(row.original.stage_key) ?? 0} />
+          <span className="inline-flex items-center gap-1">
+            <StageChip label={row.original.stage_label} index={stageIndex.get(row.original.stage_key) ?? 0} />
+            <ExplainPopover
+              what="stage"
+              path={`/rows/${encodeURIComponent(row.original.row_key)}/explain`}
+              params={new URLSearchParams({ field: 'stage' })}
+              className="opacity-0 group-hover:opacity-100"
+            />
+          </span>
         ),
       }),
       helper.accessor((row) => text(row.system_need_by_locked), {
@@ -104,7 +113,19 @@ export function BatchTable({ rows, stageIndex, canEdit, changedKeys, toolbar, on
       helper.accessor((row) => text(row.plan.expected_completion), {
         id: 'expected',
         header: 'Expected completion',
-        cell: ({ row }) => <RagCell row={row.original} />,
+        cell: ({ row }) => (
+          <span className="inline-flex items-center gap-1">
+            <RagCell row={row.original} />
+            {row.original.plan.expected_completion ? (
+              <ExplainPopover
+                what="expected completion"
+                path={`/rows/${encodeURIComponent(row.original.row_key)}/explain`}
+                params={new URLSearchParams({ field: 'expected_completion' })}
+                className="opacity-0 group-hover:opacity-100"
+              />
+            ) : null}
+          </span>
+        ),
       }),
       helper.accessor((row) => row.days_in_stage ?? -1, {
         id: 'days',

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import type { RowDetail } from '../../api/queries'
 import { formatDate, formatShortDate, humanize } from '../../lib/format'
+import { ExplainPopover } from '../explain/ExplainPopover'
 import { Light } from '../table/cells'
 
 export function DrawerSection({ title, children, aside }: { title: string; children: ReactNode; aside?: ReactNode }) {
@@ -38,6 +39,14 @@ export function PlanSection({ detail }: { detail: RowDetail }) {
         {rag ? <span className={`ml-2 font-medium ${RAG_TEXT[rag]}`}>{rag.toUpperCase()}</span> : null}
         {plan.days_remaining !== null && plan.days_remaining < 0 ? (
           <span className="ml-2 text-red-700">{-plan.days_remaining} d late</span>
+        ) : null}
+        {plan.expected_completion ? (
+          <ExplainPopover
+            what="expected completion"
+            path={`/rows/${encodeURIComponent(detail.row_key)}/explain`}
+            params={new URLSearchParams({ field: 'expected_completion' })}
+            className="ml-2"
+          />
         ) : null}
       </dd>
       <dt className="text-slate-500">Compression</dt>

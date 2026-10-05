@@ -1,8 +1,9 @@
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeAll, expect, test } from 'vitest'
 import type { Row } from '../../api/queries'
 import { BatchTable } from './BatchTable'
+import { renderWithProviders } from '../../test-utils'
 
 // jsdom has no layout, so give the scroll container a size for the virtualiser.
 beforeAll(() => {
@@ -34,14 +35,14 @@ function makeRow(n: number): Row {
 }
 
 test('F10-FR-09: 1,000 rows render virtualised (only a window of rows is in the DOM)', () => {
-  render(<BatchTable rows={Array.from({ length: 1000 }, (_, i) => makeRow(i))} stageIndex={new Map()} canEdit={false} changedKeys={new Set()} />)
+  renderWithProviders(<BatchTable rows={Array.from({ length: 1000 }, (_, i) => makeRow(i))} stageIndex={new Map()} canEdit={false} changedKeys={new Set()} />)
   expect(screen.getByTestId('row-count')).toHaveTextContent('1000 lots · 1000 batches')
   expect(screen.getAllByTestId('batch-row').length).toBeLessThan(100)
 })
 
 test('F10-FR-09: a per-column filter narrows the rows and a header click sorts them (days, descending first row)', async () => {
   const rows = [makeRow(5), makeRow(30), makeRow(12)]
-  render(<BatchTable rows={rows} stageIndex={new Map()} canEdit={false} changedKeys={new Set()} />)
+  renderWithProviders(<BatchTable rows={rows} stageIndex={new Map()} canEdit={false} changedKeys={new Set()} />)
   expect(screen.queryByRole('textbox', { name: 'Filter Batch' })).not.toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: 'Filter by Batch' }))
   await userEvent.type(screen.getByRole('textbox', { name: 'Filter Batch' }), 'B3')
@@ -56,6 +57,6 @@ test('F10-FR-09: a per-column filter narrows the rows and a header click sorts t
 
 test('F10 review: a batch with a re-evaluation lot is two lots but one batch', () => {
   const rows = [makeRow(7), { ...makeRow(7), row_key: 'RM7|B7|2', inspection_lot_no: '2' } as Row, makeRow(8)]
-  render(<BatchTable rows={rows} stageIndex={new Map()} canEdit={false} changedKeys={new Set()} />)
+  renderWithProviders(<BatchTable rows={rows} stageIndex={new Map()} canEdit={false} changedKeys={new Set()} />)
   expect(screen.getByTestId('row-count')).toHaveTextContent('3 lots · 2 batches')
 })

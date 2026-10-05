@@ -1,4 +1,5 @@
 import type { Overview, Reference } from '../../api/queries'
+import { ExplainPopover } from '../explain/ExplainPopover'
 
 type Entry = Overview['flow_strip'][number]
 
@@ -11,6 +12,14 @@ interface Props {
   onHoldActive: boolean
   onToggleStage: (stageKey: string) => void
   onToggleHold: () => void
+  /** The filters behind the counts, without the stage filter, so a flow explanation matches the card. */
+  explainParams?: URLSearchParams
+}
+
+function withField(base: URLSearchParams | undefined, field: string): URLSearchParams {
+  const params = new URLSearchParams(base)
+  params.set('field', field)
+  return params
 }
 
 export const MODE_CAPTION: Record<Overview['mode'], string> = {
@@ -19,7 +28,7 @@ export const MODE_CAPTION: Record<Overview['mode'], string> = {
 }
 
 /** F10-FR-07. One card per stage, plus the open-pipeline total and On Hold. Late rows show as a small red count. */
-export function FlowStrip({ entries, stages, mode, onHoldCount, activeStage, onHoldActive, onToggleStage, onToggleHold }: Props) {
+export function FlowStrip({ entries, stages, mode, onHoldCount, activeStage, onHoldActive, onToggleStage, onToggleHold, explainParams }: Props) {
   const terminal = new Set(stages.filter((stage) => stage.terminal).map((stage) => String(stage.stage_key)))
   // Released lots have left the pipeline, so the total counts open rows only.
   const total = entries.filter((entry) => !terminal.has(entry.stage_key)).reduce((sum, entry) => sum + entry.count, 0)
@@ -39,14 +48,14 @@ export function FlowStrip({ entries, stages, mode, onHoldCount, activeStage, onH
         {entries.map((entry, index) => {
           const active = activeStage === entry.stage_key
           return (
+            <div key={entry.stage_key} className="relative flex min-w-24 flex-1">
             <button
-              key={entry.stage_key}
               type="button"
               data-testid={`flow-${entry.stage_key}`}
               aria-pressed={active}
               onClick={() => onToggleStage(entry.stage_key)}
               style={{ borderTopColor: `var(--color-stage-${(index % 8) + 1})` }}
-              className={`min-w-24 flex-1 rounded-card border border-t-4 border-slate-200 bg-white px-2.5 py-2 text-left hover:shadow ${
+              className={`w-full rounded-card border border-t-4 border-slate-200 bg-white px-2.5 py-2 text-left hover:shadow ${
                 active ? 'ring-2 ring-indigo-600' : ''
               }`}
             >
@@ -63,6 +72,14 @@ export function FlowStrip({ entries, stages, mode, onHoldCount, activeStage, onH
                 )}
               </div>
             </button>
+            <span className="absolute top-1.5 right-1.5">
+              <ExplainPopover
+                what={`${entry.label} count`}
+                path="/explain"
+                params={withField(explainParams, `flow:${entry.stage_key}`)}
+              />
+            </span>
+            </div>
           )
         })}
         <button

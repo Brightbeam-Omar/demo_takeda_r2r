@@ -1,8 +1,9 @@
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { expect, test, vi } from 'vitest'
 import type { Overview, Reference } from '../../api/queries'
 import { FlowStrip } from './FlowStrip'
+import { renderWithProviders } from '../../test-utils'
 
 const entries = [
   { stage_key: 'receipt', label: 'Receipt', count: 39, breached: true, late_count: 5 },
@@ -16,7 +17,7 @@ const stages = [
 ] as unknown as Reference['stages']
 
 function setup(mode: Overview['mode'], onToggleStage = vi.fn()) {
-  render(
+  renderWithProviders(
     <FlowStrip entries={entries} stages={stages} mode={mode} onHoldCount={7} activeStage={null} onHoldActive={false} onToggleStage={onToggleStage} onToggleHold={vi.fn()} />,
   )
   return onToggleStage
@@ -41,7 +42,7 @@ test('F10-FR-07: the caption follows the mode and a click toggles the stage', as
 })
 
 test('F10-FR-07: the outline marks only the selected stage', () => {
-  render(
+  renderWithProviders(
     <FlowStrip entries={entries} stages={stages} mode="snapshot" onHoldCount={0} activeStage="receipt" onHoldActive={false} onToggleStage={vi.fn()} onToggleHold={vi.fn()} />,
   )
   expect(screen.getByTestId('flow-receipt')).toHaveClass('ring-2')

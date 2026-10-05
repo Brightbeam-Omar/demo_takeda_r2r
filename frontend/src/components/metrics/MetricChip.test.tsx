@@ -1,7 +1,8 @@
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import { expect, test } from 'vitest'
 import type { Metrics } from '../../api/queries'
 import { MetricChip } from './MetricChip'
+import { renderWithProviders } from '../../test-utils'
 
 type Metric = Metrics['metrics'][number]
 
@@ -21,7 +22,7 @@ const active = {
 } as unknown as Metric
 
 test('F10-AC-07: the headline is the last complete week, week to date is secondary, with a sparkline', () => {
-  render(<MetricChip metric={active} />)
+  renderWithProviders(<MetricChip metric={active} />)
   expect(screen.getByTestId('metric-headline')).toHaveTextContent('85%')
   expect(screen.getByTestId('metric-wtd')).toHaveTextContent('WTD –')
   expect(screen.getByTestId('metric-M3')).toHaveClass('border-amber-200')
@@ -31,7 +32,7 @@ test('F10-AC-07: the headline is the last complete week, week to date is seconda
 
 test('F10-AC-06: an awaiting-signal metric is a compact "M1 · Tier 2" chip with label and reason in the tooltip', () => {
   const waiting = { ...active, metric_id: 'M1', label: 'Receipt On-Time', status: 'awaiting_signal', weeks: [], null_reason: 'Comes from the 3PL feed' } as unknown as Metric
-  render(<MetricChip metric={waiting} />)
+  renderWithProviders(<MetricChip metric={waiting} />)
   const chip = screen.getByTestId('metric-M1')
   expect(chip).toHaveTextContent('M1 · Tier 2')
   expect(chip).not.toHaveTextContent('Receipt On-Time')

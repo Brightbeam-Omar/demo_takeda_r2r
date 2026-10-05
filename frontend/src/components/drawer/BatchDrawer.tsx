@@ -1,5 +1,6 @@
 import * as Dialog from '@radix-ui/react-dialog'
 import { useClock, useReference, useRowDetail } from '../../api/queries'
+import { ExplainPopover } from '../explain/ExplainPopover'
 import { Skeleton } from '../common/States'
 import { StageChip, TagChips } from '../table/cells'
 import { READ_ONLY_HINT } from '../../lib/roles'
@@ -46,6 +47,11 @@ export function BatchDrawer({ rowKey, onOpenRow, canEdit, onEdit }: Props) {
                   </p>
                   <div className="mt-2 flex flex-wrap items-center gap-2 text-[13px]">
                     <StageChip label={data.stage_label} index={stageIndex < 0 ? 0 : stageIndex} />
+                    <ExplainPopover
+                      what="stage"
+                      path={`/rows/${encodeURIComponent(data.row_key)}/explain`}
+                      params={new URLSearchParams({ field: 'stage' })}
+                    />
                     <TagChips flags={data.flags} />
                   </div>
                 </>

@@ -84,6 +84,7 @@ export function Overview() {
               onHoldCount={data.on_hold_count}
               activeStage={filters.stage}
               onHoldActive={filters.flags.includes('on_hold')}
+              explainParams={toApiParams({ ...filters, stage: null })}
               onToggleStage={(key) => update({ stage: filters.stage === key ? null : key })}
               onToggleHold={() =>
                 update({
