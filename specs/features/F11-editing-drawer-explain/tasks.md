@@ -4,6 +4,6 @@
 - [x] T3 Need-by modal with preview, save, highlight (FR-02, AC-01)
 - [x] T4 Status and comments (FR-03, AC-02)
 - [x] T5 Explain popover everywhere (FR-04, AC-04)
-- [ ] T6 Sync Status page (FR-05, AC-05)
+- [x] T6 Sync Status page (FR-05, AC-05)
 - [ ] T7 Audit Log page (FR-06)
 - [ ] T8 Playwright specs AC-01–06

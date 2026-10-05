@@ -166,6 +166,7 @@ services:
     environment:
       API_PROXY_TARGET: http://app-api:8000
       AGENTS_PROXY_TARGET: http://agents:8200
+      VITE_DAGSTER_URL: ${VITE_DAGSTER_URL:-http://localhost:3001}
     ports:
       - "${FRONTEND_HOST_PORT:-5173}:5173"
     depends_on:
@@ -183,6 +184,8 @@ services:
       context: .
       dockerfile: docker/frontend.Dockerfile
       target: prod
+      args:
+        VITE_DAGSTER_URL: ${VITE_DAGSTER_URL:-http://localhost:3001}
     ports:
       - "${FRONTEND_WEB_HOST_PORT:-8080}:8080"
     depends_on:

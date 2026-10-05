@@ -12,6 +12,8 @@ EXPOSE 5173
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
 
 FROM deps AS build
+ARG VITE_DAGSTER_URL=http://localhost:3001
+ENV VITE_DAGSTER_URL=$VITE_DAGSTER_URL
 COPY frontend/ ./
 RUN npm run build
 

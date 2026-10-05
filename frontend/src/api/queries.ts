@@ -38,11 +38,11 @@ export function useClock() {
   })
 }
 
-export function useSyncStatus() {
+export function useSyncStatus(intervalMs: number = POLL_MS) {
   return useQuery({
     queryKey: useKey('sync-status'),
     queryFn: () => apiGet<SyncStatus>('/sync/status'),
-    refetchInterval: POLL_MS,
+    refetchInterval: intervalMs,
   })
 }
 
