@@ -3,6 +3,7 @@ import { apiBlob } from '../api/client'
 import { useClock, useMe, useMetrics, useOverview, useReference } from '../api/queries'
 import { EmptyState, ErrorState, Skeleton } from '../components/common/States'
 import { BatchDrawer } from '../components/drawer/BatchDrawer'
+import { NeedByModal } from '../components/edit/NeedByModal'
 import { Section } from '../components/common/Section'
 import { FiltersBand } from '../components/filters/FiltersBand'
 import { PeriodSelector } from '../components/filters/PeriodSelector'
@@ -13,12 +14,15 @@ import { useToast } from '../components/common/Toasts'
 import { saveBlob } from '../lib/download'
 import { MetricsRibbon } from '../components/metrics/MetricsRibbon'
 import { TopBar } from '../components/shell/TopBar'
+import { useJustSaved } from '../state/just-saved'
 import { useRowChanges } from '../state/row-changes'
 import { activeFilterCount, toApiParams, useDrawerRow, useUrlFilters } from '../state/url-filters'
 
 export function Overview() {
   const { filters, update, clearAll } = useUrlFilters()
   const drawer = useDrawerRow()
+  const [editRow, setEditRow] = useState<string | null>(null)
+  const justSaved = useJustSaved()
   const reference = useReference()
   const clock = useClock()
   const params = toApiParams(filters)
@@ -30,6 +34,7 @@ export function Overview() {
     [reference.data],
   )
   const data = overview.data
+  const changedKeys = useMemo(() => new Set([...changed, ...justSaved]), [changed, justSaved])
   const me = useMe()
   const { notify } = useToast()
   const [exporting, setExporting] = useState(false)
@@ -111,7 +116,8 @@ export function Overview() {
                 rows={data.rows}
                 stageIndex={stageIndex}
                 canEdit={canEdit}
-                changedKeys={changed}
+                changedKeys={changedKeys}
+                onEditRow={setEditRow}
                 onOpenRow={drawer.open}
                 toolbar={
                   <button
@@ -130,7 +136,8 @@ export function Overview() {
           )}
         </Section>
       </main>
-      <BatchDrawer rowKey={drawer.row} onOpenRow={drawer.open} />
+      <BatchDrawer rowKey={drawer.row} onOpenRow={drawer.open} canEdit={canEdit} onEdit={setEditRow} />
+      {editRow ? <NeedByModal rowKey={editRow} onClose={() => setEditRow(null)} /> : null}
     </>
   )
 }

@@ -79,13 +79,14 @@ export function SystemNeedBy({ row }: { row: Row }) {
 interface AdjustedProps {
   row: Row
   canEdit: boolean
+  onEdit?: (rowKey: string) => void
 }
 
 /**
  * Overridden need-by: italic with a pencil that is always shown. Otherwise the pencil appears on row hover.
  * It is disabled for read-only roles; F11 wires the modal.
  */
-export function AdjustedNeedBy({ row, canEdit }: AdjustedProps) {
+export function AdjustedNeedBy({ row, canEdit, onEdit }: AdjustedProps) {
   const overridden = row.adjusted_need_by_date !== null
   return (
     <span className="inline-flex items-center gap-1">
@@ -104,7 +105,10 @@ export function AdjustedNeedBy({ row, canEdit }: AdjustedProps) {
         className={`rounded-chip px-1 text-slate-500 focus-visible:opacity-100 enabled:hover:bg-slate-100 enabled:hover:text-indigo-600 disabled:cursor-not-allowed ${
           overridden ? '' : 'opacity-0 group-hover:opacity-100'
         }`}
-        onClick={(event) => event.stopPropagation()}
+        onClick={(event) => {
+          event.stopPropagation() // the row click opens the drawer; the pencil opens the editor
+          onEdit?.(row.row_key)
+        }}
       >
         ✎
       </button>

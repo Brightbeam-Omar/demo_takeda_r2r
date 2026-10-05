@@ -47,12 +47,13 @@ interface Props {
   changedKeys: ReadonlySet<string>
   toolbar?: ReactNode
   onOpenRow?: (rowKey: string) => void
+  onEditRow?: (rowKey: string) => void
 }
 
 /** A text for the per-column filter and the sort, taken from what the cell shows. */
 const text = (value: string | number | null | undefined) => (value === null || value === undefined ? '' : String(value))
 
-export function BatchTable({ rows, stageIndex, canEdit, changedKeys, toolbar, onOpenRow }: Props) {
+export function BatchTable({ rows, stageIndex, canEdit, changedKeys, toolbar, onOpenRow, onEditRow }: Props) {
   // Unsorted = the server's exceptions-first order (F09-FR-02).
   const [sorting, setSorting] = useState<SortingState>([])
   const scroller = useRef<HTMLDivElement>(null)
@@ -98,7 +99,7 @@ export function BatchTable({ rows, stageIndex, canEdit, changedKeys, toolbar, on
       helper.accessor((row) => text(row.adjusted_need_by_date), {
         id: 'adjusted_need_by',
         header: 'Adjusted need-by',
-        cell: ({ row }) => <AdjustedNeedBy row={row.original} canEdit={canEdit} />,
+        cell: ({ row }) => <AdjustedNeedBy row={row.original} canEdit={canEdit} onEdit={onEditRow} />,
       }),
       helper.accessor((row) => text(row.plan.expected_completion), {
         id: 'expected',
@@ -117,7 +118,7 @@ export function BatchTable({ rows, stageIndex, canEdit, changedKeys, toolbar, on
         cell: ({ row }) => <StatusCell row={row.original} />,
       }),
     ],
-    [stageIndex, canEdit],
+    [stageIndex, canEdit, onEditRow],
   )
 
   // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table v8 hands back unmemoised functions; nothing here depends on their identity

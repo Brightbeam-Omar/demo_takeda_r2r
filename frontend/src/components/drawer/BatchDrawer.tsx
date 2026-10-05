@@ -8,10 +8,12 @@ import { SiblingLots, StageTimeline } from './Timeline'
 interface Props {
   rowKey: string | null
   onOpenRow: (rowKey: string | null) => void
+  canEdit: boolean
+  onEdit: (rowKey: string) => void
 }
 
 /** F11-FR-01. A right-hand drawer (560 px) for one lot; it loads the row by itself (OQ-072). */
-export function BatchDrawer({ rowKey, onOpenRow }: Props) {
+export function BatchDrawer({ rowKey, onOpenRow, canEdit, onEdit }: Props) {
   const detail = useRowDetail(rowKey)
   const reference = useReference()
   const clock = useClock()
@@ -77,7 +79,20 @@ export function BatchDrawer({ rowKey, onOpenRow }: Props) {
                     </div>
                   ) : null}
                 </DrawerSection>
-                <DrawerSection title="Plan">
+                <DrawerSection
+                  title="Plan"
+                  aside={
+                    <button
+                      type="button"
+                      disabled={!canEdit}
+                      title={canEdit ? 'Adjust need-by' : 'Read-only role'}
+                      className="rounded-chip border border-slate-300 px-2.5 py-1 text-xs enabled:hover:bg-slate-50 disabled:opacity-40"
+                      onClick={() => onEdit(data.row_key)}
+                    >
+                      ✎ Edit need-by
+                    </button>
+                  }
+                >
                   <PlanSection detail={data} />
                 </DrawerSection>
                 <DrawerSection title="Quality">
