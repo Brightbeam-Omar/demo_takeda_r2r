@@ -23,7 +23,7 @@ Every demo action must travel the real path: a source event, then a pipeline run
 Stages, SLAs, owning teams, reason codes, molecule types, campaigns, terminology and source adapters are defined in a **site profile** YAML (`config/site-profiles/`). Code reads the profile. Hard-coding a stage name or SLA number outside the profile is a defect.
 
 ## P5. Clean-room and client-safe
-All data is synthetic, produced by a seeded generator. All names are generic (see domain model §9). The leak scanner runs in `make check` and in CI.
+All data is synthetic, produced by a seeded generator. All names are generic (see domain model §9). The leak scanner runs in `make check` and in CI. Widely used commercial platform names (e.g. SAP) may appear only as site-profile `terms` values and stage labels (03 §9, OQ-075); never in code, data, fixtures or commits.
 
 ## P6. Databricks-portable data product
 - Transform SQL must use the subset that runs unchanged on **both DuckDB and Spark SQL**. Avoid DuckDB-only functions; use `CASE`, `COALESCE`, `DATE_ADD`/`DATEDIFF` through the macro shim defined in F06, and standard window functions.

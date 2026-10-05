@@ -1,5 +1,5 @@
 # F15 · Tasks
-- [ ] T1 `docs(specs)`: apply the contract changes, replace 05 with v2, record decisions
+- [x] T1 `docs(specs)`: apply the contract changes, replace 05 with v2, record decisions
 - [ ] T2 [TDD] Profile `terms` model + site_a values + `/api/reference` (FR-05)
 - [ ] T3 Tokens, DM Sans, Tailwind theme (FR-01)
 - [ ] T4 Sidebar with groups, badge, placeholders, collapse (FR-02, FR-07)

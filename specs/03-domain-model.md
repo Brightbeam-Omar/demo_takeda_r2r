@@ -58,9 +58,17 @@ metrics:  # see §7. `null_reason` is optional, and required when computed_in is
 metric_rag: {green_min_pct: 90, amber_min_pct: 80}
 rag:        {amber_days_remaining_lt: 3}
 air_gap:    {threshold_hours: 24}
-molecule_types: [small_molecule, large_molecule, peptide]
-material_classes: [drug_substance, consumable]
+molecule_types: [small_molecule, large_molecule, peptide]     # string or {key, label}; normalised to {key, label} (label defaults to the title-cased key)
+material_classes: [drug_substance, consumable]               # same shape
 full_spec_pairs: [{material: RM10031, supplier: SUP007}]   # material+supplier needing full-spec testing
+terms:   # UI vocabulary (F15, OQ-075). All keys optional; generic defaults shown. Code and data keep generic names
+  erp: "ERP"                      # site_a: "SAP"
+  lims: "LIMS"
+  qms: "QMS"
+  qc_lab: "QC Lab"                # site_a: "QCL"
+  insights_banner: "LIMS–ERP Insights"   # site_a: "LIMS–SAP Insights"
+  erp_blocked_tag: "ERP BLOCKED"  # site_a: "SAP BLOCKED"
+  planner_overrides: "planner overrides"
 reason_codes: [CAMPAIGN_PULLED_FORWARD, CAMPAIGN_PUSHED_OUT, CONSOLIDATED_TESTING, EXPEDITE_PRODUCTION,
                EXPEDITE_SHIPPING, SUPPLIER_DELAY, LAB_CAPACITY, DOCUMENTATION_ISSUE, OTHER]
 adapters: {erp: ecc_like}       # Tier 2 adds s4_like and spreadsheet
@@ -175,7 +183,7 @@ For metric `m` bound to stage `s`, week `w` (ISO week, Monday start, site timezo
 |---|---|---|
 | Company | "Demo Pharma" | any real company |
 | Site | "Site A – Harbourview", "Site B – Lakeside" | real site/town names |
-| Systems | "ERP", "LIMS", "QMS", "3PL" | vendor/product or client-internal platform names |
+| Systems | "ERP", "LIMS", "QMS", "3PL" | vendor/product or client-internal platform names, **except** widely used commercial platform names (e.g. SAP) as profile `terms` values and stage labels only (05 v2 §6, OQ-075). Client-internal names never |
 | Materials | `RM1xxxx` "Excipient 017", "API Intermediate 004", consumables `CN2xxxx` | real product/molecule names or codes |
 | Campaigns | `CMP-ALPHA`, `CMP-BRAVO`, `CMP-CEDAR`, `CMP-DELTA`, `CMP-EMBER` | real campaign/product codes |
 | Suppliers / 3PLs / labs | `SUP001`…, "3PL North", "3PL South", "External Lab A/B" | real company names |

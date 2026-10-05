@@ -9,8 +9,8 @@ The REST API behind the UI. It composes the mirror with current overrides and ap
 | `GET /api/me` | any | Current user and role (from `X-Demo-User`, default `pat` in DEMO_MODE) |
 | `GET /api/clock` | any | Proxy of scenario `/clock` (demo now, today, frozen) |
 | `GET /api/users` | any (DEMO_MODE) | Personas for the switcher |
-| `GET /api/reference` | any | Stages, metrics, reason codes, molecule types, classes, campaigns (distinct from mirror), profile site name |
-| `GET /api/overview` | any | Query: `type[]`, `class[]`, `campaign[]`, `stage`, `flags[]`, `period` (`all`,`this_week`,`last_week`,`next_week`,`this_month`,`custom`), `from`, `to`, `q` (search material/batch). Returns `{freshness, flow_strip:[{stage_key,count,breached}], on_hold_count, total, mode:'snapshot'|'due_in_period', alerts:[…], rows:[…]}` |
+| `GET /api/reference` | any | Stages, metrics, reason codes, molecule types and classes (`{key, label}`), campaigns (distinct from mirror), profile site name, profile `terms`, `release_badge` (env `RELEASE_BADGE`) |
+| `GET /api/overview` | any | Query: `type[]`, `class[]`, `campaign[]`, `stage`, `flags[]`, `period` (`all`,`this_week`,`last_week`,`next_week`,`this_month`,`last_month`,`next_month`,`custom`), `from`, `to`, `q` (search material/batch). Returns `{freshness, flow_strip:[{stage_key,count,breached}], on_hold_count, total, mode:'snapshot'|'due_in_period', alerts:[…], rows:[…]}` |
 | `GET /api/metrics` | any | Weekly metrics (12 weeks + current) and reference, honouring the same filters where computable (Tier 1: unfiltered, flag `filtered:false`) |
 | `GET /api/rows/{row_key}` | any | Full row: facts, plan, overrides (current + history), comments, deviations, sibling lots of same batch (history) |
 | `GET /api/rows/{row_key}/explain?field=stage|expected_completion` | any | Row explanation payload (see FR-06) |
@@ -20,6 +20,8 @@ The REST API behind the UI. It composes the mirror with current overrides and ap
 | `POST /api/rows/{row_key}/comments` | all except viewer | `{body}` |
 | `GET /api/audit` | any | Paginated audit events, filter by row_key/actor/action and a demo-date range (`from`, `to`, inclusive, site timezone; F11, OQ-068) |
 | `GET /api/export.csv` | any | Current overview rows (filters applied) |
+| `POST /api/feedback` | any (incl. viewer) | `{page, message}` → stores a `feedback` row (F15). Not audited |
+| `GET /api/feedback` | admin | Feedback, newest first (F15) |
 
 ## Functional requirements
 | ID | Requirement |

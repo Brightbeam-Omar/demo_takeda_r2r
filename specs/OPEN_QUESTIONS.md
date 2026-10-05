@@ -444,34 +444,34 @@ Add entries as: `## OQ-NNN · <feature> · <date>` then context, question, optio
 **Context:** F15-FR-04 maps the picker onto F09's `period` values (`all`, `this_week`, `last_week`, `next_week`, `this_month`, `custom` + `from`/`to`) and adds `last_month` and `next_month`. The existing `r2r_core.sla.in_period` and 03 §5.6 define windows only for the old values, and the F09 contract tests enumerate them.
 **Question:** How are `last_month`/`next_month` windows defined (calendar month in site timezone from the demo clock?), and does "Last Week"/"Last Month" still follow the 03 §5.6 rule that overdue rows roll into every current window, or is a past window a plain due-date range?
 **Proposal:** Calendar months in the site timezone from the demo clock, implemented in `r2r_core.sla` with unit tests and the same `in_period` rule as `this_month`. A past window uses the same rule (`expected_completion ≤ to`, non-terminal), so Last Month would show overdue rows too; mode is `due_in_period`. A picked calendar range is sent as `custom` + `from`/`to`.
-**Decision:** _pending_
+**Decision:** Accepted as proposed: calendar months in the site timezone from the demo clock (in `r2r_core.sla`, with tests); past windows use the same rule (`expected_completion ≤ to`, non-terminal, mode `due_in_period`); a picked range is sent as `custom` + `from`/`to`.
 
 ## OQ-080 · F15 · 2026-10-05
 **Context:** F15-FR-03 gives green, amber (6–12 h) and red (> 12 h) for the feed pill but not the green bound, and the F10 "demo-time rule" measures age against the demo clock, which only moves on `advance-day`.
 **Question:** Is green < 6 h, and does the pill text switch from minutes to hours at 60 min?
 **Proposal:** Green < 6 h, amber 6–12 h (inclusive of 6), red > 12 h. Text uses "N min" under 60 min and "N h" from 60 min up (floor). Same freshness source as F10, unchanged.
-**Decision:** _pending_
+**Decision:** Accepted: green < 6 h, amber 6–12 h (6 inclusive), red > 12 h; text shows "N min" under 60 minutes and "N h" (floored) from 60 minutes.
 
 ## OQ-081 · F15 · 2026-10-05
 **Context:** FR-02 says routes not built yet render "Coming in F20/F21" or "Tier 2", but F20 (Reports) and F21 (Sync/Webhook/Admin pages) are in this pack, while Team Dashboard, Schema Reference, Upload Data, Process / Campaign Mapping, POC — Integrations, Configuration and SLA Configuration are not assigned to any feature. `RELEASE_BADGE` is an env var, and the frontend is a static Vite build.
 **Question:** Which placeholder text does each unassigned item show, and how does `RELEASE_BADGE` reach the browser?
 **Proposal:** Reports & Metrics → "Coming in F20"; Sync Status and Webhook Sync Status keep the F11 Sync page until F21; Team Dashboard, Schema Reference, Upload Data, Process / Campaign Mapping, POC — Integrations, Configuration and SLA Configuration → "Tier 2". `RELEASE_BADGE` is served at runtime in `/api/reference` (`release_badge`) so it needs no rebuild, with the default `ALPHA – LOCAL`; `.env.example` documents it.
-**Decision:** _pending_
+**Decision:** Accepted with one correction: Reports & Metrics "Coming in F20"; Team Dashboard, Schema Reference and SLA Configuration "Coming in F21" (specified in F21-FR-06); Upload Data, Process / Campaign Mapping, POC — Integrations and Configuration "Tier 2" (F21 later turns these into described placeholder pages); Sync Status and Webhook Sync Status keep the F11 Sync page until F21; `RELEASE_BADGE` is served at runtime as `release_badge` in `/api/reference`, default `ALPHA – LOCAL`, documented in `.env.example`.
 
 ## OQ-082 · F15 · 2026-10-05
 **Context:** FR-05 changes the site_a qc stage labels to "QCL Ship For External Testing" and "QCL Testing", but 03 §2 and the F06 and F10/F11 tests use "QC Ship" and "QC Testing". The same FR adds `label` to `molecule_types` and `material_classes`, which are currently plain string lists in 03 §2 (and used as filter keys). 04 §4.4 reference objects are built from the profile.
 **Question:** Do the profile list shapes change (breaking the loader and F05/F09 consumers), and do the published reference objects carry the new labels?
 **Proposal:** Keep keys stable and change shape additively: accept either a string or `{key, label}` for both lists, normalised to `{key, label}` (label defaults to a title-cased key). Update the label strings in `site_a.yaml` and fix tests that assert on old label text (never on stage keys). The reference objects and `/api/reference` expose `{key, label}`.
-**Decision:** _pending_
+**Decision:** Accepted: keys stay stable; both lists accept a plain string or `{key, label}`, normalised to `{key, label}`; site_a label strings updated; tests asserting old label text are fixed (never stage keys); reference objects and `/api/reference` expose `{key, label}`.
 
 ## OQ-083 · F15 · 2026-10-05
 **Context:** FR-06 says `POST /api/feedback` is open to "any identified role", and `GET` is for Admin. The "page context auto-filled" and a length limit are not specified; feedback is not an override and not in the audit trail.
 **Question:** Does viewer count as an identified role, is feedback audited, and what are the limits?
 **Proposal:** Any persona including viewer may post. `message` is required, 1–2000 chars, `page` is the route path (≤ 200 chars). The post is not written to `audit_event` (it is not a business change). `GET /api/feedback` is admin only, newest first. The `/admin/feedback` page is an extra "Feedback" item at the end of the ADMIN group, before Demo Controls.
-**Decision:** _pending_
+**Decision:** Accepted: any persona, including viewer, may post feedback; message required, 1–2000 characters; `page` is the route path, up to 200 characters; feedback is not audited; `GET` is admin-only, newest first; the "Feedback" menu item is the last ADMIN item, before Demo Controls.
 
 ## OQ-084 · F15 · 2026-10-05
 **Context:** F15 T1 repeats the docs commit: `specs/05-ux-guidelines.md` v2 and the F15–F21 folders are already on main (`25f6287`), and the roadmap, F12/F13/F14 deltas and OQ-075–078 are applied in the preceding `docs(specs)` commit. Still to apply for F15 itself are the 03 §2 `terms` block and §9 rule, the 04 §5 `feedback` table, the F09 additions and a clarifying sentence in constitution P5.
 **Question:** Is T1 reduced to those remaining edits?
 **Proposal:** Yes. T1 becomes a second small `docs(specs)` commit with only the 03/04/F09/constitution changes, then F15 is set to `in_progress`.
-**Decision:** _pending_
+**Decision:** Accepted: T1 becomes a small second `docs(specs)` commit covering only the 03 `terms` block and §9 rule, the 04 `feedback` table, the F09 additions and one P5 sentence; then F15 is set to `in_progress`.
