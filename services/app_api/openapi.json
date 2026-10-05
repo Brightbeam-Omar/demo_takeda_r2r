@@ -1378,6 +1378,10 @@
             "title": "Site Name",
             "type": "string"
           },
+          "site_timezone": {
+            "title": "Site Timezone",
+            "type": "string"
+          },
           "stages": {
             "items": {
               "additionalProperties": true,
@@ -1389,6 +1393,7 @@
         },
         "required": [
           "site_name",
+          "site_timezone",
           "stages",
           "metrics",
           "reason_codes",

@@ -770,6 +770,8 @@ export interface components {
             }[];
             /** Site Name */
             site_name: string;
+            /** Site Timezone */
+            site_timezone: string;
             /** Stages */
             stages: {
                 [key: string]: unknown;

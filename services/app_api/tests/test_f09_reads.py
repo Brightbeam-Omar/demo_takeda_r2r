@@ -81,7 +81,7 @@ def test_f09_fr07_metrics_carry_weeks_colours_and_awaiting_signal(client: TestCl
 def test_f09_endpoint_reference_lists_the_filter_values(client: TestClient, mirror: None) -> None:
     body = client.get("/api/reference").json()
     assert body["stages"][0]["stage_key"] == "pending" and body["stages"][-1]["terminal"] is True
-    assert body["campaigns"] == ["CMP-BRAVO", "CMP-CEDAR"] and body["site_name"]
+    assert body["campaigns"] == ["CMP-BRAVO", "CMP-CEDAR"] and body["site_name"] and body["site_timezone"]
     assert "CAMPAIGN_PULLED_FORWARD" in [c["code"] for c in body["reason_codes"]]
     assert body["molecule_types"] == ["small_molecule", "large_molecule", "peptide"]
     assert {m["metric_id"] for m in body["metrics"]} >= {"M1", "M7"}

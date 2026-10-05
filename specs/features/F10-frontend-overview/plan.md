@@ -5,3 +5,4 @@
 - Table: TanStack Table + TanStack Virtual.
 
 ## Deviations
+- **Reference carries the site timezone.** The demo clock must show site-local time (`Mon 12 Oct 2026 08:00`, 05), but `/api/clock` returns UTC and `/api/reference` had no timezone. Added `site_timezone` (from the profile) to `ReferenceOut` in F09's reference router, with the OpenAPI export regenerated. Additive, no behaviour change.

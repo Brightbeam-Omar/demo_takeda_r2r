@@ -8,9 +8,9 @@ test('F10-FR-01: the shell routes to the Overview and lists the sidebar pages', 
   vi.stubGlobal(
     'fetch',
     vi.fn(async (url: string) =>
-      url.startsWith('/api/users')
-        ? new Response('not found', { status: 404 })
-        : new Response(JSON.stringify({ user_key: 'pat', display_name: 'Pat', role: 'planner', site_name: 'Site A' })),
+      url.startsWith('/api/me')
+        ? new Response(JSON.stringify({ user_key: 'pat', display_name: 'Pat', role: 'planner' }))
+        : new Response('not found', { status: 404 }),
     ),
   )
   render(<App />)
