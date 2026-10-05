@@ -1,7 +1,7 @@
 # The React app (F10). Two targets share one dependency layer:
 #   dev  : the Vite dev server on 5173, proxying /api to app-api (the compose `frontend` service)
 #   prod : the static build behind nginx on 8080, proxying the same paths (the `frontend-web` service, profile `prod`)
-FROM node:20-alpine AS deps
+FROM node:22-alpine AS deps
 WORKDIR /app
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci

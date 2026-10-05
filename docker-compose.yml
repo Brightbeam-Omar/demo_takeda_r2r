@@ -172,7 +172,7 @@ services:
       app-api: {condition: service_healthy}
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:5173/"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:5173/"]
       interval: 5s
       timeout: 5s
       retries: 12
