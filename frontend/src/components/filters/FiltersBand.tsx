@@ -1,20 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { Reference, Row } from '../../api/queries'
+import { FLAG_CHIPS } from '../../lib/flags'
 import { humanize } from '../../lib/format'
 import { activeFilterCount, type Filters } from '../../state/url-filters'
 import { MultiSelect } from './MultiSelect'
-
-/** Tag chips in the order of 05. `keys` are the API flag names; REJECTED covers both rejection kinds (OQ-064). */
-export const FLAG_CHIPS: { label: string; keys: string[] }[] = [
-  { label: 'HOLD', keys: ['on_hold'] },
-  { label: 'RE-EVAL', keys: ['re_eval'] },
-  { label: 'EXPEDITE', keys: ['expedite'] },
-  { label: 'FULL SPEC', keys: ['full_spec'] },
-  { label: 'OFFSITE', keys: ['offsite'] },
-  { label: 'ERP BLOCKED', keys: ['erp_blocked'] },
-  { label: 'REJECTED', keys: ['ud_rejected', 'lims_rejected'] },
-  { label: 'AIR GAP', keys: ['air_gap'] },
-]
 
 interface Props {
   reference: Reference | undefined

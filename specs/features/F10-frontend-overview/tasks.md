@@ -5,6 +5,6 @@
 - [x] T4 Filters band + URL state (FR-04, AC-03)
 - [x] T5 Period selector (FR-05, AC-04)
 - [x] T6 Alerts band, flow strip, metrics ribbon (FR-06–08, AC-06, AC-07)
-- [ ] T7 Batch table with virtualisation, renderers, export (FR-09)
+- [x] T7 Batch table with virtualisation, renderers, export (FR-09)
 - [ ] T8 States, update toast/highlight (FR-10, FR-11, AC-05)
 - [ ] T9 Playwright specs AC-01–05, accessibility pass (AC-08)

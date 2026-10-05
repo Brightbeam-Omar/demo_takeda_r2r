@@ -1,10 +1,14 @@
-import { useCallback } from 'react'
-import { useClock, useMetrics, useOverview, useReference } from '../api/queries'
+import { useCallback, useMemo, useState } from 'react'
+import { apiBlob } from '../api/client'
+import { useClock, useMe, useMetrics, useOverview, useReference } from '../api/queries'
 import { Section } from '../components/common/Section'
 import { FiltersBand } from '../components/filters/FiltersBand'
 import { PeriodSelector } from '../components/filters/PeriodSelector'
 import { AlertsBand } from '../components/flow-strip/AlertsBand'
 import { FlowStrip } from '../components/flow-strip/FlowStrip'
+import { BatchTable } from '../components/table/BatchTable'
+import { useToast } from '../components/common/Toasts'
+import { saveBlob } from '../lib/download'
 import { MetricsRibbon } from '../components/metrics/MetricsRibbon'
 import { TopBar } from '../components/shell/TopBar'
 import { toApiParams, useUrlFilters } from '../state/url-filters'
@@ -20,6 +24,25 @@ export function Overview() {
     [reference.data],
   )
   const data = overview.data
+  const me = useMe()
+  const { notify } = useToast()
+  const [exporting, setExporting] = useState(false)
+  // Only planners and admins may adjust a need-by (F09); everyone else sees the pencil disabled (OQ-063).
+  const canEdit = me.data?.role === 'planner' || me.data?.role === 'admin'
+  const stageIndex = useMemo(
+    () => new Map((reference.data?.stages ?? []).map((stage, index) => [String(stage.stage_key), index])),
+    [reference.data],
+  )
+  const exportCsv = async () => {
+    setExporting(true)
+    try {
+      saveBlob(await apiBlob('/export.csv', toApiParams(filters)), 'r2r-overview.csv')
+    } catch (error) {
+      notify(`Export failed: ${(error as Error).message}`, 'error')
+    } finally {
+      setExporting(false)
+    }
+  }
 
   return (
     <>
@@ -61,7 +84,26 @@ export function Overview() {
             <MetricsRibbon metrics={metrics.data.metrics} />
           </Section>
         )}
-        <p className="text-sm text-slate-500">{data ? `${data.total} batches` : ''}</p>
+        {data && (
+          <Section title="Batches">
+            <BatchTable
+              rows={data.rows}
+              stageIndex={stageIndex}
+              canEdit={canEdit}
+              changedKeys={new Set()}
+              toolbar={
+                <button
+                  type="button"
+                  disabled={exporting}
+                  className="rounded-chip border border-slate-300 bg-white px-3 py-1.5 text-sm hover:border-slate-400 disabled:opacity-50"
+                  onClick={() => void exportCsv()}
+                >
+                  Export CSV
+                </button>
+              }
+            />
+          </Section>
+        )}
       </main>
     </>
   )

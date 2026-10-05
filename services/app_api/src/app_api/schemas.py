@@ -72,6 +72,8 @@ class RowOut(BaseModel):
     inspection_lot_no: str
     lot_type: str
     campaign: str | None
+    storage_location: str | None
+    location_type: str | None
     stage_key: str
     stage_label: str
     stage_rule_id: str | None
@@ -108,6 +110,8 @@ class RowOut(BaseModel):
             inspection_lot_no=facts["inspection_lot_no"],
             lot_type=facts["lot_type"],
             campaign=facts["campaign"],
+            storage_location=facts["storage_location"],
+            location_type=facts["location_type"],
             stage_key=facts["stage_key"],
             stage_label=stage_labels.get(facts["stage_key"], facts["stage_key"]),
             stage_rule_id=facts["stage_rule_id"],
