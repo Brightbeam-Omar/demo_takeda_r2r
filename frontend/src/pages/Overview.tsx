@@ -16,7 +16,7 @@ import { BatchTable } from '../components/table/BatchTable'
 import { useToast } from '../components/common/Toasts'
 import { canEditNeedBy } from '../lib/roles'
 import { saveBlob } from '../lib/download'
-import { MetricsRibbon } from '../components/metrics/MetricsRibbon'
+import { MetricsRibbon, metricsTitle } from '../components/metrics/MetricsRibbon'
 import { useJustSaved } from '../state/just-saved'
 import { useRowChanges } from '../state/row-changes'
 import { EMPTY_FILTERS, activeFilterCount, toApiParams, useDrawerRow, useUrlFilters } from '../state/url-filters'
@@ -34,6 +34,10 @@ export function Overview() {
   const metrics = useMetrics(overview.data?.freshness.contract_run_id)
   const stageLabel = useCallback(
     (key: string) => String(reference.data?.stages.find((stage) => stage.stage_key === key)?.label ?? key),
+    [reference.data],
+  )
+  const stageLabels = useMemo(
+    () => Object.fromEntries((reference.data?.stages ?? []).map((stage) => [String(stage.stage_key), String(stage.label)])),
     [reference.data],
   )
   const data = overview.data
@@ -132,12 +136,15 @@ export function Overview() {
             />
           </Section>
         )}
-        <Section title="Weekly Metrics">
+        <Section
+          title={metrics.data ? metricsTitle(metrics.data.metrics) : 'Weekly Metrics'}
+          aside={<code className="font-mono text-xs text-ink-2">Source: weekly_metrics_v</code>}
+        >
           {metrics.isError ? (
             <ErrorState what="the weekly metrics" error={metrics.error} onRetry={() => void metrics.refetch()} />
           ) : metrics.data ? (
             metrics.data.metrics.length > 0 ? (
-              <MetricsRibbon metrics={metrics.data.metrics} />
+              <MetricsRibbon metrics={metrics.data.metrics} stageLabels={stageLabels} />
             ) : (
               <EmptyState>No metrics are published yet.</EmptyState>
             )
