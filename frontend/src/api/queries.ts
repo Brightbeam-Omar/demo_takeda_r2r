@@ -12,6 +12,7 @@ export type Overview = Schemas['OverviewOut']
 export type Row = Schemas['RowOut']
 export type Metrics = Schemas['MetricsOut']
 export type RowDetail = Schemas['RowDetail']
+export type Preset = Schemas['PresetOut']
 
 /** Query keys carry the persona so a switch refetches everything (F10-FR-02). */
 function useKey(...parts: unknown[]) {
@@ -82,5 +83,34 @@ export function useToggleBookmark() {
     mutationFn: ({ rowKey, on }: { rowKey: string; on: boolean }) =>
       on ? apiSend('POST', `/bookmarks/${encodeURIComponent(rowKey)}`, {}) : apiDelete(`/bookmarks/${encodeURIComponent(rowKey)}`),
     onSuccess: () => client.invalidateQueries({ predicate: (query) => query.queryKey[0] === 'overview' }),
+  })
+}
+
+export function usePresets() {
+  return useQuery({ queryKey: useKey('presets'), queryFn: () => apiGet<Preset[]>('/presets') })
+}
+
+/** Saves the current filters under a name. A name the user already has answers 409 (ApiError.status). */
+export function useSavePreset() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (body: { name: string; query: string }) => apiSend<Preset>('POST', '/presets', body),
+    onSuccess: () => client.invalidateQueries({ queryKey: ['presets'] }),
+  })
+}
+
+export function useOverwritePreset() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, query }: { id: number; query: string }) => apiSend<Preset>('PUT', `/presets/${id}`, { query }),
+    onSuccess: () => client.invalidateQueries({ queryKey: ['presets'] }),
+  })
+}
+
+export function useDeletePreset() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => apiDelete(`/presets/${id}`),
+    onSuccess: () => client.invalidateQueries({ queryKey: ['presets'] }),
   })
 }

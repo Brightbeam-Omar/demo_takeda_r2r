@@ -4,6 +4,7 @@ import { useTerms } from '../../hooks/useTerms'
 import { useFilterPanel, type Filters } from '../../state/url-filters'
 import { FilterChips, filterChips } from './FilterChips'
 import { FilterPanel } from './FilterPanel'
+import { PresetsMenu } from './PresetsMenu'
 import { TagChips } from './TagChips'
 
 interface Props {
@@ -62,6 +63,7 @@ export function FilterBar({ reference, rows, filters, stageLabel, bookmarks, onC
         >
           {filters.bookmarked ? '★' : '☆'} Bookmarked
         </button>
+        <PresetsMenu filters={filters} onApply={onChange} />
         <input
           type="search"
           aria-label="Search material or batch"

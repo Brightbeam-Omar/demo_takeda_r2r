@@ -1,12 +1,15 @@
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
+import { renderWithProviders } from '../test-utils'
 import { expect, test } from 'vitest'
 import { FilterBar } from '../components/filters/FilterBar'
 import { DEFAULT_TERMS, TermsContext } from './useTerms'
 import { MemoryRouter } from 'react-router-dom'
 import { vi } from 'vitest'
 
+vi.stubGlobal('fetch', vi.fn(async () => new Response('[]')))
+
 function band(erpBlockedTag: string) {
-  render(
+  renderWithProviders(
     <MemoryRouter>
       <TermsContext.Provider value={{ ...DEFAULT_TERMS, erp_blocked_tag: erpBlockedTag }}>
         <FilterBar

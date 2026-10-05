@@ -1,9 +1,10 @@
-import { render, screen, within } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, useLocation } from 'react-router-dom'
-import { afterEach, expect, test } from 'vitest'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import type { Reference, Row } from '../../api/queries'
 import { useUrlFilters } from '../../state/url-filters'
+import { renderWithProviders } from '../../test-utils'
 import { FilterBar } from './FilterBar'
 
 const reference = {
@@ -36,13 +37,20 @@ function Harness({ bookmarks = [] }: { bookmarks?: string[] }) {
 }
 
 const renderAt = (entry = '/overview', bookmarks: string[] = []) =>
-  render(
+  renderWithProviders(
     <MemoryRouter initialEntries={[entry]}>
       <Harness bookmarks={bookmarks} />
     </MemoryRouter>,
   )
 
-afterEach(() => sessionStorage.clear())
+beforeEach(() => {
+  vi.stubGlobal('fetch', vi.fn(async () => new Response('[]'))) // the presets menu loads the (empty) list
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+  sessionStorage.clear()
+})
 
 test('F16-FR-01: the Filters button toggles the panel and the state is in the URL', async () => {
   renderAt()
