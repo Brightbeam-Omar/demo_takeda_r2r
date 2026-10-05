@@ -4,15 +4,15 @@ import { Layout } from './app/Layout'
 import { ToastProvider } from './components/common/Toasts'
 import { Overview } from './pages/Overview'
 import { PlaceholderPage } from './pages/PlaceholderPage'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { onPersonaChange } from './state/persona'
 
-const queryClient = new QueryClient({
-  defaultOptions: { queries: { staleTime: 5_000, retry: 1, refetchOnWindowFocus: false } },
-})
+const createQueryClient = () =>
+  new QueryClient({ defaultOptions: { queries: { staleTime: 5_000, retry: 1, refetchOnWindowFocus: false } } })
 
 export default function App() {
-  useEffect(() => onPersonaChange(() => void queryClient.invalidateQueries()), [])
+  const [queryClient] = useState(createQueryClient)
+  useEffect(() => onPersonaChange(() => void queryClient.invalidateQueries()), [queryClient])
   return (
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
