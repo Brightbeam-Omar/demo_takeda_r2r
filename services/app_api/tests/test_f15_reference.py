@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 import yaml
-from fastapi.testclient import TestClient
 from app_api.deps import get_profile
+from fastapi.testclient import TestClient
 from r2r_core.profile import profiles_dir
 
 pytestmark = pytest.mark.integration

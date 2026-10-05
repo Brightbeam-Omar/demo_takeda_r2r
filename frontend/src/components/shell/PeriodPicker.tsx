@@ -47,7 +47,7 @@ export function PeriodPicker({ filters, today, onChange }: Props) {
           aria-label="Period"
           className="flex items-center gap-1.5 rounded-pill border border-hairline bg-white px-3 py-1.5 text-sm font-medium hover:border-ink-3"
         >
-          <span aria-hidden>📅</span>
+          <CalendarIcon />
           {periodLabel(filters)} ▾
         </button>
       </Popover.Trigger>
@@ -198,5 +198,15 @@ function RangeCalendar({ start, end, today, onApply }: CalendarProps) {
         </button>
       </div>
     </div>
+  )
+}
+
+/** Outline calendar, 16 px, in the current text colour. */
+function CalendarIcon() {
+  return (
+    <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" />
+      <path d="M3.5 10h17M8 3v4M16 3v4" />
+    </svg>
   )
 }

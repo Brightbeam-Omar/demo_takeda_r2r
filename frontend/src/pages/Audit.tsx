@@ -59,7 +59,7 @@ export function Audit() {
 
   return (
     <>
-      <main className="flex-1 space-y-4 overflow-auto p-6">
+      <main className="flex-1 space-y-4 overflow-auto p-6 pb-20">
         <section aria-label="Filters" className="flex flex-wrap items-end gap-3">
           <label className="text-xs text-slate-500">
             Actor

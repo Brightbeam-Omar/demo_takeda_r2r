@@ -125,3 +125,22 @@ test('F15-AC-06: no client logo asset exists in frontend/', async () => {
   // Only the generic mark, drawn in markup: nothing but the favicon and text is shipped as an image.
   expect(files.filter((file) => /\.(png|jpe?g|svg|gif|webp)$/i.test(file) && !/favicon/i.test(file))).toEqual([])
 })
+
+test('F15 review: no stray "." in the stage cell, and the Feedback button never covers the last rows', async ({ page }) => {
+  await page.goto('/overview?stage=sampling')
+  const row = page.getByTestId('batch-row').first()
+  await expect(row).toBeVisible()
+  await page.mouse.move(0, 0)
+  // The hover-only explain button must not leave an ellipsis behind: the stage cell clips, it does not truncate.
+  const overflow = await row.locator('[role=cell]').nth(6).evaluate((node) => getComputedStyle(node).textOverflow)
+  expect(overflow).toBe('clip')
+
+  // Scrolled to the bottom, the page content ends above the floating button.
+  await page.evaluate(() => document.querySelector('main')?.scrollTo(0, 1e6))
+  const main = await page.locator('main').evaluate((node) => {
+    const last = node.lastElementChild?.getBoundingClientRect()
+    return { bottom: last?.bottom ?? 0 }
+  })
+  const button = await page.getByTestId('feedback-button').boundingBox()
+  expect(main.bottom).toBeLessThanOrEqual(button?.y ?? 0)
+})

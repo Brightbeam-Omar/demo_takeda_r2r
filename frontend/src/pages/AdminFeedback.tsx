@@ -22,7 +22,7 @@ export function AdminFeedback() {
   const tz = reference.data?.site_timezone ?? 'UTC'
 
   return (
-    <main className="flex-1 overflow-auto p-6" data-testid="feedback-page">
+    <main className="flex-1 overflow-auto p-6 pb-20" data-testid="feedback-page">
       {!me.data ? (
         <Skeleton label="feedback" />
       ) : !isAdmin ? (

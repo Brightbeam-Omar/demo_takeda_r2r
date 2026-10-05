@@ -55,7 +55,7 @@ export function Overview() {
 
   return (
     <>
-      <main className="flex-1 space-y-5 overflow-auto p-6">
+      <main className="flex-1 space-y-5 overflow-auto p-6 pb-20">
         <FiltersBand
           reference={reference.data}
           rows={data?.rows ?? []}
