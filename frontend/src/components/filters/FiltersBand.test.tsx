@@ -62,3 +62,14 @@ test('F10-FR-04: chips, dropdowns and the summary write to the URL and Clear all
   expect(screen.getByTestId('url')).toHaveTextContent('')
   expect(screen.queryByTestId('active-filters')).not.toBeInTheDocument()
 })
+
+test('F15-FR-05: Type and Class options show the labels from the reference, not the keys', async () => {
+  render(
+    <MemoryRouter>
+      <Harness />
+    </MemoryRouter>,
+  )
+  await userEvent.click(screen.getByRole('button', { name: /Type/ }))
+  expect(screen.getByRole('checkbox', { name: /Small Molecule/ })).toBeInTheDocument()
+  expect(screen.queryByText('small_molecule')).not.toBeInTheDocument()
+})

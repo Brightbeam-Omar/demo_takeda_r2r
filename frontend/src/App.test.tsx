@@ -105,3 +105,14 @@ test('F15-FR-03: the top bar shows the page title, the period button and the use
   expect(await screen.findByTestId('period-button')).toHaveTextContent('All Dates')
   expect(await screen.findByTestId('user-chip')).toHaveTextContent('Pat · Planner')
 })
+
+test('F15-FR-07: the persona switcher shows only in DEMO_MODE', async () => {
+  stub('planner', DEMO_USERS)
+  const { unmount } = render(<App />)
+  expect(await screen.findByRole('combobox')).toBeInTheDocument()
+  unmount()
+  stub('planner')
+  render(<App />)
+  expect(await screen.findByRole('link', { name: 'Audit Log' })).toBeInTheDocument()
+  expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
+})
