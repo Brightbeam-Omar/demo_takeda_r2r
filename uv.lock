@@ -76,8 +76,10 @@ version = "0.1.0"
 source = { editable = "services/app_api" }
 dependencies = [
     { name = "alembic" },
+    { name = "deltalake" },
     { name = "fastapi" },
     { name = "psycopg", extra = ["binary"] },
+    { name = "pyarrow" },
     { name = "r2r-core" },
     { name = "sqlalchemy" },
     { name = "uvicorn" },
@@ -86,8 +88,10 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "alembic", specifier = ">=1.13" },
+    { name = "deltalake", specifier = ">=0.18" },
     { name = "fastapi", specifier = ">=0.110" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
+    { name = "pyarrow", specifier = ">=16" },
     { name = "r2r-core", editable = "packages/r2r_core" },
     { name = "sqlalchemy", specifier = ">=2" },
     { name = "uvicorn", specifier = ">=0.29" },
@@ -1306,17 +1310,26 @@ dependencies = [
     { name = "tzdata" },
 ]
 
+[package.optional-dependencies]
+delta = [
+    { name = "deltalake" },
+    { name = "pyarrow" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "alembic", specifier = ">=1.13" },
+    { name = "deltalake", marker = "extra == 'delta'", specifier = ">=0.18" },
     { name = "fastapi", specifier = ">=0.110" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
+    { name = "pyarrow", marker = "extra == 'delta'", specifier = ">=16" },
     { name = "pydantic", specifier = ">=2" },
     { name = "pyyaml", specifier = ">=6" },
     { name = "sqlalchemy", specifier = ">=2" },
     { name = "tzdata" },
 ]
+provides-extras = ["delta"]
 
 [[package]]
 name = "r2r-demo"

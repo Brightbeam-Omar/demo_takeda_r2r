@@ -15,7 +15,9 @@ This is the glue between data product and app, following constitution P2 and ADR
 | F08-FR-06 | The worker is the **only** code path that reads the lakehouse. Its container mounts `./lakehouse` read-only |
 | F08-FR-07 | `GET /api/sync/status`: last 50 events, watermark per object, `pipeline_status` (last_run_id, last_success_at, source_freshness), and computed `freshness_minutes = now − last_success_at` (demo clock) |
 | F08-FR-08 | Structured logs for claim/pull/upsert, with `event_id`, `run_id` and duration |
-| F08-FR-09 | `packages/r2r_core/contract.py` also defines `DatabricksContractReader` as a documented stub raising `NotImplementedError` (port path, Tier 2) |
+| F08-FR-09 | `packages/r2r_core/contract.py` defines the `ContractReader` Protocol, `PipelineStatus`, `DeltaContractReader` (plain Python values; a missing object or empty status raises, and the event fails with "no published data yet"), and `DatabricksContractReader` as a documented stub raising `NotImplementedError` (port path, Tier 2) |
+| F08-FR-10 | Consistency (OQ-053): the worker reads `pipeline_status_v` before and after the other objects; a changed `last_run_id` fails the event ("publish in progress"). Every row of every object with a `run_id` column must equal `last_run_id`; empty and reference objects count as consistent. The watermark has eight rows (reference objects take `last_run_id`); the no-op is "all eight equal `last_run_id`". The event's own `run_id` is informational |
+| F08-FR-11 | Timing (OQ-054): `sync_event` times are Postgres `now()`; `/api/sync/status` returns them as ISO timestamps plus `age_seconds` and `duration_ms`. A signed body that is not valid JSON with a `run_id` returns 422 with an audit row, and no event. Each drain tick processes events one at a time until none is claimable |
 
 ## Acceptance criteria
 - **F08-AC-01** After `make pipeline`, within `DRAIN_INTERVAL_SECONDS + 10 s`, `mirror_batch_pipeline` row count equals the published row count and the watermark equals the new run_id.
@@ -25,4 +27,5 @@ This is the glue between data product and app, following constitution P2 and ADR
 - **F08-AC-05** A duplicate webhook for the same run_id → second event completes as a no-op (`rows_upserted=0`).
 - **F08-AC-06** A failure mid-upsert (injected) leaves the previous mirror intact and marks the event `failed`.
 - **F08-AC-08** Published objects whose `run_id` values disagree with `pipeline_status_v` leave the mirror unchanged and mark the event `failed` (F08-FR-05b).
+- **F08-AC-09** A signed but malformed body → 422, no `sync_event`, one `audit_event` (F08-FR-11).
 - **F08-AC-07** The webhook endpoint never imports or calls the lakehouse reader (a test asserts module import graph / monkeypatch raises if called).

@@ -17,13 +17,13 @@ def dsn() -> str:
 
 
 @functools.cache
-def _factory() -> sessionmaker[Session]:
+def session_factory() -> sessionmaker[Session]:
     return make_session_factory(make_engine(dsn()))
 
 
 def get_session() -> Iterator[Session]:
     """FastAPI dependency: one session per request; commit on success, roll back on any error."""
-    with _factory()() as session:
+    with session_factory()() as session:
         try:
             yield session
             session.commit()

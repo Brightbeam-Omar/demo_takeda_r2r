@@ -80,6 +80,10 @@ class SiteProfile(BaseModel): ...     # see 03-domain-model §2; load_profile(pa
 class ContractReader(Protocol):
     def read(self, object_name: str) -> list[dict[str, Any]]: ...
     def status(self) -> PipelineStatus: ...
+# PipelineStatus: frozen dataclass(last_run_id: str, started_at: datetime, last_success_at: datetime,
+#                  row_count: int, source_freshness: dict[str, Any])
+# Rows are plain Python values (date, tz-aware datetime, Decimal, bool, str, None); *_json columns stay strings.
+# A missing object or an empty pipeline_status_v raises ContractUnavailable ("no published data yet").
 # Tier 1 impl: DeltaContractReader(lakehouse_path). Tier 2 stub: DatabricksContractReader (Statement Execution API)
 
 # sla.py: pure functions; see 03-domain-model §5

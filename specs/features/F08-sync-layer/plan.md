@@ -5,3 +5,6 @@
 - Integration tests are marked `@pytest.mark.integration` and use the compose Postgres or testcontainers.
 
 ## Deviations
+- Flat layout (OQ-055): keep F04's `app_api/{models.py, db.py, migrate.py, migrations/}` instead of `db/models.py` and `db/migrations/`; add `app_api/sync/`. One migration `0002_app_schema` creates every §5 table and seeds the five users.
+- Mirror replace uses `DELETE` + insert, not `TRUNCATE` (OQ-052): no exclusive lock, readers keep the old mirror until commit.
+- `deltalake` and `pyarrow` are in the app image (the worker needs them); F08-AC-07 guards the webhook module's import graph.

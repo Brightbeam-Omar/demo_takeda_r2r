@@ -104,7 +104,7 @@ def test_f07_fr05_the_run_log_has_one_row_per_step_for_the_run(run: dict[str, An
 
 
 def test_f07_fr04_a_webhook_that_cannot_be_delivered_does_not_fail_the_run(run: dict[str, Any]) -> None:
-    """Until F08 exists nothing answers at WEBHOOK_URL, so notify reports failed and the run still succeeds."""
+    """Notify never fails the run, whatever happens to the webhook (F08's stack test checks it reports ok)."""
     [notify] = [
         r
         for r in _table("intelligence", "pipeline_run_log")

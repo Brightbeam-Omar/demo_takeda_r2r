@@ -1,11 +1,12 @@
 # R2R Intelligence Demo: local stack. Variables are read from .env (`cp .env.example .env`).
 # Host ports can be overridden (POSTGRES_HOST_PORT, SCENARIO_HOST_PORT, ERP_HOST_PORT, LIMS_HOST_PORT,
-# QMS_HOST_PORT, DAGSTER_HOST_PORT, LAKEHOUSE_HOST_DIR): `make stack-test` uses other ports and its own project so the demo stack is never touched.
-# Later features add services (app, agents, frontend).
+# QMS_HOST_PORT, DAGSTER_HOST_PORT, APP_API_HOST_PORT, LAKEHOUSE_HOST_DIR): `make stack-test` uses other ports and its own project so the demo stack is never touched.
+# Later features add services (agents, frontend).
 
-# Bind mount for the Delta lakehouse. Declared here so later services (Dagster, app-worker)
-# reuse the same anchor: `volumes: [*lakehouse]`. App-worker mounts it read-only (F08).
+# Bind mount for the Delta lakehouse. Dagster mounts it read-write (`*lakehouse`); the app-worker, the only
+# application reader, mounts the same directory read-only (`*lakehouse-ro`, F08-FR-06).
 x-lakehouse: &lakehouse ${LAKEHOUSE_HOST_DIR:-./lakehouse}:/lakehouse
+x-lakehouse-ro: &lakehouse-ro ${LAKEHOUSE_HOST_DIR:-./lakehouse}:/lakehouse:ro
 
 # One image recipe for every Python service; SERVICE_PATH picks the workspace member to install.
 x-python-service: &python-service
@@ -131,6 +132,44 @@ services:
       interval: 5s
       timeout: 5s
       retries: 12
+
+  # The application API (F08: webhook and sync status; F09 adds the rest). It never mounts the lakehouse.
+  app-api:
+    <<: *python-service
+    image: r2r-app-api
+    build:
+      context: .
+      dockerfile: docker/python.Dockerfile
+      args: {SERVICE_PATH: services/app_api}
+    command: ["uvicorn", "app_api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      CLOCK_SOURCE: http
+    ports:
+      - "${APP_API_HOST_PORT:-8000}:8000"
+    depends_on:
+      postgres: {condition: service_healthy}
+      db-migrate: {condition: service_completed_successfully}
+      scenario: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  # The drain worker (F08): the only application code that reads the lakehouse, which it mounts read-only.
+  app-worker:
+    <<: *python-service
+    image: r2r-app-api
+    command: ["python", "-m", "app_api.worker"]
+    environment:
+      CLOCK_SOURCE: http
+      LAKEHOUSE_PATH: /lakehouse
+    volumes:
+      - *lakehouse-ro
+    depends_on:
+      postgres: {condition: service_healthy}
+      db-migrate: {condition: service_completed_successfully}
+      scenario: {condition: service_healthy}
 
   # The data product (F07). One image for both Dagster processes; the lakehouse is mounted read-write here only.
   # The pipeline reads the demo clock over HTTP from `scenario` (database fallback), like the simulators.
