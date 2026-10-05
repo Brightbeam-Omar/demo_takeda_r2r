@@ -52,7 +52,7 @@ def test_f09_ac06_stage_explain_for_b1042_names_rule_r_qct_with_values_and_refs(
     client: TestClient, mirror: SiteProfile
 ) -> None:
     body = explain(client, B1042, "stage")
-    assert body["kind"] == "stage" and body["rule"]["id"] == "R-QCT" and body["stage_label"] == "QC Testing"
+    assert body["kind"] == "stage" and body["rule"]["id"] == "R-QCT" and body["stage_label"] == "QCL Testing"
     assert "lims_status" in body["rule"]["condition_sql"] and body["rule"]["description"]
     assert body["rule"]["inputs"] == [
         "lims_status",

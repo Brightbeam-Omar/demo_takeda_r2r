@@ -42,7 +42,7 @@ def app_factory(app_engine: Engine) -> Iterator[sessionmaker[Session]]:
     store.clear_cache()
     with app_engine.begin() as connection:
         connection.execute(
-            text("TRUNCATE sync_event, watermark, audit_event, override_value, comment, mirror_batch_pipeline, mirror_weekly_metrics, "
+            text("TRUNCATE sync_event, watermark, audit_event, feedback, override_value, comment, mirror_batch_pipeline, mirror_weekly_metrics, "
                  "mirror_weekly_metric_rows, mirror_pipeline_status, mirror_stage_reference, "
                  "mirror_metric_reference, mirror_reason_codes, mirror_deviations RESTART IDENTITY")
         )  # fmt: skip

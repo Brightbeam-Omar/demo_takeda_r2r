@@ -1,85 +1,91 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { useMe, useReference } from '../../api/queries'
+import { useMe, useReference, useUsers } from '../../api/queries'
 import { PersonaSwitcher } from './PersonaSwitcher'
+import { ADMIN, VIEWS, type NavItem } from './nav'
 
-interface Item {
-  to: string
-  label: string
-  adminOnly?: boolean
+const linkClass =
+  (collapsed: boolean) =>
+  ({ isActive }: { isActive: boolean }) =>
+    `flex items-center gap-2 rounded-chip px-3 py-1.5 ${collapsed ? 'justify-center px-0' : ''} ${isActive ? 'bg-accent-tint font-semibold text-accent' : 'text-ink hover:bg-panel'}`
+
+function Group({ title, items, collapsed }: { title: string; items: NavItem[]; collapsed: boolean }) {
+  return (
+    <div className="mb-4">
+      {!collapsed && (
+        <div className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-ink-2">{title}</div>
+      )}
+      <ul className="space-y-0.5">
+        {items.map((item) => (
+          <li key={item.to}>
+            <NavLink
+              to={item.to}
+              end
+              title={collapsed ? item.label : undefined}
+              aria-label={item.label}
+              data-testid={`nav-${item.to.slice(1).replace(/\//g, '-')}`}
+              className={linkClass(collapsed)}
+            >
+              <span aria-hidden className="w-4 text-center text-ink-2">
+                {item.icon}
+              </span>
+              {!collapsed && <span className="truncate">{item.label}</span>}
+            </NavLink>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
 }
-
-const ITEMS: Item[] = [
-  { to: '/overview', label: 'Overview' },
-  { to: '/agents', label: 'Agents' },
-  { to: '/sync', label: 'Sync Status' },
-  { to: '/audit', label: 'Audit Log' },
-  { to: '/admin', label: 'Admin', adminOnly: true },
-]
-
-const linkClass = ({ isActive }: { isActive: boolean }) =>
-  `flex items-center gap-2 rounded-chip px-3 py-2 ${isActive ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
   const me = useMe()
+  const users = useUsers()
   const reference = useReference()
-  const isAdmin = me.data?.role === 'admin'
+  const demoMode = users.data !== undefined // /api/users answers only in DEMO_MODE (F10-FR-02)
+  const admin = ADMIN.filter((item) => !item.demoAdminOnly || (demoMode && me.data?.role === 'admin'))
 
   return (
     <aside
-      className={`flex shrink-0 flex-col bg-slate-900 text-slate-100 transition-[width] ${collapsed ? 'w-14' : 'w-60'}`}
+      data-testid="sidebar"
       aria-label="Main"
+      className={`flex shrink-0 flex-col border-r border-hairline bg-white transition-[width] ${collapsed ? 'w-14' : 'w-[232px]'}`}
     >
-      <div className="flex items-center justify-between px-3 py-4">
+      <div className="flex items-start justify-between px-3 py-4">
         {!collapsed && (
           <div>
-            <div className="flex items-center gap-2 text-base font-semibold">
-              <span aria-hidden className="grid h-6 w-6 place-items-center rounded-chip bg-indigo-500 text-xs">
+            <div className="flex items-center gap-2 text-base font-bold text-ink">
+              <span aria-hidden className="grid h-6 w-6 place-items-center rounded-chip bg-accent text-xs text-white">
                 R
               </span>
               R2R Intelligence
             </div>
+            <div className="mt-1 text-xs text-ink-2">Phase 1: Trusted Data</div>
             <span
-              title="DEMO · Phase 1 Trusted Data"
-              className="mt-2 inline-block rounded-chip bg-slate-800 px-2 py-0.5 text-xs text-slate-300"
+              data-testid="release-badge"
+              className="mt-2 inline-block rounded-pill bg-accent-tint px-2 py-0.5 text-[11px] font-semibold text-accent"
             >
-              DEMO · Phase 1
+              {reference.data?.release_badge ?? 'ALPHA – LOCAL'}
             </span>
           </div>
         )}
         <button
           type="button"
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className="rounded-chip px-2 py-1 text-slate-400 hover:bg-slate-800"
+          className="rounded-chip px-2 py-1 text-ink-2 hover:bg-panel"
           onClick={() => setCollapsed(!collapsed)}
         >
           {collapsed ? '»' : '«'}
         </button>
       </div>
-      {!collapsed && (
-        <nav className="flex-1 space-y-1 px-2">
-          {ITEMS.filter((item) => !item.adminOnly || isAdmin).map((item) => (
-            <NavLink key={item.to} to={item.to} className={linkClass}>
-              {item.label}
-            </NavLink>
-          ))}
-          <span
-            aria-disabled="true"
-            className="flex items-center gap-2 px-3 py-2 text-slate-500"
-            title="Reports arrive in Tier 2"
-          >
-            Reports
-            <span className="rounded-chip bg-slate-800 px-1.5 py-0.5 text-xs text-slate-400">Tier 2</span>
-          </span>
-        </nav>
-      )}
-      {!collapsed && (
-        <div className="space-y-2 border-t border-slate-800 p-3 text-xs text-slate-400">
+      <nav className="flex-1 overflow-y-auto px-2" aria-label="Pages">
+        <Group title="VIEWS" items={VIEWS} collapsed={collapsed} />
+        <Group title="ADMIN" items={admin} collapsed={collapsed} />
+      </nav>
+      {!collapsed && demoMode && (
+        <div className="space-y-2 border-t border-hairline p-3 text-xs text-ink-2">
           <PersonaSwitcher />
-          <div>
-            <span className="rounded-chip bg-slate-800 px-2 py-0.5">Local demo</span>
-          </div>
           <div>{reference.data?.site_name ?? ''}</div>
         </div>
       )}

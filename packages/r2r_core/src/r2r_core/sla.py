@@ -210,6 +210,17 @@ def exception_sort_key(row: RowFacts, plan_result: PlanResult, flags: Flags) -> 
     return group, when, material, batch
 
 
+def month_window(today: dt.date, offset: int = 0) -> tuple[dt.date, dt.date]:
+    """The calendar month ``offset`` months from ``today``'s month, as ``(first, last)`` day (F15, OQ-079).
+
+    ``today`` is the demo date in the site timezone: 0 is "This Month", -1 "Last Month", 1 "Next Month".
+    """
+    index = today.year * 12 + (today.month - 1) + offset
+    first = dt.date(index // 12, index % 12 + 1, 1)
+    following = dt.date((index + 1) // 12, (index + 1) % 12 + 1, 1)
+    return first, following - dt.timedelta(days=1)
+
+
 def in_period(plan_result: PlanResult, stage_terminal: bool, period: tuple[dt.date, dt.date] | None) -> bool:
     """Period filter (03 section 5.6). ``period=None`` is "All dates": every row is included.
 

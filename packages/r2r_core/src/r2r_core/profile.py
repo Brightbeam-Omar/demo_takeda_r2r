@@ -7,12 +7,13 @@ Everything that varies by site (stages, SLAs, teams, reason codes, terminology) 
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import yaml
 from pydantic import (
     BaseModel,
+    BeforeValidator,
     ConfigDict,
     Field,
     NonNegativeInt,
@@ -132,6 +133,43 @@ class FullSpecPair(_Model):
     supplier: str
 
 
+class Labelled(_Model):
+    """A stable key with a display label (OQ-082). Plain strings in the YAML are normalised to this."""
+
+    key: str
+    label: str
+
+
+def _labelled(values: object) -> object:
+    if not isinstance(values, list):
+        return values
+    return [{"key": i, "label": i.replace("_", " ").title()} if isinstance(i, str) else i for i in values]
+
+
+class Terms(_Model):
+    """UI vocabulary (F15, OQ-075). Every key is optional; derived defaults follow ``erp`` and ``lims``."""
+
+    erp: str = "ERP"
+    lims: str = "LIMS"
+    qms: str = "QMS"
+    qc_lab: str = "QC Lab"
+    insights_banner: str = ""
+    erp_blocked_tag: str = ""
+    planner_overrides: str = "planner overrides"
+
+    @model_validator(mode="before")
+    @classmethod
+    def _derive_defaults(cls, data: object) -> object:
+        if not isinstance(data, dict):
+            return data
+        filled = dict(data)
+        erp = str(filled.get("erp", "ERP"))
+        lims = str(filled.get("lims", "LIMS"))
+        filled.setdefault("insights_banner", f"{lims}–{erp} Insights")
+        filled.setdefault("erp_blocked_tag", f"{erp} BLOCKED")
+        return filled
+
+
 class Adapters(_Model):
     erp: str
 
@@ -146,11 +184,12 @@ class SiteProfile(_Model):
     metric_rag: MetricRag
     rag: RagConfig
     air_gap: AirGapConfig
-    molecule_types: list[str]
-    material_classes: list[str]
+    molecule_types: Annotated[list[Labelled], BeforeValidator(_labelled)]
+    material_classes: Annotated[list[Labelled], BeforeValidator(_labelled)]
     full_spec_pairs: list[FullSpecPair]
     reason_codes: list[str] = Field(min_length=1)
     adapters: Adapters
+    terms: Terms = Terms()
 
     @model_validator(mode="after")
     def _cross_checks(self) -> "SiteProfile":

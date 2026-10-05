@@ -1,4 +1,5 @@
 import type { Overview } from '../../api/queries'
+import { useTerms } from '../../hooks/useTerms'
 import type { Filters } from '../../state/url-filters'
 
 type Alert = Overview['alerts'][number]
@@ -32,6 +33,7 @@ interface Props {
 
 /** F10-FR-06. Hidden when every count is zero. */
 export function AlertsBand({ alerts, onFilter }: Props) {
+  const terms = useTerms()
   const active = alerts.filter((alert) => alert.count > 0)
   if (active.length === 0) return null
   return (
@@ -54,7 +56,7 @@ export function AlertsBand({ alerts, onFilter }: Props) {
           )}
           {alert.kind === 'rejected' && (
             <span className="ml-2 text-xs">
-              {alert.detail.ud_rejected ?? 0} usage decision · {alert.detail.lims_rejected ?? 0} LIMS
+              {alert.detail.ud_rejected ?? 0} usage decision · {alert.detail.lims_rejected ?? 0} {terms.lims}
             </span>
           )}
         </button>

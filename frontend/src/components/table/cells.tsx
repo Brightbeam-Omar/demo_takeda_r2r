@@ -1,5 +1,6 @@
 import type { Row } from '../../api/queries'
-import { FLAG_CHIPS } from '../../lib/flags'
+import { useTerms } from '../../hooks/useTerms'
+import { flagChips } from '../../lib/flags'
 import { formatDate, formatShortDate } from '../../lib/format'
 
 const CHIP_TONE = {
@@ -9,8 +10,9 @@ const CHIP_TONE = {
 }
 
 export function TagChips({ flags }: { flags: Row['flags'] }) {
+  const terms = useTerms()
   const values = flags as unknown as Record<string, boolean>
-  const shown = FLAG_CHIPS.filter((chip) => chip.keys.some((key) => values[key]))
+  const shown = flagChips(terms).filter((chip) => chip.keys.some((key) => values[key]))
   return (
     <>
       {shown.map((chip) => (

@@ -181,3 +181,55 @@ def test_f07_oq048_site_a_gives_every_app_side_metric_a_reason() -> None:
     profile = load_profile("site_a")
     assert {m.id for m in profile.metrics if m.null_reason} == {"M1", "M2", "M4", "M5"}
     assert all(m.null_reason is None for m in profile.metrics if m.computed_in == "pipeline")
+
+
+# --- F15: terms and labelled lists [F15-FR-05, OQ-082] ---------------------------------------------------
+
+
+def test_f15_fr05_site_a_terms_are_the_sap_site_values() -> None:
+    terms = load_profile("site_a").terms
+    assert (terms.erp, terms.lims, terms.qms, terms.qc_lab) == ("SAP", "LIMS", "QMS", "QCL")
+    assert terms.insights_banner == "LIMS–SAP Insights"
+    assert terms.erp_blocked_tag == "SAP BLOCKED"
+    assert terms.planner_overrides == "planner overrides"
+    assert load_profile("site_a").stage("qc_testing").label == "QCL Testing"
+    assert load_profile("site_a").stage("qc_ship").label == "QCL Ship For External Testing"
+
+
+def test_f15_fr05_terms_are_optional_with_generic_defaults(tmp_path: Path) -> None:
+    data = _raw()
+    del data["terms"]
+    terms = load_profile(_write(tmp_path, data)).terms
+    assert (terms.erp, terms.qc_lab) == ("ERP", "QC Lab")
+    assert terms.erp_blocked_tag == "ERP BLOCKED"
+    assert terms.insights_banner == "LIMS–ERP Insights"
+
+
+def test_f15_fr05_derived_terms_follow_erp_and_lims(tmp_path: Path) -> None:
+    data = _raw()
+    data["terms"] = {"erp": "S4"}
+    terms = load_profile(_write(tmp_path, data)).terms
+    assert (terms.erp_blocked_tag, terms.insights_banner) == ("S4 BLOCKED", "LIMS–S4 Insights")
+
+
+def test_f15_fr05_unknown_term_keys_are_rejected(tmp_path: Path) -> None:
+    data = _raw()
+    data["terms"] = {"erpp": "x"}
+    with pytest.raises(ProfileError):
+        load_profile(_write(tmp_path, data))
+
+
+def test_f15_oq082_type_and_class_lists_normalise_to_key_and_label(tmp_path: Path) -> None:
+    profile = load_profile("site_a")
+    assert [(t.key, t.label) for t in profile.molecule_types] == [
+        ("small_molecule", "Small Molecule"),
+        ("large_molecule", "Large Molecule"),
+        ("peptide", "Peptide"),
+    ]
+    data = _raw()
+    data["material_classes"] = ["drug_substance", {"key": "consumable", "label": "Consumables"}]
+    classes = load_profile(_write(tmp_path, data)).material_classes
+    assert [(c.key, c.label) for c in classes] == [
+        ("drug_substance", "Drug Substance"),
+        ("consumable", "Consumables"),
+    ]

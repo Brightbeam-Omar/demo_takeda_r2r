@@ -25,6 +25,9 @@ import {
 const ROW_HEIGHT = 36
 const helper = createColumnHelper<Row>()
 // Minimum px and a share of any spare width per column; at 1440 px the whole table fits without scrolling.
+// These cells end in the hover-only explain button. Clipping (not an ellipsis) keeps its hidden box from
+// printing a stray "." when the cell is narrow.
+const CLIPPED = new Set(['stage', 'expected'])
 const MIN_WIDTH = 1134
 const WIDTHS: Record<string, string> = {
   material: 'minmax(190px, 2.4fr)',
@@ -33,7 +36,7 @@ const WIDTHS: Record<string, string> = {
   location: 'minmax(84px, 1fr)',
   inbound: 'minmax(68px, 0.5fr)',
   deviation: 'minmax(84px, 0.6fr)',
-  stage: 'minmax(100px, 1.1fr)',
+  stage: 'minmax(124px, 1.2fr)',
   system_need_by: 'minmax(84px, 0.9fr)',
   adjusted_need_by: 'minmax(100px, 1fr)',
   expected: 'minmax(140px, 1.4fr)',
@@ -254,7 +257,7 @@ export function BatchTable({ rows, stageIndex, canEdit, changedKeys, toolbar, on
                 style={{ ...grid, height: ROW_HEIGHT, transform: `translateY(${item.start}px)` }}
               >
                 {row.getVisibleCells().map((cell) => (
-                  <div key={cell.id} role="cell" className="truncate px-2">
+                  <div key={cell.id} role="cell" className={`${CLIPPED.has(cell.column.id) ? 'overflow-hidden whitespace-nowrap' : 'truncate'} px-2`}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </div>
                 ))}

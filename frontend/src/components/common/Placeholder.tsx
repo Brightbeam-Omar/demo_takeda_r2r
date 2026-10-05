@@ -1,9 +1,9 @@
-export function Placeholder({ title, feature }: { title: string; feature: string }) {
+export function Placeholder({ title, note }: { title: string; note: string }) {
   return (
     <div className="p-6">
-      <div className="rounded-card border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500">
-        <p className="text-base font-medium text-slate-700">{title}</p>
-        <p className="mt-1">Built in {feature}.</p>
+      <div className="rounded-card border border-dashed border-hairline bg-white p-8 text-center text-ink-2">
+        <p className="text-base font-medium text-ink">{title}</p>
+        <p className="mt-1">{note}</p>
       </div>
     </div>
   )

@@ -10,7 +10,7 @@ export function PersonaSwitcher() {
     <label className="block">
       <span className="mb-1 block">Persona</span>
       <select
-        className="w-full rounded-chip border border-slate-700 bg-slate-800 px-2 py-1.5 text-sm text-slate-100"
+        className="w-full rounded-chip border border-hairline bg-white px-2 py-1.5 text-sm text-ink"
         value={me.data?.user_key ?? ''}
         onChange={(event) => setPersona(event.target.value)}
       >

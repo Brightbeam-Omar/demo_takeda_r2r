@@ -153,6 +153,14 @@ def test_f09_fr02_last_week_and_this_month_windows(client: TestClient, mirror: l
     assert set(keys(client, period="this_month")) == {"B1", "B2", "B3", "B4", "B5", "B6", "B7"}
 
 
+def test_f15_oq079_last_and_next_month_windows(client: TestClient, mirror: list[dict[str, Any]]) -> None:
+    # past windows keep the same rule (expected completion on or before the window end, not released); the
+    # latest lot here was due on 8 Oct, so nothing was due by the end of September
+    assert keys(client, period="last_month") == []
+    assert set(keys(client, period="next_month")) >= set(keys(client, period="this_month"))
+    assert client.get("/api/overview", params={"period": "soon"}).status_code == 422
+
+
 def test_f09_fr02_weeks_follow_the_site_date_not_the_utc_date(
     client: TestClient, mirror: list[dict[str, Any]]
 ) -> None:

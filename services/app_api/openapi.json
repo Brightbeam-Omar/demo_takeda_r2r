@@ -492,6 +492,61 @@
         "title": "DeviationOut",
         "type": "object"
       },
+      "FeedbackIn": {
+        "properties": {
+          "message": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Message",
+            "type": "string"
+          },
+          "page": {
+            "maxLength": 200,
+            "title": "Page",
+            "type": "string"
+          }
+        },
+        "required": [
+          "page",
+          "message"
+        ],
+        "title": "FeedbackIn",
+        "type": "object"
+      },
+      "FeedbackOut": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "page": {
+            "title": "Page",
+            "type": "string"
+          },
+          "user_key": {
+            "title": "User Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "at",
+          "user_key",
+          "page",
+          "message"
+        ],
+        "title": "FeedbackOut",
+        "type": "object"
+      },
       "FlagsOut": {
         "properties": {
           "air_gap": {
@@ -1373,7 +1428,10 @@
           },
           "classes": {
             "items": {
-              "type": "string"
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
             },
             "title": "Classes",
             "type": "array"
@@ -1402,7 +1460,10 @@
           },
           "molecule_types": {
             "items": {
-              "type": "string"
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
             },
             "title": "Molecule Types",
             "type": "array"
@@ -1422,6 +1483,10 @@
             "title": "Reason Codes",
             "type": "array"
           },
+          "release_badge": {
+            "title": "Release Badge",
+            "type": "string"
+          },
           "site_name": {
             "title": "Site Name",
             "type": "string"
@@ -1437,6 +1502,13 @@
             },
             "title": "Stages",
             "type": "array"
+          },
+          "terms": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Terms",
+            "type": "object"
           }
         },
         "required": [
@@ -1450,7 +1522,9 @@
           "campaigns",
           "flags",
           "periods",
-          "metric_rag"
+          "metric_rag",
+          "terms",
+          "release_badge"
         ],
         "title": "ReferenceOut",
         "type": "object"
@@ -3152,6 +3226,110 @@
           }
         },
         "summary": "Export Csv"
+      }
+    },
+    "/api/feedback": {
+      "get": {
+        "operationId": "list_feedback_api_feedback_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FeedbackOut"
+                  },
+                  "title": "Response List Feedback Api Feedback Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Feedback"
+      },
+      "post": {
+        "operationId": "post_feedback_api_feedback_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Feedback"
       }
     },
     "/api/health": {

@@ -1,5 +1,6 @@
 """``GET /api/reference``: the lists the filters and forms are built from (F09 endpoint table)."""
 
+import os
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends
@@ -13,6 +14,8 @@ from app_api.db import get_session
 from app_api.deps import get_profile
 from app_api.services.overview import FLAG_NAMES, PERIODS
 
+DEFAULT_RELEASE_BADGE = "ALPHA – LOCAL"
+
 router = APIRouter(dependencies=[Depends(current_user)])
 
 
@@ -22,12 +25,14 @@ class ReferenceOut(BaseModel):
     stages: list[dict[str, Any]]
     metrics: list[dict[str, Any]]
     reason_codes: list[dict[str, Any]]
-    molecule_types: list[str]
-    classes: list[str]
+    molecule_types: list[dict[str, str]]
+    classes: list[dict[str, str]]
     campaigns: list[str]
     flags: list[str]
     periods: list[str]
     metric_rag: dict[str, int]
+    terms: dict[str, str]
+    release_badge: str
 
 
 def _rows(session: Session, sql: str) -> list[dict[str, Any]]:
@@ -48,8 +53,8 @@ def reference(
         stages=_rows(session, "SELECT * FROM mirror_stage_reference ORDER BY sort"),
         metrics=_rows(session, "SELECT * FROM mirror_metric_reference ORDER BY metric_id"),
         reason_codes=_rows(session, "SELECT code, label FROM mirror_reason_codes ORDER BY code"),
-        molecule_types=profile.molecule_types,
-        classes=profile.material_classes,
+        molecule_types=[item.model_dump() for item in profile.molecule_types],
+        classes=[item.model_dump() for item in profile.material_classes],
         campaigns=list(campaigns),
         flags=list(FLAG_NAMES),
         periods=list(PERIODS),
@@ -57,4 +62,6 @@ def reference(
             "green_min_pct": profile.metric_rag.green_min_pct,
             "amber_min_pct": profile.metric_rag.amber_min_pct,
         },
+        terms=profile.terms.model_dump(),
+        release_badge=os.environ.get("RELEASE_BADGE", "").strip() or DEFAULT_RELEASE_BADGE,
     )

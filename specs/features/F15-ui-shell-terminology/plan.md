@@ -5,3 +5,10 @@
 - Keep the F10/F11 Playwright specs green by updating selectors (use `data-testid`, not text).
 
 ## Deviations
+- **Group labels use secondary text, not muted.** 05 v2 §2 gives muted text `#9CA3AF` for the VIEWS and ADMIN labels, but at 11 px that is 2.5:1 on white and axe (F10-AC-08) reports it as a serious contrast violation. The labels use secondary text `#6B7280` (4.8:1). Muted stays for non-text and disabled uses.
+- **Shared period state is the URL.** The period picker is in the top bar on every page (05 v2 §3) and keeps its value in the `period`/`from`/`to` query parameters that F10 already used, so no new state store. Navigating to another page starts from All Dates again.
+- **`useTerms()` reads a context.** `TermsProvider` (in the layout) fills it from `/api/reference`; components outside the shell fall back to the generic defaults, which keeps isolated component tests free of a query client.
+- **No `date-fns`.** The two-month calendar reuses the F10 `lib/calendar.ts`, so the approved dependency was not needed.
+- **Roadmap hygiene:** `RELEASE_BADGE` reaches the browser through `/api/reference` (OQ-081), not a Vite build variable.
+- **Deferred to the features that build the surface (spec-check findings).** The Type/Class pills with "Unknown" for NULL, the "System Needs-By" column header and the `planner_overrides` wording belong to the table (F18); the `insights_banner` term belongs to the Insights window (F16-FR-09). F15 delivers the `terms` and `{key, label}` data, `useTerms()` and the filter labels, which those features consume. Terms in use today: `erp_blocked_tag`, `lims`.
+- **Collapsed sidebar hides the persona switcher** (it sits in the expanded footer). Expand to switch persona.
