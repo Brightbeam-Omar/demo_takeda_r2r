@@ -228,6 +228,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/rows/{row_key}/need-by/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview Need By
+         * @description Recompute the row with the proposed override, through the composition a read uses. Writes nothing.
+         */
+        post: operations["preview_need_by_api_rows__row_key__need_by_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/rows/{row_key}/status": {
         parameters: {
             query?: never;
@@ -746,6 +766,18 @@ export interface components {
             /** Rag */
             rag: string | null;
         };
+        /**
+         * PreviewOut
+         * @description The plan now and the plan as it would be after the change; nothing is stored (F11-FR-02, OQ-067).
+         */
+        PreviewOut: {
+            current: components["schemas"]["PlanOut"];
+            /** Operative Need By */
+            operative_need_by: string | null;
+            preview: components["schemas"]["PlanOut"];
+            /** System Need By Locked */
+            system_need_by_locked: string | null;
+        };
         /** ReferenceOut */
         ReferenceOut: {
             /** Campaigns */
@@ -1090,6 +1122,8 @@ export interface operations {
                 row_key?: string | null;
                 actor?: string | null;
                 action?: string | null;
+                from?: string | null;
+                to?: string | null;
                 limit?: number;
                 offset?: number;
             };
@@ -1510,6 +1544,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RowOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_need_by_api_rows__row_key__need_by_preview_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-demo-user"?: string | null;
+            };
+            path: {
+                row_key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NeedByIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreviewOut"];
                 };
             };
             /** @description Validation Error */

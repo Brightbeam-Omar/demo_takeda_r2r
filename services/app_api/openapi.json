@@ -1319,6 +1319,49 @@
         "title": "PlanOut",
         "type": "object"
       },
+      "PreviewOut": {
+        "description": "The plan now and the plan as it would be after the change; nothing is stored (F11-FR-02, OQ-067).",
+        "properties": {
+          "current": {
+            "$ref": "#/components/schemas/PlanOut"
+          },
+          "operative_need_by": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operative Need By"
+          },
+          "preview": {
+            "$ref": "#/components/schemas/PlanOut"
+          },
+          "system_need_by_locked": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "System Need By Locked"
+          }
+        },
+        "required": [
+          "current",
+          "preview",
+          "system_need_by_locked",
+          "operative_need_by"
+        ],
+        "title": "PreviewOut",
+        "type": "object"
+      },
       "ReferenceOut": {
         "properties": {
           "campaigns": {
@@ -2567,6 +2610,40 @@
           },
           {
             "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          },
+          {
+            "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
@@ -3691,6 +3768,72 @@
           }
         },
         "summary": "Put Need By"
+      }
+    },
+    "/api/rows/{row_key}/need-by/preview": {
+      "post": {
+        "description": "Recompute the row with the proposed override, through the composition a read uses. Writes nothing.",
+        "operationId": "preview_need_by_api_rows__row_key__need_by_preview_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "row_key",
+            "required": true,
+            "schema": {
+              "title": "Row Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NeedByIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreviewOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview Need By"
       }
     },
     "/api/rows/{row_key}/status": {
