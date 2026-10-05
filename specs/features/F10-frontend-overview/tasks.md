@@ -1,5 +1,5 @@
 # F10 · Tasks
-- [ ] T1 Shell, routing, theme tokens, Inter font, API client wiring (FR-01)
+- [x] T1 Shell, routing, theme tokens, Inter font, API client wiring (FR-01)
 - [ ] T2 Persona switcher + header injection (FR-02, AC-02)
 - [ ] T3 Top bar freshness + clock (FR-03)
 - [ ] T4 Filters band + URL state (FR-04, AC-03)

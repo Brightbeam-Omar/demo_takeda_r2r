@@ -1,7 +1,35 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { Layout } from './app/Layout'
+import { ToastProvider } from './components/common/Toasts'
+import { Overview } from './pages/Overview'
+import { PlaceholderPage } from './pages/PlaceholderPage'
+import { useEffect } from 'react'
+import { onPersonaChange } from './state/persona'
+
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { staleTime: 5_000, retry: 1, refetchOnWindowFocus: false } },
+})
+
 export default function App() {
+  useEffect(() => onPersonaChange(() => void queryClient.invalidateQueries()), [])
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-50">
-      <h1 className="text-3xl font-semibold text-slate-800">R2R Intelligence Demo</h1>
-    </main>
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route element={<Layout />}>
+              <Route index element={<Navigate to="/overview" replace />} />
+              <Route path="/overview" element={<Overview />} />
+              <Route path="/agents" element={<PlaceholderPage title="Agents" feature="F12" />} />
+              <Route path="/sync" element={<PlaceholderPage title="Sync Status" feature="F11" />} />
+              <Route path="/audit" element={<PlaceholderPage title="Audit Log" feature="F11" />} />
+              <Route path="/admin" element={<PlaceholderPage title="Admin" feature="F11" />} />
+              <Route path="*" element={<Navigate to="/overview" replace />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </ToastProvider>
+    </QueryClientProvider>
   )
 }

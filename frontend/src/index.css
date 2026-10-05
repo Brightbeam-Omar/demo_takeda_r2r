@@ -1,1 +1,38 @@
 @import "tailwindcss";
+@import "@fontsource-variable/inter";
+
+/* Visual system tokens (specs/05-ux-guidelines.md). Colour carries meaning only: RAG and stage hues. */
+@theme {
+  --font-sans: "Inter Variable", system-ui, sans-serif;
+  --radius-card: 8px;
+  --radius-chip: 6px;
+  --color-stage-1: var(--color-sky-500);
+  --color-stage-2: var(--color-cyan-500);
+  --color-stage-3: var(--color-teal-500);
+  --color-stage-4: var(--color-emerald-500);
+  --color-stage-5: var(--color-lime-500);
+  --color-stage-6: var(--color-amber-500);
+  --color-stage-7: var(--color-orange-500);
+  --color-stage-8: var(--color-violet-500);
+}
+
+html {
+  font-size: 14px;
+}
+
+body {
+  @apply bg-slate-50 font-sans text-slate-800 antialiased;
+}
+
+@keyframes row-flash {
+  from {
+    background-color: var(--color-indigo-100);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+.row-changed {
+  animation: row-flash 5s ease-out;
+}
