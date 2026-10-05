@@ -34,6 +34,7 @@ OBJECTS = {
     "metric_reference_v": "mirror_metric_reference",
     "reason_codes_v": "mirror_reason_codes",
     "deviations_v": "mirror_deviations",
+    "expected_deliveries_v": "mirror_expected_deliveries",
     "pipeline_status_v": "mirror_pipeline_status",
 }
 

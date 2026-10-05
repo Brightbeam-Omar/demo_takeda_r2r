@@ -66,6 +66,19 @@ STAGING: dict[str, dict[str, tuple[str, pa.Schema]]] = {
             "mdez",
             _schema(id=INT, matnr=TEXT, campaign=TEXT, bdter=DATE, bdmng=QTY, is_open=BOOL),
         ),
+        "stg_ekpo": (
+            "ekpo",
+            _schema(
+                ebeln=TEXT,
+                ebelp=TEXT,
+                matnr=TEXT,
+                lifnr=TEXT,
+                eindt=DATE,
+                menge=QTY,
+                lgort=TEXT,
+                is_open=BOOL,
+            ),
+        ),
     },
     "lims": {
         "stg_sample": (
@@ -124,3 +137,13 @@ _FLAT_COLUMNS: dict[str, pa.DataType] = dict(
 
 # ``staging.batch_flat`` (04-data-contracts section 3): the stage engine's input.
 BATCH_FLAT_SCHEMA = pa.schema(list(_FLAT_COLUMNS.items()))
+
+# ``staging.expected_deliveries`` (F17-FR-03): the open purchase-order lines; publish adds ``run_id``.
+EXPECTED_DELIVERIES_SCHEMA = pa.schema(
+    [
+        ("ebeln", TEXT), ("ebelp", TEXT), ("material_no", TEXT), ("material_desc", TEXT),
+        ("molecule_type", TEXT), ("material_class", TEXT), ("supplier_id", TEXT), ("supplier_name", TEXT),
+        ("campaign", TEXT), ("scheduled_date", DATE), ("quantity", QTY), ("planned_location", TEXT),
+        ("planned_location_type", TEXT), ("overdue", BOOL),
+    ]
+)  # fmt: skip

@@ -39,6 +39,7 @@ def test_f06_fr03_the_expected_sql_steps_exist() -> None:
         "30_lims.sql",
         "40_quality.sql",
         "45_demand.sql",
+        "46_expected_deliveries.sql",
         "48_batch_flat.sql",
         "50_stage.sql.j2",
         "60_flags.sql",

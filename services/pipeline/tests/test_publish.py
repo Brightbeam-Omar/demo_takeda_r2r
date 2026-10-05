@@ -48,13 +48,13 @@ def world() -> World:
 
 
 @pytest.mark.usefixtures("demo_clock")
-def test_f07_ac01_all_eight_objects_exist_and_the_status_has_one_row(
+def test_f07_ac01_all_nine_objects_exist_and_the_status_has_one_row(
     world: World, tmp_path: Path, profile: SiteProfile
 ) -> None:
     ctx = run_all(world, tmp_path, profile)
     assert PUBLISH_ORDER == (
         "batch_pipeline_v", "weekly_metrics_v", "weekly_metric_rows_v", "stage_reference_v",
-        "metric_reference_v", "reason_codes_v", "deviations_v", "pipeline_status_v",
+        "metric_reference_v", "reason_codes_v", "deviations_v", "expected_deliveries_v", "pipeline_status_v",
     )  # fmt: skip
     assert all(delta_exists(tmp_path, f"published.{name}") for name in PUBLISH_ORDER)
     [status] = table(tmp_path, "pipeline_status_v")

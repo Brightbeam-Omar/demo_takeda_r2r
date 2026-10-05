@@ -12,7 +12,7 @@ from r2r_core.profile import SiteProfile
 from r2r_pipeline.applicable_sla import build_applicable_sla
 from r2r_pipeline.context import RunContext
 from r2r_pipeline.lake import register, write_delta
-from r2r_pipeline.schemas import STAGING_SCHEMAS
+from r2r_pipeline.schemas import EXPECTED_DELIVERIES_SCHEMA, STAGING_SCHEMAS
 from r2r_pipeline.source_refs import build_source_refs
 from r2r_pipeline.sql_shim import render_file
 from r2r_pipeline.stage_engine import engine_variables
@@ -76,3 +76,8 @@ def transform(ctx: RunContext) -> None:
     stage = stage.add_column(position, "applicable_sla_json", pa.array([slas[key] for key in keys]))
     stage = stage.append_column("source_refs_json", pa.array([refs[key] for key in keys]))
     write_delta(ctx.lake_root, "staging.batch_stage", stage)
+    expected = connection.execute(
+        "SELECT * FROM expected_deliveries_sql ORDER BY ebeln, ebelp"
+    ).to_arrow_table()
+    expected = pa.Table.from_pylist(expected.to_pylist(), schema=EXPECTED_DELIVERIES_SCHEMA)
+    write_delta(ctx.lake_root, "staging.expected_deliveries", expected)

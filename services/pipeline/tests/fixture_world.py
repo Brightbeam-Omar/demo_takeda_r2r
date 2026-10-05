@@ -169,6 +169,27 @@ class World:
             is_open=is_open,
         )
 
+    def po_line(
+        self,
+        ebeln: str,
+        scheduled: date,
+        is_open: bool = True,
+        matnr: str = "RM1",
+        lgort: str = "0100",
+        ebelp: str = "00010",
+    ) -> None:
+        self.add(
+            "stg_ekpo",
+            ebeln=ebeln,
+            ebelp=ebelp,
+            matnr=matnr,
+            lifnr="SUP1",
+            eindt=scheduled,
+            menge=Decimal(100),
+            lgort=lgort,
+            is_open=is_open,
+        )
+
     def deviation(self, number: str, status: str, links: list[tuple[str, str]]) -> None:
         self.add(
             "stg_deviation",

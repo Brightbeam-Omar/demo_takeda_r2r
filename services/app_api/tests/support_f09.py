@@ -80,6 +80,7 @@ def stage_reference(profile: SiteProfile) -> list[dict[str, Any]]:
             "team": s.team,
             "action": s.action,
             "terminal": s.terminal,
+            "show_card": s.show_card,
         }
         for index, s in enumerate(profile.stages)
     ]
@@ -109,6 +110,7 @@ def load_mirror(
     metrics: list[dict[str, Any]] | None = None,
     metric_rows: list[dict[str, Any]] | None = None,
     deviations: list[dict[str, Any]] | None = None,
+    expected_deliveries: list[dict[str, Any]] | None = None,
 ) -> None:
     """Replace the mirror tables with ``rows`` and the profile's reference data."""
     data: dict[str, list[dict[str, Any]]] = {
@@ -128,6 +130,7 @@ def load_mirror(
         "metric_reference_v": metric_reference(profile),
         "reason_codes_v": [{"code": c, "label": c.replace("_", " ").title()} for c in profile.reason_codes],
         "deviations_v": deviations or [],
+        "expected_deliveries_v": expected_deliveries or [],
     }
     with factory() as session:
         for name, (table, columns, _, _) in MIRRORS.items():

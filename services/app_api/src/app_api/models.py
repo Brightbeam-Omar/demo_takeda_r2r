@@ -244,6 +244,7 @@ class AgentTrace(Base):
 
 TEXT, DATE, TIMESTAMP, INTEGER, BOOLEAN, JSON = Text, Date, STAMP, BigInteger, Boolean, JSONB
 PCT = Numeric(5, 1)
+QUANTITY = Numeric(13, 3)
 
 MirrorColumns = tuple[tuple[str, Any], ...]
 
@@ -304,7 +305,8 @@ MIRRORS: dict[str, tuple[str, MirrorColumns, tuple[str, ...], tuple[tuple[str, .
     "stage_reference_v": (
         "mirror_stage_reference",
         (("stage_key", TEXT), ("label", TEXT), ("sort", INTEGER), ("sla_days", INTEGER),
-         ("reeval_sla_days", INTEGER), ("team", TEXT), ("action", TEXT), ("terminal", BOOLEAN)),
+         ("reeval_sla_days", INTEGER), ("team", TEXT), ("action", TEXT), ("terminal", BOOLEAN),
+         ("show_card", BOOLEAN)),
         ("stage_key",),
         (),
     ),
@@ -328,6 +330,15 @@ MIRRORS: dict[str, tuple[str, MirrorColumns, tuple[str, ...], tuple[tuple[str, .
          ("root_cause_category", TEXT), ("owner", TEXT)),
         ("deviation_no", "material_no", "batch_no"),
         (("material_no", "batch_no"),),
+    ),
+    "expected_deliveries_v": (
+        "mirror_expected_deliveries",
+        (("ebeln", TEXT), ("ebelp", TEXT), ("material_no", TEXT), ("material_desc", TEXT),
+         ("molecule_type", TEXT), ("material_class", TEXT), ("supplier_id", TEXT), ("supplier_name", TEXT),
+         ("campaign", TEXT), ("scheduled_date", DATE), ("quantity", QUANTITY), ("planned_location", TEXT),
+         ("planned_location_type", TEXT), ("overdue", BOOLEAN), ("run_id", TEXT)),
+        ("ebeln", "ebelp"),
+        (("material_no",),),
     ),
 }  # fmt: skip
 
