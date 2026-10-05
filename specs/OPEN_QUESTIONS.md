@@ -467,7 +467,7 @@ Add entries as: `## OQ-NNN · <feature> · <date>` then context, question, optio
 ## OQ-083 · F15 · 2026-10-05
 **Context:** FR-06 says `POST /api/feedback` is open to "any identified role", and `GET` is for Admin. The "page context auto-filled" and a length limit are not specified; feedback is not an override and not in the audit trail.
 **Question:** Does viewer count as an identified role, is feedback audited, and what are the limits?
-**Proposal:** Any persona including viewer may post. `message` is required, 1–2000 chars, `page` is the route path (≤ 200 chars). The post is not written to `audit_event` (it is not a business change). `GET /api/feedback` is admin only, newest first. The `/admin/feedback` page is reached from the ADMIN list (no new menu item; linked from Configuration placeholder is not needed, so it appears as "Feedback" under ADMIN after Webhook Sync Status).
+**Proposal:** Any persona including viewer may post. `message` is required, 1–2000 chars, `page` is the route path (≤ 200 chars). The post is not written to `audit_event` (it is not a business change). `GET /api/feedback` is admin only, newest first. The `/admin/feedback` page is an extra "Feedback" item at the end of the ADMIN group, before Demo Controls.
 **Decision:** _pending_
 
 ## OQ-084 · F15 · 2026-10-05
