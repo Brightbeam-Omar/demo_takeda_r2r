@@ -13,7 +13,7 @@ from qms_sim.db import get_session
 from qms_sim.events import links_of
 from qms_sim.models import Deviation, DeviationLink
 
-SessionDep = Annotated[Session, Depends(get_session)]
+SessionDep = Annotated[Session, Depends(get_session, scope="function")]
 
 app = FastAPI(
     title="QMS simulator",

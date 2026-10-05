@@ -12,7 +12,7 @@ from lims_sim import events, schemas
 from lims_sim.db import get_session
 from lims_sim.models import Sample, TestResult
 
-SessionDep = Annotated[Session, Depends(get_session)]
+SessionDep = Annotated[Session, Depends(get_session, scope="function")]
 
 app = FastAPI(
     title="LIMS simulator",

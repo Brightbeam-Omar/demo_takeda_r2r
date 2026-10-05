@@ -12,7 +12,7 @@ from erp_sim import events, schemas
 from erp_sim.db import get_session
 from erp_sim.models import Mara, Mcha, Mchb, Mseg, Qals, Zinbchk
 
-SessionDep = Annotated[Session, Depends(get_session)]
+SessionDep = Annotated[Session, Depends(get_session, scope="function")]
 
 app = FastAPI(
     title="ERP simulator",
