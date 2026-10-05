@@ -30,7 +30,7 @@ export function FlowStrip({ entries, stages, mode, onHoldCount, activeStage, onH
         Counts: {MODE_CAPTION[mode]}
       </p>
       <div className="flex gap-2 overflow-x-auto pb-1">
-        <div className="min-w-24 rounded-card border border-slate-200 bg-white px-3 py-2">
+        <div className="w-24 shrink-0 rounded-card border border-slate-200 bg-white px-2.5 py-2">
           <div className="text-xs text-slate-500">Open pipeline</div>
           <div className="text-xl font-semibold tabular-nums" data-testid="flow-total">
             {total}
@@ -46,13 +46,13 @@ export function FlowStrip({ entries, stages, mode, onHoldCount, activeStage, onH
               aria-pressed={active}
               onClick={() => onToggleStage(entry.stage_key)}
               style={{ borderTopColor: `var(--color-stage-${(index % 8) + 1})` }}
-              className={`min-w-28 flex-1 rounded-card border border-t-4 border-slate-200 bg-white px-3 py-2 text-left hover:shadow ${
+              className={`min-w-24 flex-1 rounded-card border border-t-4 border-slate-200 bg-white px-2.5 py-2 text-left hover:shadow ${
                 active ? 'ring-2 ring-indigo-600' : ''
               }`}
             >
               <div className="text-xs text-slate-600">{entry.label}</div>
               <div className="text-xl font-semibold tabular-nums">{entry.count}</div>
-              <div className="flex flex-wrap items-center justify-between gap-x-2 text-xs whitespace-nowrap">
+              <div className="flex h-4 items-center justify-between gap-1.5 text-xs whitespace-nowrap">
                 <span className="text-slate-500">
                   {(sla.get(entry.stage_key) ?? 0) > 0 ? `SLA ${sla.get(entry.stage_key)} d` : ''}
                 </span>
@@ -70,7 +70,7 @@ export function FlowStrip({ entries, stages, mode, onHoldCount, activeStage, onH
           data-testid="flow-on_hold"
           aria-pressed={onHoldActive}
           onClick={onToggleHold}
-          className={`min-w-24 rounded-card border border-amber-300 bg-amber-50 px-3 py-2 text-left hover:shadow ${onHoldActive ? 'ring-2 ring-indigo-600' : ''}`}
+          className={`w-24 shrink-0 rounded-card border border-amber-300 bg-amber-50 px-2.5 py-2 text-left hover:shadow ${onHoldActive ? 'ring-2 ring-indigo-600' : ''}`}
         >
           <div className="text-xs text-amber-800">On Hold</div>
           <div className="text-xl font-semibold tabular-nums">{onHoldCount}</div>

@@ -60,14 +60,14 @@ OPEN_CAUSE = "Not yet determined"
 OWNERS = ("QA", "QA", "Warehouse", "QC Lab")
 
 
-def apply_quirks(plan: Plan, params: Params) -> None:
+def apply_quirks(plan: Plan, params: Params, profile: SiteProfile) -> None:
     rng = stream(plan.seed, "quirks")
     used: set[int] = set()
     _failed_checks(plan, params, rng, used)
     _rejected_uds(plan, params, rng, used)
     _holds_and_blocks(plan, params, rng, used)
     _lims_retests(plan, rng, used)
-    _results_recorded(plan, params, rng)
+    _results_recorded(plan, params, rng, profile)
     _deviations(plan, params, rng)
 
 
@@ -194,14 +194,17 @@ def _lims_retests(plan: Plan, rng: random.Random, used: set[int]) -> None:
         lot.tags.append("lims_retest")
 
 
-def _results_recorded(plan: Plan, params: Params, rng: random.Random) -> None:
+def _results_recorded(plan: Plan, params: Params, rng: random.Random, profile: SiteProfile) -> None:
     """The interface records a lot's LIMS results in the ERP 1-6 hours after approval, except air gaps.
 
-    The air-gap quirk withholds the transfer on a few lots that have waited at least two days; B5003, fixed
-    by the story at 30 hours, is one of them. The others are at most `air_gap_max_age_days` old, so at the
-    canonical opening every air gap is 24 to 96 hours old. No other approved lot lacks the record.
+    The air-gap quirk withholds the transfer on a few lots; B5003, fixed by the story at 30 hours, is one of
+    them. The others are approved at `air_gap_ages_hours` before the opening instant (for example 62, 70 and
+    90 hours; the opening is a Monday, so ages of 32 to 55 hours would fall on a weekend), so the air-gap list
+    shows a spread of ages inside the 24 to 96 hour band. A lot is eligible for a target age when it was
+    already approved on the site-local day of that instant. No other approved lot lacks the record.
     """
     cal = plan.calendar
+    opening = profile.demo.start_datetime.astimezone(UTC)
     pool = [
         lot
         for b, lot in _in_flight(plan)
@@ -209,10 +212,18 @@ def _results_recorded(plan: Plan, params: Params, rng: random.Random) -> None:
         and lot.ud_code is None
         and lot.latest is not None
         and lot.latest.closed_on is not None
-        and 2 <= (cal.today - lot.latest.closed_on).days <= params.quirks.air_gap_max_age_days
+        and 2 <= (cal.today - lot.latest.closed_on).days <= 5
     ]
     fixed = sum(1 for _, lot in plan.lots() if "air_gap" in lot.tags)
-    for lot in rng.sample(pool, max(0, params.quirks.air_gap_lots - fixed)):
+    ages = params.quirks.air_gap_ages_hours[: max(0, params.quirks.air_gap_lots - fixed)]
+    for hours in ages:
+        approved = opening - timedelta(hours=hours)
+        day = approved.astimezone(profile.site.tz).date()
+        candidates = [lot for lot in pool if lot.latest is not None and lot.latest.closed_on == day]
+        lot = rng.choice(candidates)
+        pool.remove(lot)
+        assert lot.latest is not None
+        lot.latest.approved_at = approved
         lot.tags.append("air_gap")
     for _, lot in plan.lots():
         sample = lot.latest
