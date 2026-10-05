@@ -564,6 +564,10 @@
             "title": "Label",
             "type": "string"
           },
+          "late_count": {
+            "title": "Late Count",
+            "type": "integer"
+          },
           "stage_key": {
             "title": "Stage Key",
             "type": "string"
@@ -573,7 +577,8 @@
           "stage_key",
           "label",
           "count",
-          "breached"
+          "breached",
+          "late_count"
         ],
         "title": "FlowEntry",
         "type": "object"
@@ -1378,6 +1383,10 @@
             "title": "Site Name",
             "type": "string"
           },
+          "site_timezone": {
+            "title": "Site Timezone",
+            "type": "string"
+          },
           "stages": {
             "items": {
               "additionalProperties": true,
@@ -1389,6 +1398,7 @@
         },
         "required": [
           "site_name",
+          "site_timezone",
           "stages",
           "metrics",
           "reason_codes",
@@ -1555,6 +1565,17 @@
             ],
             "title": "Lims Status"
           },
+          "location_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Type"
+          },
           "lot_type": {
             "title": "Lot Type",
             "type": "string"
@@ -1660,6 +1681,17 @@
             ],
             "title": "Stage Rule Id"
           },
+          "storage_location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Storage Location"
+          },
           "supplier_name": {
             "anyOf": [
               {
@@ -1706,6 +1738,8 @@
           "inspection_lot_no",
           "lot_type",
           "campaign",
+          "storage_location",
+          "location_type",
           "stage_key",
           "stage_label",
           "stage_rule_id",
@@ -1862,6 +1896,17 @@
             ],
             "title": "Lims Status"
           },
+          "location_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Type"
+          },
           "lot_type": {
             "title": "Lot Type",
             "type": "string"
@@ -1953,6 +1998,17 @@
             ],
             "title": "Stage Rule Id"
           },
+          "storage_location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Storage Location"
+          },
           "supplier_name": {
             "anyOf": [
               {
@@ -1999,6 +2055,8 @@
           "inspection_lot_no",
           "lot_type",
           "campaign",
+          "storage_location",
+          "location_type",
           "stage_key",
           "stage_label",
           "stage_rule_id",

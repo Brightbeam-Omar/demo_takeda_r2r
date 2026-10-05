@@ -514,6 +514,8 @@ export interface components {
             count: number;
             /** Label */
             label: string;
+            /** Late Count */
+            late_count: number;
             /** Stage Key */
             stage_key: string;
         };
@@ -770,6 +772,8 @@ export interface components {
             }[];
             /** Site Name */
             site_name: string;
+            /** Site Timezone */
+            site_timezone: string;
             /** Stages */
             stages: {
                 [key: string]: unknown;
@@ -824,6 +828,8 @@ export interface components {
             late: boolean;
             /** Lims Status */
             lims_status: string | null;
+            /** Location Type */
+            location_type: string | null;
             /** Lot Type */
             lot_type: string;
             /** Manual Status */
@@ -853,6 +859,8 @@ export interface components {
             stage_label: string;
             /** Stage Rule Id */
             stage_rule_id: string | null;
+            /** Storage Location */
+            storage_location: string | null;
             /** Supplier Name */
             supplier_name: string | null;
             /** System Need By Locked */
@@ -896,6 +904,8 @@ export interface components {
             late: boolean;
             /** Lims Status */
             lims_status: string | null;
+            /** Location Type */
+            location_type: string | null;
             /** Lot Type */
             lot_type: string;
             /** Manual Status */
@@ -921,6 +931,8 @@ export interface components {
             stage_label: string;
             /** Stage Rule Id */
             stage_rule_id: string | null;
+            /** Storage Location */
+            storage_location: string | null;
             /** Supplier Name */
             supplier_name: string | null;
             /** System Need By Locked */

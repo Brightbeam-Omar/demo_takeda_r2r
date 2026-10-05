@@ -54,7 +54,7 @@ def build_plan(profile: SiteProfile, params: Params, seed: int, world: World | N
     for batch, lot in plan.lots():
         builder.verify(batch, lot)
     _need_by_and_demand(builder, plan, story)
-    apply_quirks(plan, params)
+    apply_quirks(plan, params, profile)
     return plan
 
 

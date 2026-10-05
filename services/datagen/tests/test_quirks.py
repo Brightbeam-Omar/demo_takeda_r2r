@@ -118,3 +118,22 @@ def test_f05_oq039_the_air_gap_count_is_three_to_five_and_is_exactly_the_withhel
     air_gaps = [b.charg for b, lot in plan.lots() if "air_gap" in lot.tags]
     assert sorted(missing) == sorted(air_gaps)
     assert "B5003" in air_gaps
+
+
+def test_f10_review_every_air_gap_is_between_24_and_96_hours_old_at_demo_start(
+    plan: Plan, profile: SiteProfile
+) -> None:
+    from datetime import UTC, datetime, time
+
+    now = profile.demo.start_datetime
+    ages = {}
+    for batch, lot in plan.lots():
+        sample = lot.latest
+        if "air_gap" in lot.tags and sample is not None and sample.closed_on is not None:
+            approved = sample.approved_at or datetime.combine(sample.closed_on, time(6), tzinfo=UTC)
+            ages[batch.charg] = (now - approved).total_seconds() / 3600
+    assert len(ages) >= 3 and all(24 <= hours <= 96 for hours in ages.values()), ages
+    assert round(ages["B5003"]) == 30
+    # The withheld lots are approved at different times, so the air-gap alert shows a spread of ages.
+    assert len({round(hours) for hours in ages.values()}) == len(ages), ages
+    assert sorted(round(hours) for hours in ages.values()) == [30, 62, 70, 90]

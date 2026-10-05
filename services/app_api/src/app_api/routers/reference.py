@@ -18,6 +18,7 @@ router = APIRouter(dependencies=[Depends(current_user)])
 
 class ReferenceOut(BaseModel):
     site_name: str
+    site_timezone: str
     stages: list[dict[str, Any]]
     metrics: list[dict[str, Any]]
     reason_codes: list[dict[str, Any]]
@@ -43,6 +44,7 @@ def reference(
     )
     return ReferenceOut(
         site_name=profile.site.name,
+        site_timezone=profile.site.timezone,
         stages=_rows(session, "SELECT * FROM mirror_stage_reference ORDER BY sort"),
         metrics=_rows(session, "SELECT * FROM mirror_metric_reference ORDER BY metric_id"),
         reason_codes=_rows(session, "SELECT code, label FROM mirror_reason_codes ORDER BY code"),

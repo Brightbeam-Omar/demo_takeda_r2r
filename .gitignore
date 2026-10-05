@@ -24,3 +24,7 @@ dist/
 .idea/
 .vscode/
 .stacktest-lakehouse/
+
+# playwright
+test-results/
+playwright-report/
