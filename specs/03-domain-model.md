@@ -34,8 +34,8 @@ stages:            # sort order = list order; key is stable and used in code/dat
   - {key: receipt,     label: "Receipt",      sla_days: 10, team: "Warehouse",     action: "Complete inbound check"}
   - {key: call_off,    label: "Call Off",     sla_days: 5,  team: "Warehouse",     action: "Call off from 3PL to site", applies_if: "received_location_type == '3pl'"}
   - {key: sampling,    label: "Sampling",     sla_days: 7,  team: "Manufacturing", action: "Collect QC sample"}
-  - {key: qc_ship,     label: "QC Ship",      sla_days: 10, team: "QC Lab",        action: "Ship sample to external lab", applies_if: "offsite_test"}
-  - {key: qc_testing,  label: "QC Testing",   sla_days: 42, team: "QC Lab",        action: "Complete and approve testing"}
+  - {key: qc_ship,     label: "QCL Ship For External Testing", sla_days: 10, team: "QC Lab",        action: "Ship sample to external lab", applies_if: "offsite_test"}
+  - {key: qc_testing,  label: "QCL Testing",   sla_days: 42, team: "QC Lab",        action: "Complete and approve testing"}
   - {key: qa_release,  label: "QA Release",   sla_days: 7,  team: "QA",            action: "Post usage decision"}
   - {key: released,    label: "Released",     sla_days: 0,  team: "QA",            action: "None", terminal: true}
 reeval_sla_overrides:   # lot_type 09 uses these where given
@@ -61,18 +61,20 @@ air_gap:    {threshold_hours: 24}
 molecule_types: [small_molecule, large_molecule, peptide]     # string or {key, label}; normalised to {key, label} (label defaults to the title-cased key)
 material_classes: [drug_substance, consumable]               # same shape
 full_spec_pairs: [{material: RM10031, supplier: SUP007}]   # material+supplier needing full-spec testing
-terms:   # UI vocabulary (F15, OQ-075). All keys optional; generic defaults shown. Code and data keep generic names
-  erp: "ERP"                      # site_a: "SAP"
+terms:   # UI vocabulary (F15, OQ-075), site_a values. All keys optional; generic defaults in the note below. Code and data keep generic names
+  erp: "SAP"
   lims: "LIMS"
   qms: "QMS"
-  qc_lab: "QC Lab"                # site_a: "QCL"
-  insights_banner: "LIMS–ERP Insights"   # site_a: "LIMS–SAP Insights"
-  erp_blocked_tag: "ERP BLOCKED"  # site_a: "SAP BLOCKED"
+  qc_lab: "QCL"
+  insights_banner: "LIMS–SAP Insights"
+  erp_blocked_tag: "SAP BLOCKED"
   planner_overrides: "planner overrides"
 reason_codes: [CAMPAIGN_PULLED_FORWARD, CAMPAIGN_PUSHED_OUT, CONSOLIDATED_TESTING, EXPEDITE_PRODUCTION,
                EXPEDITE_SHIPPING, SUPPLIER_DELAY, LAB_CAPACITY, DOCUMENTATION_ISSUE, OTHER]
 adapters: {erp: ecc_like}       # Tier 2 adds s4_like and spreadsheet
 ```
+
+**`terms` defaults** (used when a key is omitted): `erp: "ERP"`, `lims: "LIMS"`, `qms: "QMS"`, `qc_lab: "QC Lab"`, `insights_banner: "LIMS–ERP Insights"`, `erp_blocked_tag: "ERP BLOCKED"`, `planner_overrides: "planner overrides"`. Derived defaults follow `erp`/`lims`: a profile that sets only `erp: "S4"` gets "S4 BLOCKED" and "LIMS–S4 Insights".
 
 ## 3. Row grain
 One published row per **material + batch + inspection lot** (ADR-004). A batch with a re-eval lot therefore appears twice: once for its historic `01` lot (typically `released`) and once for the open `09` lot. That is correct and must be displayed as such. Distinct-batch counts must aggregate on `(material_no, batch_no)`. Lots of other types are excluded at extract.

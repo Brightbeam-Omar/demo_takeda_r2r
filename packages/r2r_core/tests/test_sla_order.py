@@ -136,3 +136,16 @@ def test_f03_oq021_all_dates_includes_every_row_even_terminal_and_undated() -> N
 
 def test_f03_oq021_a_row_with_no_expected_date_is_excluded_from_a_real_period() -> None:
     assert in_period(result(None), stage_terminal=False, period=THIS_WEEK) is False
+
+
+def test_f15_oq079_month_window_is_the_calendar_month_with_offset() -> None:
+    from r2r_core.sla import month_window
+
+    today = date(2026, 10, 12)
+    assert month_window(today) == (date(2026, 10, 1), date(2026, 10, 31))
+    assert month_window(today, -1) == (date(2026, 9, 1), date(2026, 9, 30))
+    assert month_window(today, 1) == (date(2026, 11, 1), date(2026, 11, 30))
+    # year boundaries and a leap February
+    assert month_window(date(2026, 1, 5), -1) == (date(2025, 12, 1), date(2025, 12, 31))
+    assert month_window(date(2026, 12, 5), 1) == (date(2027, 1, 1), date(2027, 1, 31))
+    assert month_window(date(2028, 1, 31), 1) == (date(2028, 2, 1), date(2028, 2, 29))

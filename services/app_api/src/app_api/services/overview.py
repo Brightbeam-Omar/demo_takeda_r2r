@@ -5,7 +5,6 @@ weeks and calendar months in the site timezone, taken from the demo clock; only 
 (``r2r_core.sla.in_period``), so overdue rows roll into every current window.
 """
 
-import calendar
 import datetime as dt
 from collections.abc import Sequence
 from dataclasses import dataclass, field
@@ -13,17 +12,18 @@ from typing import Literal
 
 from pydantic import BaseModel
 from r2r_core.profile import SiteProfile
-from r2r_core.sla import in_period
+from r2r_core.sla import in_period, month_window
 
 from app_api.schemas import Freshness, RowOut
 from app_api.services.compose import ComposedRow
 
-PERIODS = ("all", "this_week", "last_week", "next_week", "this_month", "custom")
+PERIODS = ("all", "this_week", "last_week", "next_week", "this_month", "last_month", "next_month", "custom")
 FLAG_NAMES = (
     "on_hold", "erp_blocked", "re_eval", "offsite", "full_spec", "expedite", "ud_rejected", "lims_rejected",
     "air_gap", "late",
 )  # fmt: skip
 TOP_AIR_GAPS = 5
+MONTH_OFFSETS = {"last_month": -1, "this_month": 0, "next_month": 1}
 
 
 class InvalidFilter(ValueError):
@@ -55,8 +55,8 @@ def window(filters: Filters, today: dt.date) -> tuple[dt.date, dt.date] | None:
         return monday - dt.timedelta(days=7), monday - dt.timedelta(days=1)
     if period == "next_week":
         return monday + dt.timedelta(days=7), monday + dt.timedelta(days=13)
-    if period == "this_month":
-        return today.replace(day=1), today.replace(day=calendar.monthrange(today.year, today.month)[1])
+    if period in MONTH_OFFSETS:
+        return month_window(today, MONTH_OFFSETS[period])
     if period == "custom":
         if filters.date_from is None or filters.date_to is None:
             raise InvalidFilter("period=custom needs both from and to")

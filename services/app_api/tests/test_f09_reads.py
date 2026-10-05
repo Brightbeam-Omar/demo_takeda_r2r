@@ -83,7 +83,9 @@ def test_f09_endpoint_reference_lists_the_filter_values(client: TestClient, mirr
     assert body["stages"][0]["stage_key"] == "pending" and body["stages"][-1]["terminal"] is True
     assert body["campaigns"] == ["CMP-BRAVO", "CMP-CEDAR"] and body["site_name"] and body["site_timezone"]
     assert "CAMPAIGN_PULLED_FORWARD" in [c["code"] for c in body["reason_codes"]]
-    assert body["molecule_types"] == ["small_molecule", "large_molecule", "peptide"]
+    assert [t["key"] for t in body["molecule_types"]] == ["small_molecule", "large_molecule", "peptide"]
+    assert body["terms"]["erp_blocked_tag"] == "SAP BLOCKED"
+    assert body["release_badge"] == "ALPHA – LOCAL"
     assert {m["metric_id"] for m in body["metrics"]} >= {"M1", "M7"}
 
 
