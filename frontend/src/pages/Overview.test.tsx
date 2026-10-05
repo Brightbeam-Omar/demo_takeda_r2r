@@ -83,3 +83,17 @@ test('F10-FR-09: rows keep the server (exceptions-first) order and Export CSV se
   expect(call.url).toContain('q=RM')
   sessionStorage.clear()
 })
+
+test('F11-FR-07 / OQ-072: an unknown ?row= shows "Batch not found" and Escape removes only the row parameter', async () => {
+  window.history.pushState({}, '', '/overview?q=RM&row=' + encodeURIComponent('NOPE|B0|0'))
+  vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+    if (url.startsWith('/api/rows/')) return new Response(JSON.stringify({ detail: 'unknown row' }), { status: 404 })
+    if (url.startsWith('/api/overview')) return new Response(JSON.stringify({ freshness, flow_strip: [], on_hold_count: 0, total: 0, mode: 'snapshot', alerts: [], rows: [] }))
+    return new Response('nf', { status: 404 })
+  }))
+  render(<App />)
+  expect(await screen.findByText(/Batch not found: NOPE\|B0\|0/)).toBeInTheDocument()
+  await userEvent.keyboard('{Escape}')
+  await waitFor(() => expect(screen.queryByText(/Batch not found/)).not.toBeInTheDocument())
+  expect(window.location.search).toBe('?q=RM')
+})

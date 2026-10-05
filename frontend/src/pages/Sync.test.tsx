@@ -82,3 +82,11 @@ test('F11-FR-05: relative ages and durations read naturally', () => {
   expect(formatDuration(850)).toBe('850 ms')
   expect(formatDuration(65_000)).toBe('1 min 5 s')
 })
+
+test('F11-FR-05: an event without a run id has no Dagster link', async () => {
+  status.events[0].run_id = null as unknown as string
+  setup('admin')
+  const rows = await screen.findAllByTestId('sync-event')
+  expect(within(rows[0]).queryByRole('link')).not.toBeInTheDocument()
+  status.events[0].run_id = 'abcd1234-0000'
+})

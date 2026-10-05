@@ -79,3 +79,23 @@ def test_f11_oq068_the_audit_log_filters_by_demo_date_range(client: TestClient) 
     assert client.get("/api/audit", params={"from": "2026-10-13"}).json()["total"] == 0
     assert client.get("/api/audit", params={"to": "2026-10-11"}).json()["total"] == 0
     assert client.get("/api/audit", params={"from": "2026-10-13", "to": "2026-10-12"}).status_code == 422
+
+
+def test_f11_oq068_the_date_range_uses_site_local_days(
+    client: TestClient, app_factory: sessionmaker[Session]
+) -> None:
+    from datetime import UTC, datetime
+
+    from r2r_core import clock
+    from r2r_core.clock import FixedClock
+
+    # 23:30 UTC on 12 Oct is 00:30 on 13 Oct in the site timezone (Europe/Dublin, UTC+1).
+    clock.set_clock_source(FixedClock(datetime(2026, 10, 12, 23, 30, tzinfo=UTC)))
+    client.put(PREVIEW.removesuffix("/preview"), json=PULLED)
+    assert client.get("/api/audit", params={"from": "2026-10-13", "to": "2026-10-13"}).json()["total"] == 1
+    assert client.get("/api/audit", params={"to": "2026-10-12"}).json()["total"] == 0
+
+
+def test_f11_oq067_an_expedite_only_preview_keeps_the_plan_of_the_system_date(client: TestClient) -> None:
+    body = client.post(PREVIEW, json={"expedite": True}).json()
+    assert body["preview"]["expected_completion"] == body["current"]["expected_completion"]
