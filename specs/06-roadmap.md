@@ -33,7 +33,7 @@ Claude Code updates `in_progress` and `review`. Only the human sets `done`.
 | F10 | Frontend shell & Overview | F09 | 1 | done |
 | F11 | Editing, batch drawer, Explain, Sync & Audit pages | F10 | 1 | done |
 | F15 | UI shell, visual system & profile terminology | F11 | 1 | done |
-| F16 | Overview I: filter panel, presets, bookmarks, alert banners | F15 | 1 | ready |
+| F16 | Overview I: filter panel, presets, bookmarks, alert banners | F15 | 1 | in_progress |
 | F17 | Overview II: stage cards (incl. Expected Delivery), metric cards, tag row | F16 | 1 | ready |
 | F18 | Overview III: pipeline table parity, row actions, exports | F17 | 1 | ready |
 | F19 | Batch windows: History, Inbound, Quality, Status Log, Sample Data, Adjust Needs-by | F18 | 1 | ready |

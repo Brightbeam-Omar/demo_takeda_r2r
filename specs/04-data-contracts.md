@@ -133,6 +133,8 @@ One row per `row_key`, built by the SQL steps `50`–`90` from `batch_flat`: `ro
 | `comment` | `id`, `row_key`, `body`, `author_user_key`, `created_at` (insert-only) |
 | `audit_event` | `id`, `at` (demo clock), `actor_user_key` (nullable text; `system` for system rows such as a rejected webhook), `action`, `row_key` null, `details_json`. Written for every override, comment, approval, rejection and agent action |
 | `feedback` | `id`, `at` (demo clock), `user_key`, `page` (route path, ≤ 200 chars), `message` (1–2000 chars). Insert-only, not audited (F15, OQ-083) |
+| `bookmark` | `user_key`, `row_key`, `created_at` (demo clock). PK (`user_key`, `row_key`). Personal, not audited (F16, OQ-091) |
+| `filter_preset` | `id`, `user_key`, `name`, `query` (the filter query string, `period` stored literally), `created_at` (demo clock). Unique (`user_key`, `name`). Not audited (F16, OQ-089) |
 | `proposal` | `id`, `agent_key`, `row_key` null, `kind` (e.g. `airgap_ticket`), `payload_json`, `evidence_json`, `validator_result_json`, `status` (`pending_approval`,`rejected_by_validator`,`approved`,`rejected`,`executed`), `required_role`, `created_at`, `decided_by`, `decided_at`, `trace_id` |
 | `action_log` | `id`, `proposal_id`, `action_type`, `rendered_json`, `executed_at` |
 | `agent_trace` | `id`, `trace_id`, `seq`, `step_type` (`input`,`tool_call`,`tool_result`,`model_request`,`model_response`,`validation`,`decision`,`action`), `payload_json`, `tokens_in`, `tokens_out`, `latency_ms`, `at` |
