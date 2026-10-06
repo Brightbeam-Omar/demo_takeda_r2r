@@ -11,7 +11,8 @@ type Hl = (text: string) => ReactNode
 /** The tags that apply to a row, in the tag row's order (F18-FR-03a). */
 export function rowTags(row: Row, terms: Terms): Tag[] {
   const flags = row.flags as unknown as Record<string, boolean>
-  return tagRow(terms).filter((tag) => tag.keys.some((key) => flags[key]))
+  // LATE stays in the filter tag row: the red bar and the Status column carry lateness on the row.
+  return tagRow(terms).filter((tag) => tag.id !== 'late' && tag.keys.some((key) => flags[key]))
 }
 
 /** A chip in the tag's own colours, without the hover effect of the tag-row button. */
@@ -45,7 +46,7 @@ export function MaterialCell({ row, terms, hl, star, actions }: MaterialProps) {
       <div className="flex flex-col leading-tight">
         <span className="font-semibold">{hl(row.material_no)}</span>
         <span className="text-slate-700">{hl(row.material_desc ?? '')}</span>
-        <span className="text-xs text-slate-500">{hl(row.supplier_batch ?? '')}</span>
+        {row.supplier_batch ? <span className="text-xs text-slate-500">{hl(row.supplier_batch)}</span> : null}
         <span className="flex gap-1 empty:hidden">
           <TagChips row={row} terms={terms} />
         </span>

@@ -26,6 +26,7 @@ from datagen.params import Params
 from datagen.po_lines import plan_po_lines
 from datagen.quirks import apply_quirks
 from datagen.stories import StoryResult, build_stories
+from datagen.supplier_batches import plan_supplier_batches
 from datagen.timeline import (
     OPEN_SAMPLED_STAGES,
     Builder,
@@ -59,6 +60,7 @@ def build_plan(profile: SiteProfile, params: Params, seed: int, world: World | N
     apply_quirks(plan, params, profile)
     plan_po_lines(plan, params)
     plan_next_inspection(plan)
+    plan_supplier_batches(plan)
     return plan
 
 

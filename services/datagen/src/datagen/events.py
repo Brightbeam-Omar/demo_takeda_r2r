@@ -55,6 +55,7 @@ def _lot_events(batch: BatchPlan, lot: LotPlan) -> list[Event]:
                     "budat": lot.start,
                     "hsdat": lot.start - MANUFACTURE_LEAD,
                     "vfdat": lot.start + timedelta(days=730),
+                    "licha": batch.supplier_batch,
                     "qnext": batch.next_inspection,
                     "pastrterm": lot.start,
                     "ebeln": po_ref(batch),

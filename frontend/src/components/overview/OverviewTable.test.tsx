@@ -88,7 +88,7 @@ test('F18-FR-03: the material cell has star, code, description, supplier batch a
   expect(within(cell).getByText('RM2')).toHaveClass('font-semibold')
   expect(within(cell).getByText('Excipient 017')).toBeInTheDocument()
   expect(within(cell).getByText('SB-2')).toBeInTheDocument()
-  expect(within(cell).getByText('LATE')).toBeInTheDocument()
+  expect(within(cell).queryByText('LATE')).not.toBeInTheDocument() // the red bar and Status carry lateness
   expect(within(cell).getByText('ON HOLD')).toBeInTheDocument()
   expect(within(cell).getByRole('button', { name: 'Bookmark RM2|B202|10002' })).toBeInTheDocument()
 })
@@ -202,4 +202,13 @@ test('F18-FR-03c: the Inbound and Deviation cells are 8 px dots in green, amber,
   const inbound = screen.getByRole('img', { name: 'Inbound check: red' })
   expect(inbound).toHaveClass('h-2', 'w-2', 'bg-red-600')
   expect(screen.getByRole('img', { name: 'Deviations: none recorded' })).toHaveClass('bg-slate-300')
+})
+
+test('F18: the third line of the material cell is the supplier batch, and is omitted when there is none', () => {
+  const { unmount } = show([makeRow(1)])
+  const lines = () => within(within(screen.getByTestId('batch-row')).getAllByRole('cell')[0]!).getByText('RM1').parentElement!.children
+  expect(Array.from(lines()).map((el) => el.textContent)).toEqual(['RM1', 'Excipient 017', 'SB-1', ''])
+  unmount()
+  show([makeRow(1, { supplier_batch: null } as unknown as Partial<Row>)])
+  expect(screen.getByTestId('batch-row')).not.toHaveTextContent('SB-')
 })

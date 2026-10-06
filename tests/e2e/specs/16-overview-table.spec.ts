@@ -247,6 +247,8 @@ test('F18-AC-07: late rows read LATE +Nd with a red Expected Completion (Nd over
   await page.goto(`/overview?q=${encodeURIComponent(late.batch_no)}`)
   const row = page.locator(`[data-testid=batch-row][data-row-key="${late.row_key}"]`)
   await expect(row.getByTestId('status-cell')).toHaveText(`LATE +${n}d`)
+  await expect(row.getByText('LATE', { exact: true })).toHaveCount(0) // no LATE chip on the row
+  await expect(row.getByText(/^SB-\d{6}$/)).toBeVisible() // third line: the supplier batch, not the batch number
   await expect(row.getByTestId('expected-cell')).toContainText(`(${n}d over)`)
   await expect(row.getByTestId('expected-cell')).toHaveClass(/text-red-700/)
   if (amber) {
