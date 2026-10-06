@@ -4,6 +4,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
+import pyarrow as pa
 import pytest
 from fixture_world import World
 from r2r_core.profile import SiteProfile
@@ -180,3 +181,23 @@ def test_f21_fr01_the_history_keeps_the_last_hundred_runs(
     assert {s["pipeline_run_id"] for s in published(tmp_path, "pipeline_run_steps_v")} == {
         r["pipeline_run_id"] for r in runs
     }
+
+
+@pytest.mark.usefixtures("demo_clock")
+def test_f21_ac06_the_declared_schemas_are_exactly_what_the_pipeline_publishes(
+    tmp_path: Path, profile: SiteProfile
+) -> None:
+    from deltalake import DeltaTable
+    from r2r_pipeline.contract_schemas import published_schemas
+    from r2r_pipeline.publish import PUBLISH_ORDER
+
+    w = world(2)
+    w.deviation("DEV-000001", "open", [("RM1", "B0")])
+    w.change_control("CC-000001", "open", [("RM1", "B0")])
+    w.po_line("4500000001", date(2026, 10, 20))
+    run(w, tmp_path, profile, "run-1")
+    declared = published_schemas()
+    assert list(declared) == list(PUBLISH_ORDER)
+    for name, schema in declared.items():
+        actual = pa.schema(DeltaTable(str(tmp_path / "published" / name)).schema().to_arrow())
+        assert [(f.name, str(f.type)) for f in actual] == [(f.name, str(f.type)) for f in schema], name

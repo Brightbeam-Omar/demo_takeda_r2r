@@ -18,6 +18,7 @@ from app_api.routers import (
     reports,
     rows,
     runs,
+    schema,
     teams,
     webhooks,
 )
@@ -42,6 +43,7 @@ def create_app() -> FastAPI:
         reports,
         rows,
         runs,
+        schema,
         teams,
     )
     for router in (module.router for module in routers):

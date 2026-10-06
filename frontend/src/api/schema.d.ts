@@ -681,6 +681,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/schema": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Schema */
+        get: operations["schema_api_schema_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/sync/health": {
         parameters: {
             query?: never;
@@ -984,6 +1001,15 @@ export interface components {
              * Format: date
              */
             today_local: string;
+        };
+        /** ColumnOut */
+        ColumnOut: {
+            /** Description */
+            description: string;
+            /** Name */
+            name: string;
+            /** Type */
+            type: string;
         };
         /**
          * CommentIn
@@ -1473,6 +1499,17 @@ export interface components {
             note?: string | null;
             /** Reason Code */
             reason_code?: string | null;
+        };
+        /** ObjectOut */
+        ObjectOut: {
+            /** Columns */
+            columns: components["schemas"]["ColumnOut"][];
+            /** Description */
+            description: string;
+            /** Grain */
+            grain: string;
+            /** Name */
+            name: string;
         };
         /** OverrideOut */
         OverrideOut: {
@@ -1977,6 +2014,11 @@ export interface components {
             sample_id: string;
             /** Status */
             status: string | null;
+        };
+        /** SchemaOut */
+        SchemaOut: {
+            /** Objects */
+            objects: components["schemas"]["ObjectOut"][];
         };
         /** SlaBar */
         SlaBar: {
@@ -3871,6 +3913,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StatusLogOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    schema_api_schema_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-demo-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchemaOut"];
                 };
             };
             /** @description Validation Error */

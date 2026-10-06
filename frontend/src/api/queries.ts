@@ -12,6 +12,7 @@ export type SyncHealth = Schemas['SyncHealthOut']
 export type PipelineRun = Schemas['PipelineRunOut']
 export type PipelineSteps = Schemas['PipelineStepsOut']
 export type Teams = Schemas['TeamsOut']
+export type ContractSchema = Schemas['SchemaOut']
 export type Overview = Schemas['OverviewOut']
 export type Row = Schemas['RowOut']
 export type Metrics = Schemas['MetricsOut']
@@ -83,6 +84,14 @@ export function useTeams() {
     queryKey: useKey('teams'),
     queryFn: () => apiGet<Teams>('/teams'),
     refetchInterval: POLL_MS,
+  })
+}
+
+export function useContractSchema() {
+  return useQuery({
+    queryKey: ['contract-schema'],
+    queryFn: () => apiGet<ContractSchema>('/schema'),
+    staleTime: Infinity, // the contract only changes with a release
   })
 }
 

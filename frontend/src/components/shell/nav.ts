@@ -30,7 +30,6 @@ export const ADMIN: NavItem[] = [
     to: '/admin/schema',
     label: 'Schema Reference',
     icon: '▥',
-    coming: 'Coming in F21',
   },
   { to: '/admin/upload', label: 'Upload Data', icon: '⇪', coming: 'Tier 2' },
   {

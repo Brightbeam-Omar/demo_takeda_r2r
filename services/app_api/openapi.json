@@ -523,6 +523,29 @@
         "title": "ClockOut",
         "type": "object"
       },
+      "ColumnOut": {
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "description"
+        ],
+        "title": "ColumnOut",
+        "type": "object"
+      },
       "CommentIn": {
         "description": "Deprecated body of ``POST /rows/{row_key}/comments`` (F19-FR-05): a wrapper over the status log.",
         "properties": {
@@ -2173,6 +2196,37 @@
           }
         },
         "title": "NeedByIn",
+        "type": "object"
+      },
+      "ObjectOut": {
+        "properties": {
+          "columns": {
+            "items": {
+              "$ref": "#/components/schemas/ColumnOut"
+            },
+            "title": "Columns",
+            "type": "array"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "grain": {
+            "title": "Grain",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "grain",
+          "columns"
+        ],
+        "title": "ObjectOut",
         "type": "object"
       },
       "OverrideOut": {
@@ -4064,6 +4118,22 @@
           "approved_at"
         ],
         "title": "SampleOut",
+        "type": "object"
+      },
+      "SchemaOut": {
+        "properties": {
+          "objects": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectOut"
+            },
+            "title": "Objects",
+            "type": "array"
+          }
+        },
+        "required": [
+          "objects"
+        ],
+        "title": "SchemaOut",
         "type": "object"
       },
       "SlaBar": {
@@ -9402,6 +9472,52 @@
           }
         },
         "summary": "Post Status Log"
+      }
+    },
+    "/api/schema": {
+      "get": {
+        "operationId": "schema_api_schema_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchemaOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Schema"
       }
     },
     "/api/sync/health": {

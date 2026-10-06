@@ -4,7 +4,7 @@
 SHELL := /bin/bash
 SRC_DIRS := $(shell find packages services tools -type d -name src -not -path '*/node_modules/*' -not -path '*/.venv/*' 2>/dev/null)
 
-.PHONY: help install up down logs fmt test check check-python check-frontend coverage-core leakscan integration stack-test \
+.PHONY: help install up down logs fmt test contract-json check check-python check-frontend coverage-core leakscan integration stack-test \
         e2e e2e-headed demo-reset seed pipeline scenario record-agents record-video doctor
 
 help:
@@ -76,6 +76,10 @@ leakscan:
 	else \
 		echo "leakscan: no upstream branch, skipping commit message scan"; \
 	fi
+
+# F21-FR-06: regenerate the Schema Reference's contract file (the check in `make check` fails when it is stale).
+contract-json: ## Regenerate specs/contract.json from the published schemas and the specs
+	uv run python tools/contract_schema.py
 
 check: check-python coverage-core check-frontend leakscan ## Lint, types, tests, leak scan: one verdict
 

@@ -1,0 +1,1108 @@
+{
+  "generated_from": [
+    "specs/04-data-contracts.md",
+    "specs/contract_descriptions.yaml",
+    "r2r_pipeline"
+  ],
+  "objects": [
+    {
+      "name": "batch_pipeline_v",
+      "description": "The pipeline. One row per lot in flight or released, with its stage, stage dates, flags and lights. The facts every page of the application is built on.",
+      "grain": "One row per material + batch + inspection lot (row_key).",
+      "columns": [
+        {
+          "name": "row_key",
+          "type": "string",
+          "description": "Key of the lot: material_no|batch_no|inspection_lot_no."
+        },
+        {
+          "name": "material_no",
+          "type": "string",
+          "description": "Material number."
+        },
+        {
+          "name": "material_desc",
+          "type": "string",
+          "description": "Material description."
+        },
+        {
+          "name": "material_class",
+          "type": "string",
+          "description": "Material class (drug substance or consumable); null when unknown."
+        },
+        {
+          "name": "molecule_type",
+          "type": "string",
+          "description": "Molecule type of the material (small molecule, large molecule, peptide)."
+        },
+        {
+          "name": "supplier_id",
+          "type": "string",
+          "description": "Supplier identifier."
+        },
+        {
+          "name": "supplier_name",
+          "type": "string",
+          "description": "Supplier name."
+        },
+        {
+          "name": "supplier_batch",
+          "type": "string",
+          "description": "The supplier's own batch number."
+        },
+        {
+          "name": "batch_no",
+          "type": "string",
+          "description": "Batch number."
+        },
+        {
+          "name": "batch_status_code",
+          "type": "string",
+          "description": "ERP batch status; H means the batch is on hold."
+        },
+        {
+          "name": "inspection_lot_no",
+          "type": "string",
+          "description": "ERP inspection lot number."
+        },
+        {
+          "name": "lot_type",
+          "type": "string",
+          "description": "01 initial receipt inspection, 09 re-evaluation (periodic retest)."
+        },
+        {
+          "name": "lot_start_date",
+          "type": "date",
+          "description": "`qals.pastrterm`"
+        },
+        {
+          "name": "storage_location",
+          "type": "string",
+          "description": "Current storage location of the batch."
+        },
+        {
+          "name": "location_type",
+          "type": "string",
+          "description": "Current location type (onsite or 3pl). Used for display only."
+        },
+        {
+          "name": "received_location_type",
+          "type": "string",
+          "description": "`t001l.zloctype` of `mseg.lgort` on that netted `101`. For `lot_type = '09'` it is always `onsite` (a re-evaluation cycle starts with the stock on site)"
+        },
+        {
+          "name": "stock_category",
+          "type": "string",
+          "description": "From the bucket sums over all the batch's `mchb` rows: `BLOCKED` if the sum of `speme > 0`, else `QI` if the sum of `insme > 0`, else `UNRESTRICTED`"
+        },
+        {
+          "name": "gr_date",
+          "type": "date",
+          "description": "`MIN(mseg.budat)` of `bwart='101'` for the batch after netting: a `102` cancels at most one `101` of the same batch, posting date and quantity, and each `101` is cancelled at most once. Unmatched or partial reversals stay as posted. `stg_mseg` is a raw copy; netting happens here"
+        },
+        {
+          "name": "transfer_to_site_date",
+          "type": "date",
+          "description": "`MIN(mseg.budat)` of `bwart='311'` where `t001l(umlgo).zloctype='onsite'` and `budat ≥ gr_date`"
+        },
+        {
+          "name": "inbound_check_status",
+          "type": "string",
+          "description": "`zinbchk.status` for the lot, else `'none'`"
+        },
+        {
+          "name": "inbound_check_completed_date",
+          "type": "date",
+          "description": "`zinbchk.completed_on` only when the status is `passed` or `resolved` (F19); NULL for `open`, `failed` or no check (so a failed check leaves the receipt stage without an exit date)"
+        },
+        {
+          "name": "sample_id",
+          "type": "string",
+          "description": "Latest LIMS sample of the lot; null when none."
+        },
+        {
+          "name": "sample_collected_date",
+          "type": "date",
+          "description": "Date the latest sample was collected."
+        },
+        {
+          "name": "offsite_test",
+          "type": "boolean",
+          "description": "True when the sample is tested at an external lab."
+        },
+        {
+          "name": "external_lab",
+          "type": "string",
+          "description": "The external lab, for an offsite test."
+        },
+        {
+          "name": "sample_shipped_date",
+          "type": "date",
+          "description": "Date the sample was shipped to the external lab."
+        },
+        {
+          "name": "lims_status",
+          "type": "string",
+          "description": "Latest `sample.status` for the lot: `registered`/`in_progress` → `in_progress`, `approved`, `rejected`. `'none'` if there is no sample"
+        },
+        {
+          "name": "lims_approved_date",
+          "type": "date",
+          "description": "`lims_approved_at` converted to the site timezone (profile) and truncated to date"
+        },
+        {
+          "name": "lims_approved_at",
+          "type": "timestamp",
+          "description": "When LIMS approved all tests of the lot."
+        },
+        {
+          "name": "ud_code",
+          "type": "string",
+          "description": "ERP usage decision code of the lot; null until decided."
+        },
+        {
+          "name": "ud_date",
+          "type": "date",
+          "description": "Date of the usage decision."
+        },
+        {
+          "name": "erp_results_recorded_at",
+          "type": "timestamp",
+          "description": "`qals.zresrec` for the lot (NULL if never recorded)"
+        },
+        {
+          "name": "campaign",
+          "type": "string",
+          "description": "Production campaign of the earliest open demand for the material; null for a released lot."
+        },
+        {
+          "name": "system_need_by_date",
+          "type": "date",
+          "description": "Earliest open MRP requirement date on or after the snapshot date; drifts as demand moves. Null for a released lot."
+        },
+        {
+          "name": "open_deviation_count",
+          "type": "integer",
+          "description": "Open deviations linked to the batch."
+        },
+        {
+          "name": "closed_deviation_count",
+          "type": "integer",
+          "description": "Closed deviations linked to the batch."
+        },
+        {
+          "name": "next_inspection_date",
+          "type": "date",
+          "description": "Next inspection (retest) date of the batch, from the ERP."
+        },
+        {
+          "name": "need_by_at_release",
+          "type": "date",
+          "description": "For a released lot, the earliest requirement date on or after its cycle start (closed lines included), used for needs-by adherence."
+        },
+        {
+          "name": "expedite_requested_on",
+          "type": "date",
+          "description": "Date the ERP requested the batch be expedited."
+        },
+        {
+          "name": "expedite_due_date",
+          "type": "date",
+          "description": "Date the expedited batch is due."
+        },
+        {
+          "name": "stage_key",
+          "type": "string",
+          "description": "The stage the lot is in now (first matching rule wins)."
+        },
+        {
+          "name": "stage_rule_id",
+          "type": "string",
+          "description": "The stage rule that matched, for example R-QCT (constitution P3)."
+        },
+        {
+          "name": "cycle_start_date",
+          "type": "date",
+          "description": "Start of the lot's cycle: the goods receipt date, or the lot start for a re-evaluation. Null for a pending lot."
+        },
+        {
+          "name": "ud_effective",
+          "type": "boolean",
+          "description": "True when the usage decision is an accept code, so the lot is released."
+        },
+        {
+          "name": "stage_sort",
+          "type": "integer",
+          "description": "Position of the stage in the profile order."
+        },
+        {
+          "name": "current_stage_entry_date",
+          "type": "date",
+          "description": "Entry date of the current stage; null for pending."
+        },
+        {
+          "name": "lims_rejected",
+          "type": "boolean",
+          "description": "True when the latest LIMS sample was rejected (a retest is expected)."
+        },
+        {
+          "name": "receipt_entry",
+          "type": "date",
+          "description": "Entry date of the receipt stage."
+        },
+        {
+          "name": "receipt_exit",
+          "type": "date",
+          "description": "Exit date of the receipt stage."
+        },
+        {
+          "name": "call_off_entry",
+          "type": "date",
+          "description": "Entry date of the call-off stage (3PL lots only)."
+        },
+        {
+          "name": "call_off_exit",
+          "type": "date",
+          "description": "Exit date of the call-off stage."
+        },
+        {
+          "name": "sampling_entry",
+          "type": "date",
+          "description": "Entry date of the sampling stage."
+        },
+        {
+          "name": "sampling_exit",
+          "type": "date",
+          "description": "Exit date of the sampling stage."
+        },
+        {
+          "name": "qc_ship_entry",
+          "type": "date",
+          "description": "Entry date of the external-testing shipment stage (offsite lots only)."
+        },
+        {
+          "name": "qc_ship_exit",
+          "type": "date",
+          "description": "Exit date of the external-testing shipment stage."
+        },
+        {
+          "name": "qc_testing_entry",
+          "type": "date",
+          "description": "Entry date of the testing stage."
+        },
+        {
+          "name": "qc_testing_exit",
+          "type": "date",
+          "description": "Exit date of the testing stage."
+        },
+        {
+          "name": "qa_release_entry",
+          "type": "date",
+          "description": "Entry date of the QA release stage."
+        },
+        {
+          "name": "qa_release_exit",
+          "type": "date",
+          "description": "Exit date of the QA release stage."
+        },
+        {
+          "name": "applicable_sla_json",
+          "type": "string",
+          "description": "Ordered list of {stage_key, sla_days} for the stages that apply to this lot (re-evaluation SLAs included)."
+        },
+        {
+          "name": "source_refs_json",
+          "type": "string",
+          "description": "The source records the row was built from (ERP, LIMS, QMS), shown by Explain."
+        },
+        {
+          "name": "system_need_by_locked",
+          "type": "date",
+          "description": "The first need-by ever seen for the lot, locked so the SLAs do not creep."
+        },
+        {
+          "name": "on_hold",
+          "type": "boolean",
+          "description": "The ERP hold fact (batch status H)."
+        },
+        {
+          "name": "erp_blocked",
+          "type": "boolean",
+          "description": "True when the stock is blocked in the ERP."
+        },
+        {
+          "name": "re_eval",
+          "type": "boolean",
+          "description": "True for a re-evaluation lot."
+        },
+        {
+          "name": "offsite",
+          "type": "boolean",
+          "description": "True when the test is offsite."
+        },
+        {
+          "name": "full_spec",
+          "type": "boolean",
+          "description": "True when the material and supplier pair needs full-spec testing."
+        },
+        {
+          "name": "ud_rejected",
+          "type": "boolean",
+          "description": "True when the usage decision is a reject code."
+        },
+        {
+          "name": "deviation_light",
+          "type": "string",
+          "description": "Red when an open deviation is linked, amber when only closed ones are, green when none."
+        },
+        {
+          "name": "inbound_light",
+          "type": "string",
+          "description": "Red when the inbound check is open or failed, amber when resolved, green when passed, grey when none."
+        },
+        {
+          "name": "snapshot_date",
+          "type": "date",
+          "description": "The demo day the snapshot was taken."
+        },
+        {
+          "name": "run_id",
+          "type": "string",
+          "description": "The pipeline run that published the row. A mixed run id across objects means a publish was interrupted."
+        },
+        {
+          "name": "published_at",
+          "type": "timestamp",
+          "description": "When the run published, on the demo clock."
+        }
+      ]
+    },
+    {
+      "name": "weekly_metrics_v",
+      "description": "On-time performance of each pipeline-computed metric, by ISO week (the last 52 complete weeks plus the current week to date).",
+      "grain": "One row per metric and week; weeks with no completions are present with 0 completed.",
+      "columns": [
+        {
+          "name": "metric_id",
+          "type": "string",
+          "description": "Metric identifier (M1 to M7)."
+        },
+        {
+          "name": "week_start",
+          "type": "date",
+          "description": "Monday that starts the ISO week, in the site time zone."
+        },
+        {
+          "name": "completed",
+          "type": "integer",
+          "description": "Lots whose exit date for the metric's stage falls in the period."
+        },
+        {
+          "name": "on_time",
+          "type": "integer",
+          "description": "Completed lots that took no longer than their SLA for the stage."
+        },
+        {
+          "name": "pct",
+          "type": "decimal(5,1)",
+          "description": "On-time share of the completed lots, one decimal; null when nothing completed."
+        },
+        {
+          "name": "run_id",
+          "type": "string",
+          "description": "The pipeline run that published the row. A mixed run id across objects means a publish was interrupted."
+        }
+      ]
+    },
+    {
+      "name": "weekly_metric_rows_v",
+      "description": "The lots behind every weekly metric figure, so a number can be explained row by row.",
+      "grain": "One row per metric, week and lot.",
+      "columns": [
+        {
+          "name": "metric_id",
+          "type": "string",
+          "description": "Metric identifier (M1 to M7)."
+        },
+        {
+          "name": "week_start",
+          "type": "date",
+          "description": "Monday that starts the ISO week, in the site time zone."
+        },
+        {
+          "name": "row_key",
+          "type": "string",
+          "description": "Key of the lot: material_no|batch_no|inspection_lot_no."
+        },
+        {
+          "name": "entry_date",
+          "type": "date",
+          "description": "Entry date of the metric's stage for the lot."
+        },
+        {
+          "name": "exit_date",
+          "type": "date",
+          "description": "Exit date of the metric's stage for the lot."
+        },
+        {
+          "name": "duration_days",
+          "type": "integer",
+          "description": "Days from entry to exit."
+        },
+        {
+          "name": "sla_days",
+          "type": "integer",
+          "description": "The lot's own SLA for the stage (re-evaluation aware)."
+        },
+        {
+          "name": "on_time",
+          "type": "boolean",
+          "description": "True when the lot completed within its SLA."
+        },
+        {
+          "name": "run_id",
+          "type": "string",
+          "description": "The pipeline run that published the row. A mixed run id across objects means a publish was interrupted."
+        }
+      ]
+    },
+    {
+      "name": "stage_reference_v",
+      "description": "The stages of the site profile in order, with their SLA, owning team and the action that moves a lot on.",
+      "grain": "One row per stage.",
+      "columns": [
+        {
+          "name": "stage_key",
+          "type": "string",
+          "description": "Key of a stage of the site profile."
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "description": "Display label."
+        },
+        {
+          "name": "sort",
+          "type": "integer",
+          "description": "Position of the stage in the profile order."
+        },
+        {
+          "name": "sla_days",
+          "type": "integer",
+          "description": "SLA of the stage in days."
+        },
+        {
+          "name": "reeval_sla_days",
+          "type": "integer",
+          "description": "SLA of the stage for a re-evaluation lot, where it differs."
+        },
+        {
+          "name": "team",
+          "type": "string",
+          "description": "Owning team."
+        },
+        {
+          "name": "action",
+          "type": "string",
+          "description": "What has to happen to move a lot out of the stage."
+        },
+        {
+          "name": "terminal",
+          "type": "boolean",
+          "description": "True for the final stage (released)."
+        },
+        {
+          "name": "show_card",
+          "type": "boolean",
+          "description": "Whether the stage has a card on the Overview."
+        }
+      ]
+    },
+    {
+      "name": "metric_reference_v",
+      "description": "The metrics of the site profile, and whether each is computed by the pipeline or waits for a signal that arrives later.",
+      "grain": "One row per metric.",
+      "columns": [
+        {
+          "name": "metric_id",
+          "type": "string",
+          "description": "Metric identifier (M1 to M7)."
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "description": "Display label."
+        },
+        {
+          "name": "stage_key",
+          "type": "string",
+          "description": "The stage the metric measures; null for a metric that spans stages."
+        },
+        {
+          "name": "sla_days",
+          "type": "integer",
+          "description": "SLA of the stage in days."
+        },
+        {
+          "name": "computed_in",
+          "type": "string",
+          "description": "Where the metric is computed (pipeline or app)."
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "description": "active, or awaiting_signal when the input arrives later."
+        },
+        {
+          "name": "null_reason",
+          "type": "string",
+          "description": "Why an awaiting metric has no value yet."
+        }
+      ]
+    },
+    {
+      "name": "reason_codes_v",
+      "description": "The labelled reason codes a planner can give when adjusting a need-by date.",
+      "grain": "One row per reason code.",
+      "columns": [
+        {
+          "name": "code",
+          "type": "string",
+          "description": "Code."
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "description": "Display label."
+        }
+      ]
+    },
+    {
+      "name": "deviations_v",
+      "description": "Quality deviations linked to batches, from the QMS.",
+      "grain": "One row per deviation-to-batch link.",
+      "columns": [
+        {
+          "name": "deviation_no",
+          "type": "string",
+          "description": "Deviation number."
+        },
+        {
+          "name": "material_no",
+          "type": "string",
+          "description": "Material number."
+        },
+        {
+          "name": "batch_no",
+          "type": "string",
+          "description": "Batch number."
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "description": "Short title."
+        },
+        {
+          "name": "severity",
+          "type": "string",
+          "description": "minor, moderate or major."
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "description": "open or closed."
+        },
+        {
+          "name": "opened_on",
+          "type": "date",
+          "description": "Date it was opened."
+        },
+        {
+          "name": "closed_on",
+          "type": "date",
+          "description": "Date it was closed; null while open."
+        },
+        {
+          "name": "root_cause_category",
+          "type": "string",
+          "description": "Root cause category."
+        },
+        {
+          "name": "causal_factor",
+          "type": "string",
+          "description": "Causal factor, once investigated."
+        },
+        {
+          "name": "investigation_summary",
+          "type": "string",
+          "description": "Summary of the investigation."
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "description": "Longer description."
+        },
+        {
+          "name": "owner",
+          "type": "string",
+          "description": "Owning role."
+        },
+        {
+          "name": "run_id",
+          "type": "string",
+          "description": "The pipeline run that published the row. A mixed run id across objects means a publish was interrupted."
+        }
+      ]
+    },
+    {
+      "name": "expected_deliveries_v",
+      "description": "Open purchase-order lines that have not been received yet (a grain before the batch exists).",
+      "grain": "One row per open purchase-order line (ebeln + ebelp).",
+      "columns": [
+        {
+          "name": "ebeln",
+          "type": "string",
+          "description": "Purchase order number."
+        },
+        {
+          "name": "ebelp",
+          "type": "string",
+          "description": "Purchase order line."
+        },
+        {
+          "name": "material_no",
+          "type": "string",
+          "description": "Material number."
+        },
+        {
+          "name": "material_desc",
+          "type": "string",
+          "description": "Material description."
+        },
+        {
+          "name": "molecule_type",
+          "type": "string",
+          "description": "Molecule type of the material (small molecule, large molecule, peptide)."
+        },
+        {
+          "name": "material_class",
+          "type": "string",
+          "description": "Material class (drug substance or consumable); null when unknown."
+        },
+        {
+          "name": "supplier_id",
+          "type": "string",
+          "description": "Supplier identifier."
+        },
+        {
+          "name": "supplier_name",
+          "type": "string",
+          "description": "Supplier name."
+        },
+        {
+          "name": "campaign",
+          "type": "string",
+          "description": "Production campaign of the earliest open demand for the material."
+        },
+        {
+          "name": "scheduled_date",
+          "type": "date",
+          "description": "Scheduled delivery date of the line."
+        },
+        {
+          "name": "quantity",
+          "type": "decimal(13,3)",
+          "description": "Ordered quantity."
+        },
+        {
+          "name": "planned_location",
+          "type": "string",
+          "description": "Planned receiving storage location."
+        },
+        {
+          "name": "planned_location_type",
+          "type": "string",
+          "description": "Location type of the planned location (onsite or 3pl)."
+        },
+        {
+          "name": "overdue",
+          "type": "boolean",
+          "description": "True when the scheduled date is before the snapshot date."
+        },
+        {
+          "name": "run_id",
+          "type": "string",
+          "description": "The pipeline run that published the row. A mixed run id across objects means a publish was interrupted."
+        }
+      ]
+    },
+    {
+      "name": "inbound_checks_v",
+      "description": "The receipt-time inbound check of each lot that has one, with its sub-checks.",
+      "grain": "One row per lot that has an inbound check.",
+      "columns": [
+        {
+          "name": "row_key",
+          "type": "string",
+          "description": "Key of the lot: material_no|batch_no|inspection_lot_no."
+        },
+        {
+          "name": "prueflos",
+          "type": "string",
+          "description": "ERP inspection lot number."
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "description": "open, passed, resolved or failed."
+        },
+        {
+          "name": "deadline",
+          "type": "date",
+          "description": "Cycle start plus the lot's receipt SLA; null without a cycle start."
+        },
+        {
+          "name": "failed_count",
+          "type": "integer",
+          "description": "Number of sub-checks that failed."
+        },
+        {
+          "name": "items_json",
+          "type": "string",
+          "description": "Ordered list of {seq, check_code, check_label, outcome}."
+        },
+        {
+          "name": "run_id",
+          "type": "string",
+          "description": "The pipeline run that published the row. A mixed run id across objects means a publish was interrupted."
+        }
+      ]
+    },
+    {
+      "name": "change_controls_v",
+      "description": "Change controls linked to batches, from the QMS. They are shown in the Quality window and never change a light.",
+      "grain": "One row per change-control-to-batch link.",
+      "columns": [
+        {
+          "name": "cc_no",
+          "type": "string",
+          "description": "Change control number."
+        },
+        {
+          "name": "material_no",
+          "type": "string",
+          "description": "Material number."
+        },
+        {
+          "name": "batch_no",
+          "type": "string",
+          "description": "Batch number."
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "description": "Short title."
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "description": "open, approved, closed or cancelled."
+        },
+        {
+          "name": "current_state",
+          "type": "string",
+          "description": "The state before the change."
+        },
+        {
+          "name": "proposed_state",
+          "type": "string",
+          "description": "The state after the change."
+        },
+        {
+          "name": "opened_on",
+          "type": "date",
+          "description": "Date it was opened."
+        },
+        {
+          "name": "effective_on",
+          "type": "date",
+          "description": "Date the change takes effect; null until set."
+        },
+        {
+          "name": "run_id",
+          "type": "string",
+          "description": "The pipeline run that published the row. A mixed run id across objects means a publish was interrupted."
+        }
+      ]
+    },
+    {
+      "name": "samples_v",
+      "description": "Every LIMS sample of every published lot, not only the latest one.",
+      "grain": "One row per lot and sample.",
+      "columns": [
+        {
+          "name": "row_key",
+          "type": "string",
+          "description": "Key of the lot: material_no|batch_no|inspection_lot_no."
+        },
+        {
+          "name": "sample_id",
+          "type": "string",
+          "description": "LIMS sample id."
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "description": "registered, in_progress, approved or rejected."
+        },
+        {
+          "name": "collected_date",
+          "type": "date",
+          "description": "Date the sample was collected."
+        },
+        {
+          "name": "approved_at",
+          "type": "timestamp",
+          "description": "When LIMS approved the sample."
+        },
+        {
+          "name": "run_id",
+          "type": "string",
+          "description": "The pipeline run that published the row. A mixed run id across objects means a publish was interrupted."
+        }
+      ]
+    },
+    {
+      "name": "monthly_metrics_v",
+      "description": "On-time performance of each pipeline-computed metric by calendar month of the exit date (the last 12 complete months plus the current month).",
+      "grain": "One row per metric and month; empty months are present with 0 completed.",
+      "columns": [
+        {
+          "name": "metric_id",
+          "type": "string",
+          "description": "Metric identifier (M1 to M7)."
+        },
+        {
+          "name": "month_start",
+          "type": "date",
+          "description": "First day of the calendar month, in the site time zone."
+        },
+        {
+          "name": "completed",
+          "type": "integer",
+          "description": "Lots whose exit date for the metric's stage falls in the period."
+        },
+        {
+          "name": "on_time",
+          "type": "integer",
+          "description": "Completed lots that took no longer than their SLA for the stage."
+        },
+        {
+          "name": "pct",
+          "type": "decimal(5,1)",
+          "description": "On-time share of the completed lots, one decimal; null when nothing completed."
+        },
+        {
+          "name": "run_id",
+          "type": "string",
+          "description": "The pipeline run that published the row. A mixed run id across objects means a publish was interrupted."
+        }
+      ]
+    },
+    {
+      "name": "pipeline_daily_v",
+      "description": "How many lots sat in each stage on each of the last 365 days, derived from the stage entry and exit dates.",
+      "grain": "One row per day and stage.",
+      "columns": [
+        {
+          "name": "day",
+          "type": "date",
+          "description": "The day."
+        },
+        {
+          "name": "stage_key",
+          "type": "string",
+          "description": "Key of a stage of the site profile."
+        },
+        {
+          "name": "open_count",
+          "type": "integer",
+          "description": "Lots in the stage that day (entered, not yet exited, no effective usage decision)."
+        },
+        {
+          "name": "run_id",
+          "type": "string",
+          "description": "The pipeline run that published the row. A mixed run id across objects means a publish was interrupted."
+        }
+      ]
+    },
+    {
+      "name": "releases_weekly_v",
+      "description": "Lots released (an effective usage decision) per ISO week of the usage decision date.",
+      "grain": "One row per ISO week.",
+      "columns": [
+        {
+          "name": "week_start",
+          "type": "date",
+          "description": "Monday that starts the ISO week, in the site time zone."
+        },
+        {
+          "name": "released_count",
+          "type": "integer",
+          "description": "Lots with an effective usage decision in the week."
+        },
+        {
+          "name": "run_id",
+          "type": "string",
+          "description": "The pipeline run that published the row. A mixed run id across objects means a publish was interrupted."
+        }
+      ]
+    },
+    {
+      "name": "pipeline_runs_v",
+      "description": "The history of pipeline runs (the last 100), including runs that failed since the previous publication. Behind the Sync Status page.",
+      "grain": "One row per pipeline run.",
+      "columns": [
+        {
+          "name": "pipeline_run_id",
+          "type": "string",
+          "description": "Id of the pipeline run the row describes (the Dagster run id)."
+        },
+        {
+          "name": "run_seq",
+          "type": "integer",
+          "description": "Wall-clock microseconds when the run was logged; orders the runs, because the demo clock does not tick."
+        },
+        {
+          "name": "started_at",
+          "type": "timestamp",
+          "description": "When it started, on the demo clock."
+        },
+        {
+          "name": "duration_ms",
+          "type": "integer",
+          "description": "Real elapsed time in milliseconds (the demo clock does not tick, so it cannot be derived from the timestamps)."
+        },
+        {
+          "name": "files",
+          "type": "integer",
+          "description": "Source tables extracted by the run; null when extract failed."
+        },
+        {
+          "name": "inserted",
+          "type": "integer",
+          "description": "Rows that are new or whose content hash changed since the previous successful run; null for a failed run."
+        },
+        {
+          "name": "total",
+          "type": "integer",
+          "description": "Rows in the published pipeline after the run; null for a failed run."
+        },
+        {
+          "name": "skipped",
+          "type": "integer",
+          "description": "Rows unchanged since the previous successful run (total minus inserted); null for a failed run."
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "description": "ok or failed."
+        },
+        {
+          "name": "failed_step",
+          "type": "string",
+          "description": "The step that failed; null for an ok run."
+        },
+        {
+          "name": "run_id",
+          "type": "string",
+          "description": "The run that published this history (not the run described by the row)."
+        }
+      ]
+    },
+    {
+      "name": "pipeline_run_steps_v",
+      "description": "The steps of each run in the history, with their status, duration, rows and error.",
+      "grain": "One row per run and step.",
+      "columns": [
+        {
+          "name": "pipeline_run_id",
+          "type": "string",
+          "description": "Id of the run the step belongs to."
+        },
+        {
+          "name": "step",
+          "type": "string",
+          "description": "setup, extract, transform, snapshot_aggregate, publish or notify."
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "description": "success or failed."
+        },
+        {
+          "name": "started_at",
+          "type": "timestamp",
+          "description": "When it started, on the demo clock."
+        },
+        {
+          "name": "finished_at",
+          "type": "timestamp",
+          "description": "When it finished, on the demo clock."
+        },
+        {
+          "name": "duration_ms",
+          "type": "integer",
+          "description": "Real elapsed time in milliseconds (the demo clock does not tick, so it cannot be derived from the timestamps)."
+        },
+        {
+          "name": "rows",
+          "type": "integer",
+          "description": "Rows the step produced."
+        },
+        {
+          "name": "error",
+          "type": "string",
+          "description": "Error text; null when there was none."
+        },
+        {
+          "name": "run_id",
+          "type": "string",
+          "description": "The run that published this history."
+        }
+      ]
+    },
+    {
+      "name": "pipeline_status_v",
+      "description": "The last successful run, written last so its run id means every other object of that run is complete.",
+      "grain": "Exactly one row.",
+      "columns": [
+        {
+          "name": "last_run_id",
+          "type": "string",
+          "description": "Id of the last successful run (the Dagster run id)."
+        },
+        {
+          "name": "started_at",
+          "type": "timestamp",
+          "description": "When it started, on the demo clock."
+        },
+        {
+          "name": "last_success_at",
+          "type": "timestamp",
+          "description": "When the last successful run published, on the demo clock."
+        },
+        {
+          "name": "row_count",
+          "type": "integer",
+          "description": "Rows in the published pipeline."
+        },
+        {
+          "name": "source_freshness_json",
+          "type": "string",
+          "description": "Per source (erp, lims, qms): newest record time and extraction time."
+        }
+      ]
+    }
+  ]
+}
