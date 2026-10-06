@@ -33,6 +33,9 @@ class SyncEventOut(BaseModel):
     finished_at: datetime | None
     error: str | None
     rows_upserted: int | None
+    attempts: int
+    objects_synced: int | None
+    drain_pass_id: str | None
     age_seconds: int
     duration_ms: int | None
 
@@ -65,6 +68,7 @@ def sync_status(session: Annotated[Session, Depends(get_session, scope="function
         text(
             """
             SELECT id, source, run_id, status, received_at, claimed_at, finished_at, error, rows_upserted,
+                   attempts, objects_synced, drain_pass_id,
                    floor(extract(epoch FROM now() - received_at))::int AS age_seconds,
                    round(extract(epoch FROM finished_at - claimed_at) * 1000)::int AS duration_ms
             FROM sync_event ORDER BY id DESC LIMIT :limit

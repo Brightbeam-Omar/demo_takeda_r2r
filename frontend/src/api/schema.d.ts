@@ -307,6 +307,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/pipeline/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pipeline Runs */
+        get: operations["pipeline_runs_api_pipeline_runs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/pipeline/runs/{pipeline_run_id}/steps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pipeline Run Steps */
+        get: operations["pipeline_run_steps_api_pipeline_runs__pipeline_run_id__steps_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/presets": {
         parameters: {
             query?: never;
@@ -641,6 +675,43 @@ export interface paths {
         put?: never;
         /** Post Status Log */
         post: operations["post_status_log_api_rows__row_key__status_log_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sync/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Sync Health */
+        get: operations["sync_health_api_sync_health_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sync/run-pipeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run Pipeline
+         * @description Start a pipeline run through the scenario service (admin). Its webhook flows as usual.
+         */
+        post: operations["run_pipeline_api_sync_run_pipeline_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1435,6 +1506,29 @@ export interface components {
             /** Total */
             total: number;
         };
+        /** PipelineRunOut */
+        PipelineRunOut: {
+            /** Age Seconds */
+            age_seconds: number | null;
+            /** Duration Ms */
+            duration_ms: number | null;
+            /** Failed Step */
+            failed_step: string | null;
+            /** Files */
+            files: number | null;
+            /** Inserted */
+            inserted: number | null;
+            /** Pipeline Run Id */
+            pipeline_run_id: string;
+            /** Skipped */
+            skipped: number | null;
+            /** Started At */
+            started_at: string | null;
+            /** Status */
+            status: string;
+            /** Total */
+            total: number | null;
+        };
         /** PipelineStatusOut */
         PipelineStatusOut: {
             /** Last Run Id */
@@ -1455,6 +1549,35 @@ export interface components {
              * Format: date-time
              */
             started_at: string;
+        };
+        /** PipelineStepOut */
+        PipelineStepOut: {
+            /** Error */
+            error: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /** Rows */
+            rows: number | null;
+            /** Started At */
+            started_at: string | null;
+            /** Status */
+            status: string;
+            /** Step */
+            step: string;
+        };
+        /** PipelineStepsOut */
+        PipelineStepsOut: {
+            /** Pipeline Run Id */
+            pipeline_run_id: string;
+            /** Steps */
+            steps: components["schemas"]["PipelineStepOut"][];
+        };
+        /** PipelineTriggerOut */
+        PipelineTriggerOut: {
+            /** Run Id */
+            run_id: string;
+            /** Status */
+            status: string;
         };
         /** PlanOut */
         PlanOut: {
@@ -1995,8 +2118,12 @@ export interface components {
         SyncEventOut: {
             /** Age Seconds */
             age_seconds: number;
+            /** Attempts */
+            attempts: number;
             /** Claimed At */
             claimed_at: string | null;
+            /** Drain Pass Id */
+            drain_pass_id: string | null;
             /** Duration Ms */
             duration_ms: number | null;
             /** Error */
@@ -2005,6 +2132,8 @@ export interface components {
             finished_at: string | null;
             /** Id */
             id: number;
+            /** Objects Synced */
+            objects_synced: number | null;
             /**
              * Received At
              * Format: date-time
@@ -2018,6 +2147,25 @@ export interface components {
             source: string;
             /** Status */
             status: string;
+        };
+        /** SyncHealthOut */
+        SyncHealthOut: {
+            /** Abandoned */
+            abandoned: number;
+            /** Error */
+            error: number;
+            /** Last Drain Age Seconds */
+            last_drain_age_seconds: number | null;
+            /** Last Webhook Age Seconds */
+            last_webhook_age_seconds: number | null;
+            /** Pending */
+            pending: number;
+            /** Poll Available */
+            poll_available: boolean;
+            /** Poll Fallbacks 24H */
+            poll_fallbacks_24h: number;
+            /** Stale Claim Minutes */
+            stale_claim_minutes: number;
         };
         /** SyncStatusOut */
         SyncStatusOut: {
@@ -2856,6 +3004,70 @@ export interface operations {
             };
         };
     };
+    pipeline_runs_api_pipeline_runs_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-demo-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PipelineRunOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pipeline_run_steps_api_pipeline_runs__pipeline_run_id__steps_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-demo-user"?: string | null;
+            };
+            path: {
+                pipeline_run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PipelineStepsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_presets_api_presets_get: {
         parameters: {
             query?: never;
@@ -3606,6 +3818,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StatusLogOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sync_health_api_sync_health_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-demo-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyncHealthOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_pipeline_api_sync_run_pipeline_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-demo-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PipelineTriggerOut"];
                 };
             };
             /** @description Validation Error */

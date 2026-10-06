@@ -17,6 +17,8 @@ from app_api.routers import (
     reference,
     reports,
     rows,
+    runs,
+    webhooks,
 )
 from app_api.sync import status, webhook
 
@@ -38,11 +40,13 @@ def create_app() -> FastAPI:
         reference,
         reports,
         rows,
+        runs,
     )
     for router in (module.router for module in routers):
         app.include_router(router, prefix="/api")
     app.include_router(webhook.router, prefix="/api/sync")
     app.include_router(status.router, prefix="/api/sync")
+    app.include_router(webhooks.router, prefix="/api/sync")
     return app
 
 

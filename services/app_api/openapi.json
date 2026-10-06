@@ -2315,6 +2315,121 @@
         "title": "OverviewOut",
         "type": "object"
       },
+      "PipelineRunOut": {
+        "properties": {
+          "age_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age Seconds"
+          },
+          "duration_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Ms"
+          },
+          "failed_step": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failed Step"
+          },
+          "files": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Files"
+          },
+          "inserted": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inserted"
+          },
+          "pipeline_run_id": {
+            "title": "Pipeline Run Id",
+            "type": "string"
+          },
+          "skipped": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Skipped"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total"
+          }
+        },
+        "required": [
+          "pipeline_run_id",
+          "started_at",
+          "age_seconds",
+          "duration_ms",
+          "files",
+          "inserted",
+          "total",
+          "skipped",
+          "status",
+          "failed_step"
+        ],
+        "title": "PipelineRunOut",
+        "type": "object"
+      },
       "PipelineStatusOut": {
         "properties": {
           "last_run_id": {
@@ -2349,6 +2464,113 @@
           "source_freshness"
         ],
         "title": "PipelineStatusOut",
+        "type": "object"
+      },
+      "PipelineStepOut": {
+        "properties": {
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "rows": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rows"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "step": {
+            "title": "Step",
+            "type": "string"
+          }
+        },
+        "required": [
+          "step",
+          "status",
+          "started_at",
+          "finished_at",
+          "rows",
+          "error"
+        ],
+        "title": "PipelineStepOut",
+        "type": "object"
+      },
+      "PipelineStepsOut": {
+        "properties": {
+          "pipeline_run_id": {
+            "title": "Pipeline Run Id",
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/PipelineStepOut"
+            },
+            "title": "Steps",
+            "type": "array"
+          }
+        },
+        "required": [
+          "pipeline_run_id",
+          "steps"
+        ],
+        "title": "PipelineStepsOut",
+        "type": "object"
+      },
+      "PipelineTriggerOut": {
+        "properties": {
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "status"
+        ],
+        "title": "PipelineTriggerOut",
         "type": "object"
       },
       "PlanOut": {
@@ -4347,6 +4569,10 @@
             "title": "Age Seconds",
             "type": "integer"
           },
+          "attempts": {
+            "title": "Attempts",
+            "type": "integer"
+          },
           "claimed_at": {
             "anyOf": [
               {
@@ -4358,6 +4584,17 @@
               }
             ],
             "title": "Claimed At"
+          },
+          "drain_pass_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Drain Pass Id"
           },
           "duration_ms": {
             "anyOf": [
@@ -4396,6 +4633,17 @@
           "id": {
             "title": "Id",
             "type": "integer"
+          },
+          "objects_synced": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Objects Synced"
           },
           "received_at": {
             "format": "date-time",
@@ -4443,10 +4691,75 @@
           "finished_at",
           "error",
           "rows_upserted",
+          "attempts",
+          "objects_synced",
+          "drain_pass_id",
           "age_seconds",
           "duration_ms"
         ],
         "title": "SyncEventOut",
+        "type": "object"
+      },
+      "SyncHealthOut": {
+        "properties": {
+          "abandoned": {
+            "title": "Abandoned",
+            "type": "integer"
+          },
+          "error": {
+            "title": "Error",
+            "type": "integer"
+          },
+          "last_drain_age_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Drain Age Seconds"
+          },
+          "last_webhook_age_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Webhook Age Seconds"
+          },
+          "pending": {
+            "title": "Pending",
+            "type": "integer"
+          },
+          "poll_available": {
+            "title": "Poll Available",
+            "type": "boolean"
+          },
+          "poll_fallbacks_24h": {
+            "title": "Poll Fallbacks 24H",
+            "type": "integer"
+          },
+          "stale_claim_minutes": {
+            "title": "Stale Claim Minutes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "last_webhook_age_seconds",
+          "pending",
+          "error",
+          "abandoned",
+          "poll_fallbacks_24h",
+          "poll_available",
+          "last_drain_age_seconds",
+          "stale_claim_minutes"
+        ],
+        "title": "SyncHealthOut",
         "type": "object"
       },
       "SyncStatusOut": {
@@ -7427,6 +7740,111 @@
         "summary": "Insights"
       }
     },
+    "/api/pipeline/runs": {
+      "get": {
+        "operationId": "pipeline_runs_api_pipeline_runs_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PipelineRunOut"
+                  },
+                  "title": "Response Pipeline Runs Api Pipeline Runs Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Pipeline Runs"
+      }
+    },
+    "/api/pipeline/runs/{pipeline_run_id}/steps": {
+      "get": {
+        "operationId": "pipeline_run_steps_api_pipeline_runs__pipeline_run_id__steps_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pipeline_run_id",
+            "required": true,
+            "schema": {
+              "title": "Pipeline Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelineStepsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Pipeline Run Steps"
+      }
+    },
     "/api/presets": {
       "get": {
         "operationId": "list_presets_api_presets_get",
@@ -8861,6 +9279,99 @@
           }
         },
         "summary": "Post Status Log"
+      }
+    },
+    "/api/sync/health": {
+      "get": {
+        "operationId": "sync_health_api_sync_health_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncHealthOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Sync Health"
+      }
+    },
+    "/api/sync/run-pipeline": {
+      "post": {
+        "description": "Start a pipeline run through the scenario service (admin). Its webhook flows as usual.",
+        "operationId": "run_pipeline_api_sync_run_pipeline_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelineTriggerOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run Pipeline"
       }
     },
     "/api/sync/status": {

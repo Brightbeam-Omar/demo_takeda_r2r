@@ -9,12 +9,12 @@ from r2r_core.db import make_engine
 from sqlalchemy import inspect, text
 
 SECTION_5_TABLES = {
-    "app_user", "demo_clock", "sync_event", "watermark", "override_value", "comment", "status_log", "audit_event",
+    "app_user", "demo_clock", "sync_event", "worker_heartbeat", "watermark", "override_value", "comment", "status_log", "audit_event",
     "feedback", "bookmark", "filter_preset", "proposal", "action_log", "agent_trace", "mirror_batch_pipeline", "mirror_weekly_metrics",
     "mirror_weekly_metric_rows", "mirror_pipeline_status", "mirror_stage_reference",
     "mirror_metric_reference", "mirror_reason_codes", "mirror_deviations", "mirror_expected_deliveries",
     "mirror_inbound_checks", "mirror_change_controls", "mirror_samples", "mirror_monthly_metrics",
-    "mirror_pipeline_daily", "mirror_releases_weekly",
+    "mirror_pipeline_daily", "mirror_releases_weekly", "mirror_pipeline_runs", "mirror_pipeline_run_steps",
 }  # fmt: skip
 
 
