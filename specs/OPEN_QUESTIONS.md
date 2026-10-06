@@ -607,3 +607,56 @@ Add entries as: `## OQ-NNN · <feature> · <date>` then context, question, optio
 **Question:** Minor behaviours.
 **Proposal:** Row shortcuts (↑/↓/Enter/B) are active only when the table, not a text input, has focus. `DUE IN Nd` uses `days_remaining` (0, 1 or 2), so day 0 reads `DUE IN 0d`; `LATE +Nd` uses `-days_remaining`; the `(Nd over)` suffix uses the same N. Enter opens the F11 drawer until F19 ships.
 **Decision:** Accepted: shortcuts only work when the table has focus. `DUE IN 0d` reads literally. Enter opens the F11 drawer until F19.
+
+## OQ-107 · F19 · 2026-10-06
+**Context:** F19-FR-02 gives the sub-check labels and outcome codes (PASS, FAIL, PENDING, NO, COMP, APRV, DCPS) and "5–9 items per check", but not which label gets which code, which items are dropped, or what "Failed checks: n" and "CHECK RESULTS: the overall verdict" show. `resolved` also touches the ERP check constraint on `zinbchk.status`, the `inbound-check` event schema, 04 §3 (`inbound_check_completed_date` is "passed only") and the `inbound_light` colours.
+**Question:** How are items generated and displayed?
+**Proposal:** A fixed generic order of the nine labels, each with its own default outcome (Physical evaluation, Inbound delivery check, Supplier batch verification, Quantity received verification, Date verification → PASS; Certificate of analysis → APRV; Deviation on batch → NO; Batch use → DCPS; Results of analytical work → COMP or PENDING). The 5–9 count is the first N in that order. Open checks show PENDING on the last items. Failed checks set one or more PASS items to FAIL. `failed_count` is the number of FAIL items and W2 shows "Failed checks: n" when n > 0 (a resolved check keeps its FAIL items, so it shows n too). CHECK RESULTS reads Passed, Completed (Resolved), Failed or Open. A row with no check has no `inbound_checks_v` row. `resolved` is added to the DB check constraint, the event schema and the F06 SQL (exit date when status IN `passed`, `resolved`).
+
+## OQ-108 · F19 · 2026-10-06
+**Context:** F19-FR-03 changes the severity vocabulary to minor, moderate, major (migrating `critical` → `major`) with a 60/30/10 datagen mix, and adds `causal_factor` and `investigation_summary`. The spec does not say which deviations get an investigation summary. The W3 tab "Closed / Cancelled" implies a cancelled state, but `deviation.status` is only `open` / `closed`. F19-AC-07 says the F05 report counts must not move.
+**Question:** What are the severity data rules and the Closed / Cancelled tab contents?
+**Proposal:** Change only the weights in the existing `severity` draw and the vocabulary. If any F05 report count or oracle test depends on severity, stop and ask. `investigation_summary` is set on closed deviations and on about half of open major ones, drawn from a new `rng.stream`. `causal_factor` is a short generic list, drawn from a new stream. The tab "Closed / Cancelled" holds closed deviations; the Changes tab holds change controls in every status (including cancelled). No `cancelled` deviation status is added.
+
+## OQ-109 · F19 · 2026-10-06
+**Context:** Deviations and change controls link to `(material_no, batch_no)`, and a W5 title says "B1042 (n samples)". The published rows (`samples_v`, `inbound_checks_v`) are keyed per lot (`row_key`). A batch such as B4410 has five lots. FR-03/FR-04 do not list the columns of `change_controls_v`, the mirror primary keys, or whether `sample_count` counts the lot or the batch.
+**Question:** What is the grain of W3 and W5 content?
+**Proposal:** Deviations and changes in W3 are batch-level (all lots of the batch see the same list, as today's deviation light). Samples in W5 and `sample_count` are per lot (the opened row's lot), and the title shows the batch number. `change_controls_v`: `cc_no, material_no, batch_no, title, status, current_state, proposed_state, opened_on, effective_on, run_id`, one row per link, mirror PK `(cc_no, material_no, batch_no)`. `mirror_samples` PK `(row_key, sample_id)`, `mirror_inbound_checks` PK `row_key`.
+
+## OQ-110 · F19 · 2026-10-06
+**Context:** W5's filter pills are All / Received / Approved (and Rejected when any), but LIMS sample statuses are `registered`, `in_progress`, `approved`, `rejected`. B1042 has a single `in_progress` sample, so AC-05's "counts per status" is trivially 1.
+**Question:** How do statuses map to pills, and does B1042 need more samples?
+**Proposal:** Received = `registered` + `in_progress`; Approved and Rejected map one to one; the chip label shows "Received" for the first two. Leave B1042 as one sample (changing story data would move the F05 oracle). The AC-05 test asserts "All (1) · Received (1) · Approved (0)" and a second lot with a rejected retest is covered by a unit test on the pill counts.
+
+## OQ-111 · F19 · 2026-10-06
+**Context:** F19-FR-05 migrates `manual_status` (`{rag, team}`) and `comment` rows into `status_log` and keeps the old endpoints as wrappers. But F09/OQ-057 also stores a free-text `reason` on a status, `status_log.reason_code` takes only the `status_reasons` list, `comment` is required, and `override_value` is insert-only. The log has no "clear status" action.
+**Question:** What exactly migrates, and what do the wrappers do?
+**Proposal:** Migrate every version of `manual_status` and every `comment` row, in time order, with `at = created_at` and the original author. A migrated status uses its free-text `reason` as `comment` and `reason_code = null`; `rag` maps green/amber/red to `on_track`/`at_risk`/`blocked`. Old `override_value` rows are left in place (insert-only) and compose ignores the field. The wrapper `POST` for status appends a log row; the wrapper clear appends an `on_track`/"Cleared" row; both answer with a `Deprecation` header. `latest_status` is the newest entry with a non-null status, and its comment is that entry's comment.
+
+## OQ-112 · F19 · 2026-10-06
+**Context:** F19-FR-06 migrates existing override rows to the new reason codes (`CAMPAIGN_PUSHED_OUT` → `CAMPAIGN_PUSHED_BACK` and so on), keeping the original code in `note` for retired codes. `override_value` is insert-only and every change is audited (04 §5). Existing rows may already have a note. W6 also has an Expedite checkbox, and reasons `EXPEDITE_*` exist.
+**Question:** How is the migration done without breaking insert-only, and how do Expedite and the reason interact?
+**Proposal:** Migrate current rows only, as new versions (`author_user_key = 'system'`, an `audit_event` `reason_code_migrated`), never by updating old rows. Where a retired code becomes `OTHER`, the note becomes `"<original code>: <existing note>"` (or just the code). Picking an `EXPEDITE_*` reason does not tick the checkbox; the two stay independent, and Save sends the need-by and expedite overrides in one transaction.
+
+## OQ-113 · F19 · 2026-10-06
+**Superseded in part by OQ-116:** W1 is now the drawer's history sections. Other lots includes the current lot (marked), as proposed; the CSV and gap rules stand; closing the drawer, not a window, fills the Batch filter.
+**Context:** W1's "Other lots" is described as the sibling lots, and F19-AC-01 says "4 sibling lots … with the current lot marked as the one open". The sketch numbers siblings Initial, Re-eval 1 to 3, so the current lot would be Re-eval 4. The milestone "+Nd from <previous>" is undefined when the previous milestone is pending. The CSV columns are unspecified.
+**Question:** Does the list include the current lot, and what are the small display rules?
+**Proposal:** The list shows all lots oldest first (5 for B4410), numbering re-evals by lot start date, with the current lot marked "current" and not clickable; the four others open their own W1. Gap = days from the nearest earlier milestone that has a date; none is shown when there is none. CSV: stage, entered, exited, SLA days, days, within SLA (generated client side from the loaded row, no new endpoint). Closing W1 sets the Batch filter box; closing the other windows does not.
+
+## OQ-114 · F19 · 2026-10-06
+**Superseded in part by OQ-116:** `?row=` opens the drawer (not W1), `?win=` takes only the five windows, and a window can open on top of an open drawer.
+**Context:** F19-FR-01 says each window has its own URL param (`?win=history&row=…`), but OQ-072 and `useDrawerRow` already use `?row=` alone, and FR-07 says `?row=` opens W1. The F16/F17 list windows have their own open-state.
+**Question:** What is the URL scheme, and may windows stack?
+**Proposal:** `?win=<history|inbound|quality|status|samples|needby>&row=<row_key>`. `?row=` without `win` means `win=history`. One window at a time: opening another replaces it, and closing removes both params. Esc, the × button and the backdrop close, and focus returns to the trigger. The F16/F17 windows are left as they are.
+
+## OQ-115 · F19 · 2026-10-06
+**Context:** OQ-105 says the F19 feature migrates the Insights window to `DataTable`, "per the F12 proposal column". F19's spec and tasks do not touch the Insights window. The UI-PARITY-README says W1 gains a proposal-status line (F12-FR-13), and no proposals exist before F12.
+**Question:** Is any of this in F19's scope?
+**Proposal:** No. F19 does not touch the Insights window or W1's proposal line; F12 adds both (and migrates Insights to `DataTable` at that point). F19 leaves the F16/F17 windows unchanged.
+
+## OQ-116 · F19 · 2026-10-06
+**Context:** Product-owner design change to F19. W1 Batch History as a modal window is dropped. F11's batch drawer stays as the batch's home, non-modal, and the per-cell windows stay for parity. This supersedes F19-FR-01, FR-07 and AC-01 as first written, and parts of OQ-113 and OQ-114 (OQ-072 still holds for loading). F19 had not started, so no code changed.
+**Question:** n/a (decision recorded).
+**Proposal:** n/a.
+**Decision:** The drawer is non-modal, 560 px, right side. The table stays interactive and a row click swaps its content. The persona switcher works while it is open (the "close the drawer before switching persona" limitation goes). It opens from the batch link, a row click, Enter and `?row=<row_key>`. Its top sections are the history (summary, milestone dates with gaps, stage timeline, other lots with all 5 for B4410 and the current one marked, export). Closing the drawer puts the batch number into the Batch filter box. Below the history are summary sections with "Open ↗" links: Quality (W3), Inbound (W2), Status log (W4), Samples (W5), Need-by (W6) and a collapsed Source refs. The windows also open from the table cells. URLs: `?row=` opens the drawer; `?win=<inbound|quality|status|samples|needby>&row=` opens a window, which can sit on top of an open drawer; closing it leaves the drawer open; one window at a time. `components/drawer/*` is refactored, not deleted, and the F11 drawer e2e specs stay, updated for the new sections. AC-01 and the screenshot (`drawer-b4410.png`, table and drawer side by side) change accordingly. 05 §5 gains the batch drawer line.
