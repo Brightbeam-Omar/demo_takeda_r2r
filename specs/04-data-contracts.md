@@ -14,7 +14,8 @@ All timestamps are `timestamptz` (UTC) and all dates are `date` (site-local). Co
 | `mchb` | `matnr, charg, lgort` | current stock · `insme` numeric · QI qty · `speme` numeric · blocked qty · `clabs` numeric · unrestricted qty · `updated_at` |
 | `mseg` | `mblnr, zeile` | `bwart` text · `101` GR, `102` GR reversal, `311` transfer · `matnr` · `charg` · `lgort` · `umlgo` · `budat` date posting · `menge` numeric(13,3) quantity · `ebeln`, `ebelp` text null · the PO line a `101` closed (F17, OQ-092) · `updated_at`. For `101`/`102`, `lgort` is the **receiving storage location** and `umlgo` is null. For `311`, `lgort` is the **source** and `umlgo` the **destination** |
 | `qals` | `prueflos` | `prueflos` text · inspection lot · `art` text · `01`/`09` (others excluded) · `matnr` · `charg` · `pastrterm` date start · `vcode` text · UD code · `vdatum` date · UD date · `zresrec` timestamptz null · LIMS results recorded in ERP via interface (set by the `results-recorded` event; a usage decision does not set it) · `updated_at` |
-| `zinbchk` | `prueflos` | inbound check · `status` text · `open`/`passed`/`failed` · `completed_on` date · `notes` text · `updated_at` |
+| `zinbchk` | `prueflos` | inbound check · `status` text · `open`/`passed`/`resolved`/`failed` (F19: `resolved` = the check completed with an issue resolved; it behaves like `passed`) · `completed_on` date · `notes` text · `updated_at` |
+| `zinbchk_item` | `prueflos, seq` | inbound sub-check (F19) · `prueflos` · `seq` int · `check_code` text · `check_label` text · `outcome` text · `PASS`/`FAIL`/`PENDING`/`NO`/`COMP`/`APRV`/`DCPS` · `updated_at`. FK `prueflos`→`zinbchk`. The `inbound-check`, `goods-receipt` and `reeval-lot` events accept `items` and replace the lot's items with them |
 | `ekpo` | `ebeln, ebelp` | open purchase-order lines, a pre-batch grain (F17) · `ebeln` text · PO number, 10 digits starting `45` · `ebelp` text · line, `00010` in steps of 10 · `matnr` · `lifnr` · `eindt` date · scheduled delivery · `menge` numeric(13,3) · `lgort` · planned receiving location · `is_open` bool · `updated_at`. A `101` that carries `ebeln/ebelp` closes the line; a `102` reopens the line of the `101` it nets; a GR with no PO reference reopens nothing |
 | `mdez` | `id` | MRP demand · `matnr` · `campaign` text · `bdter` date · requirement date · `bdmng` numeric · `is_open` bool · `updated_at` |
 
@@ -42,9 +43,11 @@ The REST API (`lims-sim`) exposes `GET /samples?batch_no=` and `GET /samples/{id
 ### 1.3 `qms_sim`
 | Table | Key | Columns |
 |---|---|---|
-| `deviation` | `deviation_no` | `title`, `description`, `severity` (`minor`,`major`,`critical`), `status` (`open`,`closed`), `opened_on`, `closed_on`, `root_cause_category`, `owner`, `updated_at` |
+| `deviation` | `deviation_no` | `title`, `description`, `severity` (`minor`,`moderate`,`major`; F19 migrates `critical` to `major`), `status` (`open`,`closed`), `opened_on`, `closed_on`, `root_cause_category` (shown as Root Cause), `causal_factor` text null (F19), `investigation_summary` text null (F19), `owner`, `updated_at` |
 | `deviation_link` | `deviation_no, material_no, batch_no` | links a deviation to batches · `updated_at` |
-| `capa`, `change_control` | n/a | Tier 2 |
+| `change_control` | `cc_no` | F19 · `cc_no` (`CC-000001`, counter-allocated), `title`, `status` (`open`,`approved`,`closed`,`cancelled`), `current_state`, `proposed_state`, `opened_on`, `effective_on` date null, `updated_at` |
+| `change_control_link` | `cc_no, material_no, batch_no` | links a change control to batches · `updated_at` |
+| `capa` | n/a | Tier 2 |
 
 `deviation_no` is `DEV-000001`-style (counter-allocated). `root_cause_category` is free text from a short generic list used by the generator and `owner` is a role name such as `QA`; neither list is enforced.
 
@@ -52,11 +55,13 @@ The REST API (`lims-sim`) exposes `GET /samples?batch_no=` and `GET /samples/{id
 ```
 lakehouse/
   staging/        stg_mara, stg_lfa1, stg_t001l, stg_mcha, stg_mchb, stg_mseg, stg_qals, stg_zinbchk,
-                  stg_mdez, stg_ekpo, stg_sample, stg_deviation, stg_deviation_link, batch_flat, batch_stage   (overwrite per run)
+                  stg_mdez, stg_ekpo, stg_zinbchk_item, stg_sample, stg_deviation, stg_deviation_link, stg_change_control,
+                  stg_change_control_link, batch_flat, batch_stage   (overwrite per run)
   intelligence/   batch_snapshot (append/replace by snapshot_date), weekly_metrics, weekly_metric_rows, need_by_history,
                   pipeline_run_log
   published/      batch_pipeline_v, weekly_metrics_v, weekly_metric_rows_v, pipeline_status_v,
-                  stage_reference_v, metric_reference_v, reason_codes_v, deviations_v, expected_deliveries_v  (overwrite per run)
+                  stage_reference_v, metric_reference_v, reason_codes_v, deviations_v, expected_deliveries_v,
+                  inbound_checks_v, change_controls_v, samples_v  (overwrite per run)
 ```
 Even though the published tables are suffixed `_v`, they are materialised Delta tables, not views.
 
@@ -69,7 +74,7 @@ Even though the published tables are suffixed `_v`, they are materialised Delta 
 | `weekly_metric_rows` | the `weekly_metric_rows_v` columns (`metric_id, week_start, row_key, entry_date, exit_date, duration_days, sla_days, on_time`) plus `run_id`: the rows behind every `weekly_metrics` figure. Replaced wholesale each run |
 | `pipeline_run_log` | `run_id, step, status ('success'/'failed'), started_at, finished_at, rows, error, notify_status ('ok'/'failed'/'skipped', notify row only), detail_json`. One row per step per run, appended. `detail_json` carries step details (the `extract` row holds the per-source freshness that `publish` reads for `source_freshness_json`) |
 
-Run order and publishing: the published objects are written one by one in the order of §4 (`batch_pipeline_v`, `weekly_metrics_v`, `weekly_metric_rows_v`, `stage_reference_v`, `metric_reference_v`, `reason_codes_v`, `deviations_v`, `expected_deliveries_v`) with `pipeline_status_v` **last**. Every object except the reference ones carries the `run_id`, so a reader can detect a mixed state after a crash inside `publish`.
+Run order and publishing: the published objects are written one by one in the order of §4 (`batch_pipeline_v`, `weekly_metrics_v`, `weekly_metric_rows_v`, `stage_reference_v`, `metric_reference_v`, `reason_codes_v`, `deviations_v`, `expected_deliveries_v`, `inbound_checks_v`, `change_controls_v`, `samples_v`) with `pipeline_status_v` **last**. Every object except the reference ones carries the `run_id`, so a reader can detect a mixed state after a crash inside `publish`.
 
 ## 3. `staging.batch_flat` (input to the stage engine)
 One row per `material_no, batch_no, inspection_lot_no` for lot types `01`/`09`, excluding cancelled UDs.
@@ -85,7 +90,7 @@ Derivations (non-obvious columns):
 | `transfer_to_site_date` | `MIN(mseg.budat)` of `bwart='311'` where `t001l(umlgo).zloctype='onsite'` and `budat ≥ gr_date` |
 | `storage_location`, `location_type` | From `mchb` with the largest total qty for the batch; ties go to the lowest location number. If there is no stock (consumed/released), the last `mseg` destination |
 | `stock_category` | From the bucket sums over all the batch's `mchb` rows: `BLOCKED` if the sum of `speme > 0`, else `QI` if the sum of `insme > 0`, else `UNRESTRICTED` |
-| `inbound_check_completed_date` | `zinbchk.completed_on` only when the status is `passed`; NULL for `open`, `failed` or no check (so a failed check leaves the receipt stage without an exit date) |
+| `inbound_check_completed_date` | `zinbchk.completed_on` only when the status is `passed` or `resolved` (F19); NULL for `open`, `failed` or no check (so a failed check leaves the receipt stage without an exit date) |
 | `lot_start_date` | `qals.pastrterm` |
 | `inbound_check_status` | `zinbchk.status` for the lot, else `'none'` |
 | `lims_status` | Latest `sample.status` for the lot: `registered`/`in_progress` → `in_progress`, `approved`, `rejected`. `'none'` if there is no sample |
@@ -117,13 +122,22 @@ One row per `row_key`, built by the SQL steps `50`–`90` from `batch_flat`: `ro
 ### 4.4 Reference objects (built from the site profile)
 - `stage_reference_v`: `stage_key, label, sort, sla_days, reeval_sla_days, team, action, terminal, show_card` (F17)
 - `metric_reference_v`: `metric_id, label, stage_key, sla_days, computed_in, status ('active'|'awaiting_signal'), null_reason`
-- `reason_codes_v`: `code, label`
+- `reason_codes_v`: `code, label` (F19: the ten labelled codes of the profile)
 
 ### 4.6 `expected_deliveries_v` (F17)
 `ebeln, ebelp, material_no, material_desc, molecule_type, material_class, supplier_id, supplier_name, campaign, scheduled_date, quantity, planned_location, planned_location_type, overdue (bool, `scheduled_date` < snapshot date), run_id`. One row per open PO line. `campaign` is the material's earliest open demand campaign (as for batch rows).
 
 ### 4.5 `deviations_v`
-`deviation_no, material_no, batch_no, title, severity, status, opened_on, closed_on, root_cause_category, owner`
+`deviation_no, material_no, batch_no, title, severity, status, opened_on, closed_on, root_cause_category, causal_factor, investigation_summary, description, owner, run_id` (F19 adds `causal_factor`, `investigation_summary`, `description` and `run_id`)
+
+### 4.7 `inbound_checks_v` (F19)
+`row_key, prueflos, status ('open'|'passed'|'resolved'|'failed'), deadline (cycle_start_date + the receipt SLA of the row, NULL without a cycle start), failed_count (number of `FAIL` items), items_json (ordered list of `{seq, check_code, check_label, outcome}`), run_id`. One row per lot that has an inbound check; a lot without a check has no row.
+
+### 4.8 `change_controls_v` (F19)
+`cc_no, material_no, batch_no, title, status, current_state, proposed_state, opened_on, effective_on, run_id`. One row per change-control-to-batch link (batch level, like `deviations_v`).
+
+### 4.9 `samples_v` (F19)
+`row_key, sample_id, status ('registered'|'in_progress'|'approved'|'rejected'), collected_date, approved_at, run_id`. **All** samples of each lot (not only the latest). `sample_count` on an overview row is the number of `mirror_samples` rows of its `row_key`, counted at read time.
 
 ## 5. Application database (`app`)
 | Table | Purpose / key columns |
@@ -131,10 +145,11 @@ One row per `row_key`, built by the SQL steps `50`–`90` from `batch_flat`: `ro
 | `app_user` | `user_key` PK, `display_name`, `role` (`planner`,`qc_lead`,`qa_release`,`viewer`,`admin`). Seed: `pat`/Pat/planner, `quinn`/Quinn/qc_lead, `alex`/Alex/qa_release, `sam`/Sam/viewer, `admin`/Admin/admin |
 | `demo_clock` | `id` int primary key with `CHECK (id = 1)`, `now_utc timestamptz not null`, `frozen boolean not null default false`. **Owned by F04** (first app migration, `0001_demo_clock`, in the `app_api` package). No `updated_at` (it is the clock). The `scenario` service inserts the row on first start from the profile's `demo.start_datetime` and never overwrites it. The clock moves only via set/advance |
 | `sync_event` | `id` PK, `source` (`webhook`,`poll`,`manual`), `run_id` (informational; null for manual), `status` (`pending`,`claimed`,`done`,`failed`), `received_at`, `claimed_at`, `finished_at`, `error`, `rows_upserted`. Times are infrastructure time (Postgres `now()`), not the demo clock; the API exposes them as ISO timestamps plus `age_seconds` and `duration_ms` |
-| `watermark` | `object_name` PK, `run_id`, `synced_at`. One row per mirrored object (nine rows). Reference objects, which carry no `run_id`, take the pipeline's `last_run_id`. `synced_at` is infrastructure time (Postgres `now()`) |
-| `mirror_batch_pipeline`, `mirror_weekly_metrics`, `mirror_weekly_metric_rows`, `mirror_pipeline_status`, `mirror_stage_reference`, `mirror_metric_reference`, `mirror_reason_codes`, `mirror_deviations`, `mirror_expected_deliveries` (F17; primary key `(ebeln, ebelp)`) | Same columns as the published object, plus `contract_run_id`, `mirrored_at`. Replaced wholesale per sync in one transaction (`DELETE` then insert, so readers never block). Native types (`date`, `timestamptz`, `numeric`, `boolean`, `text`); `applicable_sla_json`, `source_refs_json` and `source_freshness_json` are `jsonb`. Primary keys: `row_key` (batch pipeline); `(metric_id, week_start)` (weekly metrics); `(metric_id, week_start, row_key)` (metric rows); one row (status); `stage_key`; `metric_id`; `code`; `(deviation_no, material_no, batch_no)`. Indexes on `stage_key` and `(material_no, batch_no)` for `mirror_batch_pipeline` |
-| `override_value` | `id`, `row_key`, `field` (`adjusted_need_by_date`,`expedite`,`manual_status`,`delivery_date`,`delivery_location`,`manual_hold`,`release_on_coa`; the last two carry `{"on": bool, "reason": str}` with a 3–200 character reason, F18, OQ-103; turning one off is a new version with `on: false` and its reason, not a null), `value_json`, `reason_code` null, `note` null, `version` int, `author_user_key`, `created_at`, `is_current` bool. Unique partial index on `(row_key, field) WHERE is_current`. **Insert-only**: a new version sets the prior row's `is_current=false` in the same transaction. A "clear" is a new version with `value_json = null` |
-| `comment` | `id`, `row_key`, `body`, `author_user_key`, `created_at` (insert-only) |
+| `watermark` | `object_name` PK, `run_id`, `synced_at`. One row per mirrored object (twelve rows in F19). Reference objects, which carry no `run_id`, take the pipeline's `last_run_id`. `synced_at` is infrastructure time (Postgres `now()`) |
+| `mirror_batch_pipeline`, `mirror_weekly_metrics`, `mirror_weekly_metric_rows`, `mirror_pipeline_status`, `mirror_stage_reference`, `mirror_metric_reference`, `mirror_reason_codes`, `mirror_deviations`, `mirror_expected_deliveries` (F17; primary key `(ebeln, ebelp)`), `mirror_inbound_checks` (F19; PK `row_key`), `mirror_change_controls` (F19; PK `(cc_no, material_no, batch_no)`), `mirror_samples` (F19; PK `(row_key, sample_id)`) | Same columns as the published object, plus `contract_run_id`, `mirrored_at`. Replaced wholesale per sync in one transaction (`DELETE` then insert, so readers never block). Native types (`date`, `timestamptz`, `numeric`, `boolean`, `text`); `applicable_sla_json`, `source_refs_json` and `source_freshness_json` are `jsonb`. Primary keys: `row_key` (batch pipeline); `(metric_id, week_start)` (weekly metrics); `(metric_id, week_start, row_key)` (metric rows); one row (status); `stage_key`; `metric_id`; `code`; `(deviation_no, material_no, batch_no)`. `mirror_deviations` carries the extended `deviations_v` columns. Indexes on `stage_key` and `(material_no, batch_no)` for `mirror_batch_pipeline` |
+| `override_value` | `id`, `row_key`, `field` (`adjusted_need_by_date`,`expedite`,`manual_status`,`delivery_date`,`delivery_location`,`manual_hold`,`release_on_coa`; the last two carry `{"on": bool, "reason": str}` with a 3–200 character reason, F18, OQ-103; `manual_status` is legacy from F19 (see `status_log`); turning one off is a new version with `on: false` and its reason, not a null), `value_json`, `reason_code` null, `note` null, `version` int, `author_user_key`, `created_at`, `is_current` bool. Unique partial index on `(row_key, field) WHERE is_current`. **Insert-only**: a new version sets the prior row's `is_current=false` in the same transaction. A "clear" is a new version with `value_json = null` |
+| `comment` | `id`, `row_key`, `body`, `author_user_key`, `created_at` (insert-only). **Legacy since F19**: its rows are copied into `status_log`; the table and the `manual_status` override field stay for history and are no longer read by compose |
+| `status_log` | F19 · `id`, `row_key`, `status` null (profile `status_options` key; null for migrated comment rows), `team` null, `reason_code` null (profile `status_reasons` key), `comment` text, `author_user_key`, `at` (demo clock). Insert-only. Audit action `status_logged` |
 | `audit_event` | `id`, `at` (demo clock), `actor_user_key` (nullable text; `system` for system rows such as a rejected webhook), `action`, `row_key` null, `details_json`. Written for every override, comment, approval, rejection and agent action |
 | `feedback` | `id`, `at` (demo clock), `user_key`, `page` (route path, ≤ 200 chars), `message` (1–2000 chars). Insert-only, not audited (F15, OQ-083) |
 | `bookmark` | `user_key`, `row_key`, `created_at` (demo clock). PK (`user_key`, `row_key`). Personal, not audited (F16, OQ-091) |
@@ -144,3 +159,5 @@ One row per `row_key`, built by the SQL steps `50`–`90` from `batch_flat`: `ro
 | `agent_trace` | `id`, `trace_id`, `seq`, `step_type` (`input`,`tool_call`,`tool_result`,`model_request`,`model_response`,`validation`,`decision`,`action`), `payload_json`, `tokens_in`, `tokens_out`, `latency_ms`, `at` |
 
 Override fields are composed at read time: `operative = current override value ?? mirror value`.
+
+**F19 reason codes.** `override_value.reason_code` uses the ten labelled codes of the profile (`CAMPAIGN_PULLED_FORWARD, CAMPAIGN_PUSHED_BACK, VERBAL_CONFIRMATION, SHELF_LIFE_CONSTRAINT, SUPPLIER_DELAY, RETEST_REQUIRED, EXPEDITE_PRODUCTION, EXPEDITE_SHIPPING, TESTING_CAPACITY, OTHER`). `OTHER` requires a note (422 otherwise). Migrations never update an existing row: they append new current versions (or log rows) with author `system` and an `audit_event` (OQ-111, OQ-112).

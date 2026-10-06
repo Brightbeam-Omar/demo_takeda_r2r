@@ -14,6 +14,7 @@ from r2r_core.domain import LotType, RowFacts, StageKey
 from r2r_core.profile import SiteProfile
 from r2r_core.sla import plan as plan_dates
 
+from datagen.inbound_items import plan_inbound_items
 from datagen.model import (
     BatchPlan,
     DemandPlan,
@@ -24,6 +25,7 @@ from datagen.model import (
 from datagen.next_inspection import plan_next_inspection
 from datagen.params import Params
 from datagen.po_lines import plan_po_lines
+from datagen.quality_data import plan_quality_data
 from datagen.quirks import apply_quirks
 from datagen.stories import StoryResult, build_stories
 from datagen.supplier_batches import plan_supplier_batches
@@ -61,6 +63,8 @@ def build_plan(profile: SiteProfile, params: Params, seed: int, world: World | N
     plan_po_lines(plan, params)
     plan_next_inspection(plan)
     plan_supplier_batches(plan)
+    plan_inbound_items(plan)
+    plan_quality_data(plan)
     return plan
 
 

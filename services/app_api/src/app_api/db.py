@@ -32,5 +32,5 @@ def get_session() -> Iterator[Session]:
             raise
 
 
-def migrate(database_dsn: str | None = None) -> None:
-    upgrade(MIGRATIONS, database_dsn or dsn())
+def migrate(database_dsn: str | None = None, revision: str = "head") -> None:
+    upgrade(MIGRATIONS, database_dsn or dsn(), revision)

@@ -14,6 +14,17 @@ class Body(BaseModel):
 Quantity = Field(gt=0, max_digits=13, decimal_places=3)
 
 
+InboundOutcome = Literal["PASS", "FAIL", "PENDING", "NO", "COMP", "APRV", "DCPS"]
+
+
+class InboundItemIn(Body):
+    """One inbound sub-check (F19-FR-02). The position in the list is its sequence number."""
+
+    check_code: str
+    check_label: str
+    outcome: InboundOutcome
+
+
 class GoodsReceiptIn(Body):
     matnr: str
     charg: str
@@ -30,6 +41,7 @@ class GoodsReceiptIn(Body):
     prueflos: str | None = None  # explicit inspection lot number
     ebeln: str | None = None  # purchase order line this receipt closes (give both or neither)
     ebelp: str | None = None
+    items: list[InboundItemIn] | None = None  # inbound sub-checks of the open check (F19)
 
 
 class ReversalIn(Body):
@@ -52,9 +64,10 @@ class TransferIn(Body):
 
 class InboundCheckIn(Body):
     prueflos: str
-    status: Literal["open", "passed", "failed"]
-    completed_on: date | None = None  # default: today when passed or failed
+    status: Literal["open", "passed", "resolved", "failed"]
+    completed_on: date | None = None  # default: today when not open
     notes: str = ""
+    items: list[InboundItemIn] | None = None  # replaces the lot's sub-checks; omit to leave them (F19)
 
 
 class UsageDecisionIn(Body):
@@ -73,8 +86,9 @@ class ReevalLotIn(Body):
     charg: str
     pastrterm: date | None = None
     prueflos: str | None = None
-    inbound_check: Literal["none", "open", "passed", "failed"] = "none"
+    inbound_check: Literal["none", "open", "passed", "resolved", "failed"] = "none"
     completed_on: date | None = None
+    items: list[InboundItemIn] | None = None  # needs an inbound check (F19)
 
 
 class StockMoveIn(Body):

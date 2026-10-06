@@ -47,6 +47,29 @@ terms:   # UI vocabulary (F15, OQ-075), site_a values. All keys optional; generi
   planner_overrides: "planner overrides"
 release_on_coa: {sla_days: 14}   # F18: single release deadline from cycle_start_date
 exports: {sampling_plan: [sampling], qc_queue: [qc_ship, qc_testing]}   # F18: stage sets of the two queue exports
-reason_codes: [CAMPAIGN_PULLED_FORWARD, CAMPAIGN_PUSHED_OUT, CONSOLIDATED_TESTING, EXPEDITE_PRODUCTION,
-               EXPEDITE_SHIPPING, SUPPLIER_DELAY, LAB_CAPACITY, DOCUMENTATION_ISSUE, OTHER]
+reason_codes:   # F19: labelled, shown in the Adjust Needs-by window; OTHER requires a note
+  - {code: CAMPAIGN_PULLED_FORWARD, label: "Campaign pulled forward"}
+  - {code: CAMPAIGN_PUSHED_BACK,    label: "Campaign pushed back"}
+  - {code: VERBAL_CONFIRMATION,     label: "Verbal confirmation received"}
+  - {code: SHELF_LIFE_CONSTRAINT,   label: "Shelf life constraint"}
+  - {code: SUPPLIER_DELAY,          label: "Supplier/supply delay"}
+  - {code: RETEST_REQUIRED,         label: "Retest required"}
+  - {code: EXPEDITE_PRODUCTION,     label: "Expedite production requested"}
+  - {code: EXPEDITE_SHIPPING,       label: "Expedite shipping requested"}
+  - {code: TESTING_CAPACITY,        label: "Testing capacity"}
+  - {code: OTHER,                   label: "Other — see notes"}
+status_options:   # F19: the status log (§6)
+  - {key: on_track,  label: "On Track",  colour: green}
+  - {key: at_risk,   label: "At Risk",   colour: amber}
+  - {key: blocked,   label: "Blocked",   colour: red}
+  - {key: escalated, label: "Escalated", colour: red}
+  - {key: resolved,  label: "Resolved",  colour: green}
+status_reasons:   # F19: optional reason of a status entry
+  - {key: process_delay,        label: "Process delay"}
+  - {key: supplier_issue,       label: "Supplier issue"}
+  - {key: resource_constraint,  label: "Resource constraint"}
+  - {key: campaign_pull_forward, label: "Campaign pull-forward"}
+  - {key: equipment_issue,      label: "Equipment issue"}
+  - {key: awaiting_info,        label: "Awaiting info"}
+  - {key: other,                label: "Other"}
 adapters: {erp: ecc_like}       # Tier 2 adds s4_like and spreadsheet

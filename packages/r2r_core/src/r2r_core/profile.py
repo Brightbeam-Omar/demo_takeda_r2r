@@ -161,6 +161,21 @@ def _labelled(values: object) -> object:
     return [{"key": i, "label": i.replace("_", " ").title()} if isinstance(i, str) else i for i in values]
 
 
+class ReasonCode(_Model):
+    """F19-FR-06: a need-by reason code with its display label."""
+
+    code: str
+    label: str
+
+
+class StatusOption(_Model):
+    """F19-FR-05: a status of the status log, with its dot colour."""
+
+    key: str
+    label: str
+    colour: Literal["green", "amber", "red"]
+
+
 class Terms(_Model):
     """UI vocabulary (F15, OQ-075). Every key is optional; derived defaults follow ``erp`` and ``lims``."""
 
@@ -204,7 +219,9 @@ class SiteProfile(_Model):
     full_spec_pairs: list[FullSpecPair]
     release_on_coa: ReleaseOnCoa
     exports: Exports
-    reason_codes: list[str] = Field(min_length=1)
+    reason_codes: list[ReasonCode] = Field(min_length=1)
+    status_options: list[StatusOption] = Field(min_length=1)
+    status_reasons: list[Labelled]
     adapters: Adapters
     terms: Terms = Terms()
 
@@ -224,6 +241,13 @@ class SiteProfile(_Model):
         for key in (*self.exports.sampling_plan, *self.exports.qc_queue):
             if key not in keys:
                 raise ValueError(f"exports refers to unknown stage {key!r}")
+        for name, entries in (
+            ("reason_codes", [r.code for r in self.reason_codes]),
+            ("status_options", [o.key for o in self.status_options]),
+            ("status_reasons", [r.key for r in self.status_reasons]),
+        ):
+            if len(set(entries)) != len(entries):
+                raise ValueError(f"duplicate key in {name}")
         metric_ids: set[str] = set()
         for metric in self.metrics:
             if metric.id in metric_ids:

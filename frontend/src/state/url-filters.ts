@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 /** Everything the Overview filters on. It lives in the URL query string so it can be shared and survives reload. */
@@ -31,7 +31,7 @@ export const EMPTY_FILTERS: Filters = {
 const LIST_KEYS = { types: 'type', classes: 'class', campaigns: 'campaign', flags: 'flag' } as const
 
 /** URL parameters that are view state, not filters: `update` carries them over. */
-const KEPT_PARAMS = ['row', 'filters'] as const
+const KEPT_PARAMS = ['row', 'win', 'drawer', 'filters'] as const
 
 export function parseFilters(search: URLSearchParams): Filters {
   return {
@@ -102,20 +102,23 @@ export function activeFilterCount(filters: Filters): number {
 export function useUrlFilters() {
   const [search, setSearch] = useSearchParams()
   const filters = useMemo(() => parseFilters(search), [search])
+  // Rapid clicks can arrive before React re-renders, and react-router hands every updater the params of the last
+  // render: the ref keeps the params the previous click produced, so no click is lost.
+  const latest = useRef(search)
+  useEffect(() => {
+    latest.current = search
+  }, [search])
   const update = useCallback(
     (patch: Partial<Filters>) => {
-      setSearch(
-        (current) => {
-          const next = serializeFilters({ ...parseFilters(current), ...patch })
-          // The open drawer and the panel state are not filters, but they must survive one.
-          for (const key of KEPT_PARAMS) {
-            const value = current.get(key)
-            if (value) next.set(key, value)
-          }
-          return next
-        },
-        { replace: true },
-      )
+      const current = latest.current
+      const next = serializeFilters({ ...parseFilters(current), ...patch })
+      // The open drawer and the panel state are not filters, but they must survive one.
+      for (const key of KEPT_PARAMS) {
+        const value = current.get(key)
+        if (value) next.set(key, value)
+      }
+      latest.current = next
+      setSearch(next, { replace: true })
     },
     [setSearch],
   )
@@ -124,26 +127,6 @@ export function useUrlFilters() {
     [update],
   )
   return { filters, update, clearAll }
-}
-
-/** The batch whose drawer is open (`?row=<row_key>`, F11-FR-07). Closing removes only this parameter. */
-export function useDrawerRow() {
-  const [search, setSearch] = useSearchParams()
-  const row = search.get('row')
-  const open = useCallback(
-    (rowKey: string | null) =>
-      setSearch(
-        (current) => {
-          const next = new URLSearchParams(current)
-          if (rowKey) next.set('row', rowKey)
-          else next.delete('row')
-          return next
-        },
-        { replace: true },
-      ),
-    [setSearch],
-  )
-  return { row, open }
 }
 
 /** The filter panel is open or closed (`?filters=open|closed`, F16-FR-01). Closed unless the URL says open. */

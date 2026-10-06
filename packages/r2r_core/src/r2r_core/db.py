@@ -101,12 +101,12 @@ def allocate_number(
             return number
 
 
-def upgrade(script_location: str | Path, dsn: str) -> None:
-    """Run ``alembic upgrade head`` for a migrations directory against ``dsn``."""
+def upgrade(script_location: str | Path, dsn: str, revision: str = "head") -> None:
+    """Run ``alembic upgrade <revision>`` (default ``head``) for a migrations directory against ``dsn``."""
     config = Config()
     config.set_main_option("script_location", str(script_location))
     config.set_main_option("sqlalchemy.url", dsn.replace("%", "%%"))
-    command.upgrade(config, "head")
+    command.upgrade(config, revision)
 
 
 def run_migrations_env(context: Any, metadata: Any) -> None:

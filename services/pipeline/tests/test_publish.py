@@ -48,13 +48,14 @@ def world() -> World:
 
 
 @pytest.mark.usefixtures("demo_clock")
-def test_f07_ac01_all_nine_objects_exist_and_the_status_has_one_row(
+def test_f07_ac01_all_published_objects_exist_and_the_status_has_one_row(
     world: World, tmp_path: Path, profile: SiteProfile
 ) -> None:
     ctx = run_all(world, tmp_path, profile)
     assert PUBLISH_ORDER == (
         "batch_pipeline_v", "weekly_metrics_v", "weekly_metric_rows_v", "stage_reference_v",
-        "metric_reference_v", "reason_codes_v", "deviations_v", "expected_deliveries_v", "pipeline_status_v",
+        "metric_reference_v", "reason_codes_v", "deviations_v", "expected_deliveries_v", "inbound_checks_v",
+        "change_controls_v", "samples_v", "pipeline_status_v",
     )  # fmt: skip
     assert all(delta_exists(tmp_path, f"published.{name}") for name in PUBLISH_ORDER)
     [status] = table(tmp_path, "pipeline_status_v")
@@ -146,7 +147,7 @@ def test_f07_fr03_stage_and_reason_references_come_from_the_profile(
         "Collect QC sample",
     )
     reasons = table(tmp_path, "reason_codes_v")
-    assert [r["code"] for r in reasons] == profile.reason_codes
+    assert [(r["code"], r["label"]) for r in reasons] == [(r.code, r.label) for r in profile.reason_codes]
     assert reasons[0] == {"code": "CAMPAIGN_PULLED_FORWARD", "label": "Campaign pulled forward"}
 
 
@@ -160,6 +161,56 @@ def test_f07_fr03_deviations_has_one_row_per_linked_batch(
         ("DEV-000001", "B1", "minor", "open"),
         ("DEV-000001", "B2", "minor", "open"),
     ]
+
+
+@pytest.mark.usefixtures("demo_clock")
+def test_f19_fr03_deviations_carry_the_new_fields_and_the_run_id(
+    tmp_path: Path, profile: SiteProfile
+) -> None:
+    world = World()
+    world.receive("B1", "10000001", D(2026, 10, 1))
+    world.demand(1, D(2026, 11, 20))
+    world.deviation(
+        "DEV-000001",
+        "closed",
+        [("RM1", "B1")],
+        severity="moderate",
+        causal_factor="Carrier handling",
+        investigation_summary="Handled with the carrier.",
+    )
+    run_all(world, tmp_path, profile)
+    [row] = table(tmp_path, "deviations_v")
+    assert (row["severity"], row["causal_factor"], row["investigation_summary"]) == (
+        "moderate",
+        "Carrier handling",
+        "Handled with the carrier.",
+    )
+    assert (row["description"], row["run_id"]) == ("d", "run-1")
+    assert read_delta(tmp_path, "published.deviations_v").schema.names == [
+        "deviation_no", "material_no", "batch_no", "title", "severity", "status", "opened_on", "closed_on",
+        "root_cause_category", "causal_factor", "investigation_summary", "description", "owner", "run_id",
+    ]  # fmt: skip
+
+
+@pytest.mark.usefixtures("demo_clock")
+def test_f19_fr03_change_controls_has_one_row_per_linked_batch(tmp_path: Path, profile: SiteProfile) -> None:
+    world = World()
+    world.receive("B1", "10000001", D(2026, 10, 1))
+    world.receive("B2", "10000002", D(2026, 10, 1))
+    world.demand(1, D(2026, 11, 20))
+    world.change_control("CC-000002", "approved", [("RM1", "B1"), ("RM1", "B2")], D(2026, 11, 1))
+    world.change_control("CC-000001", "open", [("RM1", "B1")])
+    run_all(world, tmp_path, profile)
+    rows = table(tmp_path, "change_controls_v")
+    assert [(r["cc_no"], r["batch_no"], r["status"], r["effective_on"], r["run_id"]) for r in rows] == [
+        ("CC-000001", "B1", "open", None, "run-1"),
+        ("CC-000002", "B1", "approved", D(2026, 11, 1), "run-1"),
+        ("CC-000002", "B2", "approved", D(2026, 11, 1), "run-1"),
+    ]
+    assert read_delta(tmp_path, "published.change_controls_v").schema.names == [
+        "cc_no", "material_no", "batch_no", "title", "status", "current_state", "proposed_state", "opened_on",
+        "effective_on", "run_id",
+    ]  # fmt: skip
 
 
 @pytest.mark.usefixtures("demo_clock")
@@ -191,7 +242,7 @@ def test_f07_fr03_published_column_types_follow_the_contract(
 
     run_all(world, tmp_path, profile)
     assert read_delta(tmp_path, "published.weekly_metrics_v").schema.field("pct").type == pa.decimal128(5, 1)
-    for name in ("stage_reference_v", "metric_reference_v", "reason_codes_v", "deviations_v"):
+    for name in ("stage_reference_v", "metric_reference_v", "reason_codes_v"):
         assert "run_id" not in read_delta(tmp_path, f"published.{name}").schema.names, name
 
 
@@ -222,3 +273,105 @@ def _ctx(profile: SiteProfile, lake: Path) -> RunContext:
     from r2r_pipeline.context import new_context
 
     return new_context(profile, lake, run_id="run-1")
+
+
+@pytest.mark.usefixtures("demo_clock")
+def test_f19_fr02_inbound_checks_has_one_row_per_lot_with_a_check_and_its_items(
+    tmp_path: Path, profile: SiteProfile
+) -> None:
+    world = World()
+    world.receive("B1", "10000001", D(2026, 10, 1))
+    world.check("10000001", "resolved", D(2026, 10, 3))
+    world.items(
+        "10000001",
+        [
+            ("PHYS", "Physical evaluation", "PASS"),
+            ("QTYR", "Quantity received verification", "FAIL"),
+            ("RESL", "Results of analytical work", "COMP"),
+        ],
+    )
+    world.receive("B2", "10000002", D(2026, 10, 2))  # open check, no items
+    world.receive("B3", "10000003", D(2026, 10, 2))
+    world.reeval("B3", "10000004", D(2026, 10, 9))  # a 09 lot with no check: no row
+    world.demand(1, D(2026, 11, 20))
+    run_all(world, tmp_path, profile)
+    rows = {r["prueflos"]: r for r in table(tmp_path, "inbound_checks_v")}
+    assert set(rows) == {"10000001", "10000002", "10000003"}
+    resolved = rows["10000001"]
+    assert resolved["row_key"] == "RM1|B1|10000001"
+    assert (resolved["status"], resolved["failed_count"], resolved["run_id"]) == ("resolved", 1, "run-1")
+    assert resolved["deadline"] == D(2026, 10, 11)  # cycle start 1 Oct + the 10-day receipt SLA
+    assert json.loads(resolved["items_json"]) == [
+        {"seq": 1, "check_code": "PHYS", "check_label": "Physical evaluation", "outcome": "PASS"},
+        {"seq": 2, "check_code": "QTYR", "check_label": "Quantity received verification", "outcome": "FAIL"},
+        {"seq": 3, "check_code": "RESL", "check_label": "Results of analytical work", "outcome": "COMP"},
+    ]
+    assert (rows["10000002"]["status"], rows["10000002"]["failed_count"], rows["10000002"]["items_json"]) == (
+        "open",
+        0,
+        "[]",
+    )
+    assert read_delta(tmp_path, "published.inbound_checks_v").schema.names == [
+        "row_key", "prueflos", "status", "deadline", "failed_count", "items_json", "run_id",
+    ]  # fmt: skip
+
+
+@pytest.mark.usefixtures("demo_clock")
+def test_f19_fr02_a_re_evaluation_deadline_uses_its_own_cycle_start(
+    tmp_path: Path, profile: SiteProfile
+) -> None:
+    world = World()
+    world.receive("B1", "10000001", D(2026, 9, 1))
+    world.reeval("B1", "10000002", D(2026, 10, 8))
+    world.add("stg_zinbchk", prueflos="10000002", status="open")
+    world.demand(1, D(2026, 11, 20))
+    run_all(world, tmp_path, profile)
+    rows = {r["prueflos"]: r for r in table(tmp_path, "inbound_checks_v")}
+    assert rows["10000002"]["deadline"] == D(2026, 10, 18)
+
+
+@pytest.mark.usefixtures("demo_clock")
+def test_f19_fr04_samples_has_every_sample_of_every_lot_not_only_the_latest(
+    tmp_path: Path, profile: SiteProfile
+) -> None:
+    from datetime import datetime
+
+    world = World()
+    world.receive("B1", "10000001", D(2026, 10, 1))
+    world.receive("B2", "10000002", D(2026, 10, 1))
+    first = world.sample("10000001", D(2026, 10, 3), status="rejected")
+    retest = world.sample(
+        "10000001", D(2026, 10, 8), status="approved", approved_at=datetime(2026, 10, 10, 9, tzinfo=UTC)
+    )
+    world.sample("10000002", D(2026, 10, 4), status="in_progress", charg="B2")
+    world.demand(1, D(2026, 11, 20))
+    run_all(world, tmp_path, profile)
+    rows = table(tmp_path, "samples_v")
+    assert [(r["row_key"], r["sample_id"], r["status"]) for r in rows] == [
+        ("RM1|B1|10000001", first, "rejected"),
+        ("RM1|B1|10000001", retest, "approved"),
+        ("RM1|B2|10000002", "S-0000003", "in_progress"),
+    ]
+    assert rows[1]["approved_at"] == datetime(2026, 10, 10, 9, tzinfo=UTC)
+    assert (rows[0]["collected_date"], rows[0]["approved_at"], rows[0]["run_id"]) == (
+        D(2026, 10, 3),
+        None,
+        "run-1",
+    )
+    assert read_delta(tmp_path, "published.samples_v").schema.names == [
+        "row_key", "sample_id", "status", "collected_date", "approved_at", "run_id",
+    ]  # fmt: skip
+
+
+@pytest.mark.usefixtures("demo_clock")
+def test_f19_fr04_a_lot_without_a_sample_has_no_rows_and_cancelled_lots_stay_out(
+    tmp_path: Path, profile: SiteProfile
+) -> None:
+    world = World()
+    world.receive("B1", "10000001", D(2026, 10, 1))
+    world.receive("B2", "10000002", D(2026, 10, 1))
+    world.lot_field("10000002", vcode="X", vdatum=D(2026, 10, 5))  # cancelled: never enters the pipeline
+    world.sample("10000002", D(2026, 10, 3), charg="B2")
+    world.demand(1, D(2026, 11, 20))
+    run_all(world, tmp_path, profile)
+    assert table(tmp_path, "samples_v") == []

@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 from qms_sim import events, schemas
 from qms_sim.app import app
 from qms_sim.db import get_session
-from qms_sim.models import Deviation
+from qms_sim.models import ChangeControl, Deviation
 from r2r_core.errors import Conflict, Invalid
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -113,3 +113,102 @@ def test_f04_fr05_reads_filter_by_batch_and_include_links(client: TestClient) ->
     )
     assert client.get("/health").json() == {"status": "ok", "service": "qms-sim"}
     assert client.get("/docs").status_code == 200
+
+
+# --- F19: quality data -------------------------------------------------------------------------
+
+
+def test_f19_fr03_a_deviation_carries_causal_factor_and_investigation_summary(
+    factory: sessionmaker[Session],
+) -> None:
+    with factory() as session:
+        opened = events.deviation_opened(
+            session,
+            schemas.DeviationOpenedIn(
+                **OPENED, causal_factor="Transport", investigation_summary="Probe was out of calibration."
+            ),
+        )
+        plain = events.deviation_opened(session, schemas.DeviationOpenedIn(title="x", severity="moderate"))
+        closed = events.deviation_closed(
+            session,
+            schemas.DeviationClosedIn(
+                deviation_no="DEV-000002", investigation_summary="Handled with the carrier."
+            ),
+        )
+    assert opened["deviation"]["causal_factor"] == "Transport"
+    assert opened["deviation"]["investigation_summary"] == "Probe was out of calibration."
+    assert (plain["deviation"]["causal_factor"], plain["deviation"]["investigation_summary"]) == (None, None)
+    assert closed["deviation"]["investigation_summary"] == "Handled with the carrier."
+
+
+def test_f19_fr03_the_severity_vocabulary_is_minor_moderate_major() -> None:
+    for value in ("minor", "moderate", "major"):
+        schemas.DeviationOpenedIn(title="x", severity=value)  # type: ignore[arg-type]
+    with pytest.raises(ValueError):
+        schemas.DeviationOpenedIn(title="x", severity="critical")  # type: ignore[arg-type]
+
+
+CHANGE = {
+    "title": "Update the storage specification",
+    "current_state": "Store at 2-8 C",
+    "proposed_state": "Store at 2-25 C",
+    "links": [LINK],
+}
+
+
+def test_f19_fr03_change_control_opened_numbers_links_and_stamps(factory: sessionmaker[Session]) -> None:
+    with factory() as session:
+        first = events.change_control_opened(session, schemas.ChangeControlOpenedIn(**CHANGE))
+        second = events.change_control_opened(
+            session, schemas.ChangeControlOpenedIn(**{**CHANGE, "links": []}, status="approved")
+        )
+        session.commit()
+    assert first["change_control"]["cc_no"] == "CC-000001"
+    assert second["change_control"]["cc_no"] == "CC-000002"
+    assert (first["change_control"]["status"], first["change_control"]["opened_on"]) == (
+        "open",
+        date(2026, 10, 12),
+    )
+    assert first["change_control"]["updated_at"] == datetime(2026, 10, 12, 7, 0, tzinfo=UTC)
+    assert [(c["material_no"], c["batch_no"]) for c in first["links"]] == [("RM10001", "B1001")]
+    assert second["change_control"]["status"] == "approved" and second["links"] == []
+
+
+def test_f19_fr03_change_control_status_moves_forward_and_validates(factory: sessionmaker[Session]) -> None:
+    with factory() as session:
+        events.change_control_opened(session, schemas.ChangeControlOpenedIn(**CHANGE))
+        done = events.change_control_status(
+            session,
+            schemas.ChangeControlStatusIn(
+                cc_no="CC-000001", status="closed", effective_on=date(2026, 10, 30)
+            ),
+        )
+        assert (done["change_control"]["status"], done["change_control"]["effective_on"]) == (
+            "closed",
+            date(2026, 10, 30),
+        )
+        with pytest.raises(Invalid, match="unknown change control"):
+            events.change_control_status(
+                session, schemas.ChangeControlStatusIn(cc_no="CC-999999", status="closed")
+            )
+        with pytest.raises(Invalid, match="twice"):
+            events.change_control_opened(
+                session, schemas.ChangeControlOpenedIn(**{**CHANGE, "links": [LINK, LINK]})
+            )
+        with pytest.raises(Conflict):
+            events.change_control_opened(session, schemas.ChangeControlOpenedIn(**CHANGE, cc_no="CC-000001"))
+        assert session.get(ChangeControl, "CC-000001") is not None
+
+
+def test_f19_fr03_change_controls_can_be_read_over_http(client: TestClient) -> None:
+    client.post("/events/change-control-opened", json=CHANGE, headers=TOKEN)
+    client.post(
+        "/events/change-control-opened",
+        json={**CHANGE, "links": [{"material_no": "RM10002", "batch_no": "B2002"}]},
+        headers=TOKEN,
+    )
+    assert len(client.get("/change-controls").json()) == 2
+    found = client.get("/change-controls", params={"batch_no": "B1001"}).json()
+    assert [c["cc_no"] for c in found] == ["CC-000001"] and found[0]["links"][0]["batch_no"] == "B1001"
+    assert client.get("/change-controls/CC-000002").json()["proposed_state"] == "Store at 2-25 C"
+    assert client.get("/change-controls/CC-999999").status_code == 404

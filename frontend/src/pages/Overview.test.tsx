@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, test, vi } from 'vitest'
 import App from '../App'
@@ -26,7 +26,7 @@ test('F10-FR-10: a failing overview shows an error band with Retry and a loading
 const freshness = { contract_run_id: 'r1', last_success_at: null, freshness_minutes: 0 }
 const rowOf = (n: number, rag: string) => ({
   row_key: `RM${n}|B${n}|1`, material_no: `RM${n}`, material_desc: 'x', batch_no: `B${n}`, inspection_lot_no: '1', supplier_batch: null, material_class: null, campaign: null, storage_location: null, stage_key: 'sampling', stage_label: 'Sampling', days_in_stage: 1, adjusted_need_by_date: null, system_need_by_locked: null, next_inspection_date: null, inbound_light: 'grey', deviation_light: 'grey',
-  flags: {}, plan: { expected_completion: '2026-10-20', must_complete_by: {}, rag, days_remaining: 3, late: false }, manual_status: null,
+  flags: {}, plan: { expected_completion: '2026-10-20', must_complete_by: {}, rag, days_remaining: 3, late: false }, latest_status: null, status_log_count: 0, sample_count: 0,
 })
 
 function stubApi(overview: object, metrics: object, seen: { url: string; user: string | null }[] = []) {
@@ -164,4 +164,103 @@ test('F18-FR-07: Export Sampling Plan and Export QC Testing Queue fetch with the
   await userEvent.click(screen.getAllByRole('button', { name: '↓ Export QC Testing Queue' })[0]!)
   await waitFor(() => expect(seen.some((call) => call.url.startsWith('/api/export/qc-queue.csv'))).toBe(true))
   sessionStorage.clear()
+})
+
+
+const USERS = [
+  { user_key: 'pat', display_name: 'Pat', role: 'planner' },
+  { user_key: 'sam', display_name: 'Sam', role: 'viewer' },
+]
+
+function stubDrawerApp(seen: { url: string; user: string | null }[]) {
+  const detail = {
+    ...rowOf(7, 'green'),
+    inspection_lot_no: '1',
+    lot_type: '01',
+    ud_date: null,
+    plan: { expected_completion: '2026-10-20', must_complete_by: {}, rag: 'green', days_remaining: 3, late: false, compressed: false, compression_ratio: null, effective_slas: {} },
+    flags: { released: false, offsite: false },
+    siblings: [],
+    deviations: [],
+    changes: [],
+    samples: [],
+    status_log: [],
+    inbound_check: null,
+    current_overrides: {},
+    facts: { applicable_sla_json: [], cycle_start_date: null },
+  }
+  const overview = { freshness, flow_strip: [], on_hold_count: 0, adjusted_count: 0, total: 2, mode: 'snapshot', bookmarks: [], alerts: [], rows: [rowOf(7, 'green'), rowOf(8, 'green')] }
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string, init?: RequestInit) => {
+      const user = (init?.headers as Record<string, string> | undefined)?.['X-Demo-User'] ?? null
+      seen.push({ url, user })
+      if (url.startsWith('/api/users')) return new Response(JSON.stringify(USERS))
+      if (url.startsWith('/api/metrics')) return new Response(JSON.stringify({ freshness, filtered: false, week_starts: [], metrics: [] }))
+      if (url.startsWith('/api/me')) return new Response(JSON.stringify(USERS.find((u) => u.user_key === (user ?? 'pat'))))
+      if (url.startsWith('/api/overview')) return new Response(JSON.stringify(overview))
+      if (url.startsWith('/api/reference')) return new Response(JSON.stringify({ site_name: 's', site_timezone: 'UTC', stages: [{ stage_key: 'sampling', label: 'Sampling', team: 'QC Lab' }], campaigns: [], molecule_types: [], classes: [], terms: {}, metrics: [], flags: [], periods: [], reason_codes: [], status_options: [], status_reasons: [], metric_rag: { green_min_pct: 90, amber_min_pct: 80 }, air_gap_threshold_hours: 24, release_badge: 'ALPHA – LOCAL' }))
+      if (url.startsWith('/api/clock')) return new Response(JSON.stringify({ now_utc: '2026-10-12T07:00:00Z', today_local: '2026-10-12', frozen: false }))
+      if (url.startsWith('/api/rows/')) {
+        const key = decodeURIComponent(url.slice('/api/rows/'.length))
+        return new Response(JSON.stringify({ ...detail, row_key: key, batch_no: key.split('|')[1] }))
+      }
+      return new Response('nf', { status: 404 })
+    }),
+  )
+}
+
+test('F19-AC-01 / OQ-116: the drawer is non-modal: another row swaps it, the persona switcher works, and closing fills the Batch filter', async () => {
+  sessionStorage.clear()
+  const seen: { url: string; user: string | null }[] = []
+  window.history.pushState({}, '', '/overview?row=' + encodeURIComponent('RM7|B7|1'))
+  stubDrawerApp(seen)
+  render(<App />)
+  const drawer = await screen.findByTestId('batch-drawer')
+  expect(await within(drawer).findByText(/Batch B7/)).toBeInTheDocument()
+
+  // The table is still interactive: a click on another row swaps the drawer's content (no close in between).
+  await userEvent.click((await screen.findAllByTestId('batch-row'))[1]!)
+  expect(await within(screen.getByTestId('batch-drawer')).findByText(/Batch B8/)).toBeInTheDocument()
+  expect(window.location.search).toContain('row=RM8%7CB8%7C1')
+
+  // The persona switcher works while the drawer is open (no "close the drawer first").
+  await userEvent.selectOptions(await screen.findByRole('combobox', { name: 'Persona' }), 'sam')
+  await waitFor(() => expect(screen.getByTestId('user-chip')).toHaveTextContent('Sam · Viewer'))
+  expect(screen.getByTestId('batch-drawer')).toBeInTheDocument()
+
+  // Closing puts the batch number into the table's Batch filter box.
+  await userEvent.click(within(screen.getByTestId('batch-drawer')).getByRole('button', { name: 'Close drawer' }))
+  await waitFor(() => expect(screen.queryByTestId('batch-drawer')).not.toBeInTheDocument())
+  expect(window.location.search).not.toContain('row=')
+  expect(screen.getByLabelText('Filter Batch')).toHaveValue('B8')
+  sessionStorage.clear()
+})
+
+test('F19-FR-01: ?win=quality&row= opens the Quality window alone and Escape closes it, leaving the table', async () => {
+  sessionStorage.clear()
+  window.history.pushState({}, '', '/overview?win=quality&row=' + encodeURIComponent('RM7|B7|1'))
+  stubDrawerApp([])
+  render(<App />)
+  expect(await screen.findByRole('heading', { name: 'Quality — B7' })).toBeInTheDocument()
+  expect(screen.queryByTestId('batch-drawer')).not.toBeInTheDocument() // a window deep link is the window alone
+  await userEvent.keyboard('{Escape}')
+  await waitFor(() => expect(screen.queryByRole('heading', { name: 'Quality — B7' })).not.toBeInTheDocument())
+  expect(window.location.search).toBe('')
+})
+
+test('F19-FR-01: a window opened from the drawer leaves the drawer open when it closes', async () => {
+  sessionStorage.clear()
+  window.history.pushState({}, '', '/overview?row=' + encodeURIComponent('RM7|B7|1'))
+  stubDrawerApp([])
+  render(<App />)
+  const drawer = await screen.findByTestId('batch-drawer')
+  await userEvent.click(await within(drawer).findByRole('button', { name: 'Open Inbound window' }))
+  expect(await screen.findByRole('heading', { name: 'Inbound — B7' })).toBeInTheDocument()
+  expect(window.location.search).toContain('win=inbound')
+  expect(window.location.search).toContain('drawer=open')
+  await userEvent.keyboard('{Escape}')
+  await waitFor(() => expect(screen.queryByRole('heading', { name: 'Inbound — B7' })).not.toBeInTheDocument())
+  expect(screen.getByTestId('batch-drawer')).toBeInTheDocument()
+  expect(window.location.search).toBe('?row=RM7%7CB7%7C1')
 })

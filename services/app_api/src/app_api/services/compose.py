@@ -17,7 +17,7 @@ from r2r_core.sla import AdjustedNeedBy, Flags, PlanResult, exception_sort_key, 
 
 ADJUSTED = "adjusted_need_by_date"
 EXPEDITE = "expedite"
-MANUAL_STATUS = "manual_status"
+MANUAL_STATUS = "manual_status"  # legacy since F19: the status log replaced it
 MANUAL_HOLD = "manual_hold"  # {"on": bool, "reason": str} (F18-FR-09)
 RELEASE_ON_COA = "release_on_coa"  # {"on": bool, "reason": str} (F18-FR-10)
 
@@ -35,6 +35,21 @@ class CurrentOverride:
 
 
 @dataclass(frozen=True)
+class LatestStatus:
+    """The newest status-log entry of a row that has a status (F19-FR-05), with its label and colour."""
+
+    status: str
+    label: str
+    colour: str
+    team: str | None
+    reason_code: str | None
+    reason_label: str | None
+    comment: str
+    author_user_key: str
+    at: dt.datetime
+
+
+@dataclass(frozen=True)
 class ComposedRow:
     facts: Mapping[str, Any]
     row_facts: RowFacts
@@ -42,11 +57,12 @@ class ComposedRow:
     adjusted: AdjustedNeedBy | None
     operative_need_by: dt.date | None
     expedite: bool
-    manual_status: Mapping[str, Any] | None
+    latest_status: LatestStatus | None
     air_gap: bool
     air_gap_hours: int
     stage_terminal: bool
-    comment_count: int
+    status_log_count: int
+    sample_count: int = 0  # samples of the lot in the mirror (F19-FR-04)
     manual_hold: Mapping[str, Any] | None = None  # the current hold override while it is on
     coa_release: Mapping[str, Any] | None = None  # the current Release on COA override while it is on
     overrides: Mapping[str, CurrentOverride] = field(default_factory=dict)
@@ -105,12 +121,33 @@ def _switched_on(override: CurrentOverride | None) -> Mapping[str, Any] | None:
     return value if isinstance(value, Mapping) and value.get("on") else None
 
 
+def latest_status_of(profile: SiteProfile, entry: Mapping[str, Any] | None) -> LatestStatus | None:
+    """Decorate the newest entry that has a status (a mapping with the ``status_log`` columns)."""
+    if entry is None or entry["status"] is None:
+        return None
+    option = next((o for o in profile.status_options if o.key == entry["status"]), None)
+    reason = next((r for r in profile.status_reasons if r.key == entry["reason_code"]), None)
+    return LatestStatus(
+        status=entry["status"],
+        label=option.label if option else entry["status"],
+        colour=option.colour if option else "grey",
+        team=entry["team"],
+        reason_code=entry["reason_code"],
+        reason_label=reason.label if reason else None,
+        comment=entry["comment"],
+        author_user_key=entry["author_user_key"],
+        at=entry["at"],
+    )
+
+
 def compose_row(
     facts: Mapping[str, Any],
     overrides: Mapping[str, CurrentOverride],
-    comment_count: int,
+    latest_status: Mapping[str, Any] | None,
+    status_log_count: int,
     profile: SiteProfile,
     now: dt.datetime,
+    sample_count: int = 0,
 ) -> ComposedRow:
     base = row_facts(facts)
     adjusted = adjusted_need_by(overrides)
@@ -124,7 +161,6 @@ def compose_row(
         facts["erp_results_recorded_at"],
     )
     expedite = overrides.get(EXPEDITE)
-    status = overrides.get(MANUAL_STATUS)
     terminal = profile.stage(base.stage_key).terminal
     coa = _switched_on(overrides.get(RELEASE_ON_COA))
     # An old COA release no longer plans a row that has since been released or has no cycle start.
@@ -136,11 +172,12 @@ def compose_row(
         adjusted=adjusted,
         operative_need_by=operative_need_by(base, adjusted),
         expedite=bool(expedite and expedite.value),
-        manual_status=status.value if status is not None and status.value is not None else None,
+        latest_status=latest_status_of(profile, latest_status),
         air_gap=gap,
         air_gap_hours=hours,
         stage_terminal=terminal,
-        comment_count=comment_count,
+        status_log_count=status_log_count,
+        sample_count=sample_count,
         manual_hold=_switched_on(overrides.get(MANUAL_HOLD)),
         coa_release=coa if plans_on_coa else None,
         overrides=overrides,
@@ -150,13 +187,21 @@ def compose_row(
 def compose_rows(
     mirror_rows: Iterable[Mapping[str, Any]],
     overrides: Mapping[str, Mapping[str, CurrentOverride]],
-    comment_counts: Mapping[str, int],
+    latest_statuses: Mapping[str, Mapping[str, Any]],
+    status_counts: Mapping[str, int],
     profile: SiteProfile,
     now: dt.datetime,
+    sample_counts: Mapping[str, int] | None = None,
 ) -> list[ComposedRow]:
     return [
         compose_row(
-            row, overrides.get(row["row_key"], {}), comment_counts.get(row["row_key"], 0), profile, now
+            row,
+            overrides.get(row["row_key"], {}),
+            latest_statuses.get(row["row_key"]),
+            status_counts.get(row["row_key"], 0),
+            profile,
+            now,
+            (sample_counts or {}).get(row["row_key"], 0),
         )
         for row in mirror_rows
     ]

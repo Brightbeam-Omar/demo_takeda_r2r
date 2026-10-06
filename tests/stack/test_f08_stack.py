@@ -35,6 +35,9 @@ OBJECTS = {
     "reason_codes_v": "mirror_reason_codes",
     "deviations_v": "mirror_deviations",
     "expected_deliveries_v": "mirror_expected_deliveries",
+    "inbound_checks_v": "mirror_inbound_checks",
+    "change_controls_v": "mirror_change_controls",
+    "samples_v": "mirror_samples",
     "pipeline_status_v": "mirror_pipeline_status",
 }
 

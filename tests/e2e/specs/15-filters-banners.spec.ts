@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test'
+import { clickRow } from '../helpers'
 
 const B2077_KEY = 'RM10031|B2077|10000782'
 const pat = { 'X-Demo-User': 'pat' }
@@ -101,13 +102,13 @@ test('F16-AC-04: after the B2077 pull-forward the banner says "1 adjusted needs-
   await expect(banner).toHaveAttribute('data-state', 'empty')
   await expect(banner).toContainText('No adjusted needs-by dates in this period')
 
-  // The F11 flow: the row's pencil, a date, a reason, Save.
+  // The F19 flow: the drawer's Need-by link, a date, a reason, Save.
   const row = page.locator(`[data-testid=batch-row][data-row-key="${B2077_KEY}"]`)
-  await row.click()
-  await page.getByTestId('batch-drawer').getByRole('button', { name: /Edit need-by/ }).click()
-  const modal = page.getByTestId('need-by-modal')
-  await modal.getByLabel('Adjusted need-by').fill('2026-11-26')
-  await modal.getByLabel('Reason').selectOption('CAMPAIGN_PULLED_FORWARD')
+  await clickRow(row)
+  await page.getByTestId('batch-drawer').getByRole('button', { name: 'Open Need-by window' }).click()
+  const modal = page.getByTestId('needby-window')
+  await modal.getByLabel('New Adjusted Date').fill('2026-11-26')
+  await modal.getByLabel('Reason for Change').selectOption('CAMPAIGN_PULLED_FORWARD')
   await modal.getByRole('button', { name: 'Save' }).click()
   await expect(modal).toBeHidden()
   await page.keyboard.press('Escape')

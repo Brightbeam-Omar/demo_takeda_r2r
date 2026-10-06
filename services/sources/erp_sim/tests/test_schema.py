@@ -9,7 +9,20 @@ from sqlalchemy.engine.reflection import Inspector
 
 pytestmark = pytest.mark.integration
 
-TABLES = {"mara", "lfa1", "t001l", "mcha", "mchb", "mseg", "qals", "zinbchk", "mdez", "ekpo", "counter"}
+TABLES = {
+    "mara",
+    "lfa1",
+    "t001l",
+    "mcha",
+    "mchb",
+    "mseg",
+    "qals",
+    "zinbchk",
+    "zinbchk_item",
+    "mdez",
+    "ekpo",
+    "counter",
+}
 
 
 @pytest.fixture(scope="module")
@@ -46,6 +59,7 @@ def test_f04_fr01_keys_match_the_data_contract(inspector: Inspector) -> None:
     assert keys["mseg"] == ["mblnr", "zeile"]
     assert keys["qals"] == ["prueflos"]
     assert keys["zinbchk"] == ["prueflos"]
+    assert keys["zinbchk_item"] == ["prueflos", "seq"]
     assert keys["mdez"] == ["id"]
     assert keys["ekpo"] == ["ebeln", "ebelp"]
 

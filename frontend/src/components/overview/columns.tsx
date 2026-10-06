@@ -5,7 +5,8 @@ import { formatDate } from '../../lib/format'
 import { dash, expectedText, slaDeadline, statusOf } from '../../lib/status'
 import type { Column } from '../datatable/DataTable'
 import { BookmarkStar } from '../table/cells'
-import { AdjustedDate, Dot, ExpectedCell, MaterialCell, SlaDeadline, StageBadge, StatusCell, SystemNeedBy } from './cells'
+import type { WindowName } from '../../state/batch-view'
+import { AdjustedDate, DotButton, ExpectedCell, MaterialCell, SlaDeadline, StageBadge, StatusCell, SystemNeedBy } from './cells'
 
 export interface OverviewColumnDeps {
   terms: Terms
@@ -14,7 +15,8 @@ export interface OverviewColumnDeps {
   bookmarks: ReadonlySet<string>
   onToggleBookmark?: (rowKey: string, on: boolean) => void
   onOpenRow?: (rowKey: string) => void
-  onEditRow?: (rowKey: string) => void
+  /** Open one of the batch windows from a cell (F19-FR-07): the dots, the sample badge, the status bubble, the adjusted date. */
+  onOpenWindow?: (win: WindowName, rowKey: string) => void
   /** The `⋯` menu of a row (F18-FR-08). */
   actions?: (row: Row) => ReactNode
 }
@@ -29,7 +31,7 @@ const LATE_LAST = '9999-12-31'
  * four (First QC Date, Goods Receipt Date, <lims> Approved Date, Usage Decision Date) are off.
  */
 export function overviewColumns(deps: OverviewColumnDeps): Column<Row>[] {
-  const { terms, stageIndex, canEdit, bookmarks, onToggleBookmark, onOpenRow, onEditRow, actions } = deps
+  const { terms, stageIndex, canEdit, bookmarks, onToggleBookmark, onOpenRow, onOpenWindow, actions } = deps
   return [
     {
       id: 'material',
@@ -71,8 +73,8 @@ export function overviewColumns(deps: OverviewColumnDeps): Column<Row>[] {
       ),
     },
     { id: 'lot', header: 'Lot #', text: (row) => row.inspection_lot_no, cell: (row, { hl }) => hl(row.inspection_lot_no) },
-    { id: 'inbound', header: 'Inbound', text: (row) => row.inbound_light ?? 'grey', cell: (row) => <Dot colour={row.inbound_light} what="Inbound check" /> },
-    { id: 'deviation', header: 'Deviation', text: (row) => row.deviation_light ?? 'grey', cell: (row) => <Dot colour={row.deviation_light} what="Deviations" /> },
+    { id: 'inbound', header: 'Inbound', text: (row) => row.inbound_light ?? 'grey', cell: (row) => <DotButton colour={row.inbound_light} what="Inbound check" label="inbound" onOpen={onOpenWindow && (() => onOpenWindow('inbound', row.row_key))} /> },
+    { id: 'deviation', header: 'Deviation', text: (row) => row.deviation_light ?? 'grey', cell: (row) => <DotButton colour={row.deviation_light} what="Deviations" label="quality" onOpen={onOpenWindow && (() => onOpenWindow('quality', row.row_key))} /> },
     {
       id: 'location',
       header: 'Location',
@@ -84,7 +86,9 @@ export function overviewColumns(deps: OverviewColumnDeps): Column<Row>[] {
       header: 'Stage',
       text: (row) => row.stage_label,
       sortValue: (row) => stageIndex.get(row.stage_key) ?? 0,
-      cell: (row) => <StageBadge row={row} index={stageIndex.get(row.stage_key) ?? 0} />,
+      cell: (row) => (
+        <StageBadge row={row} index={stageIndex.get(row.stage_key) ?? 0} onOpenSamples={onOpenWindow && (() => onOpenWindow('samples', row.row_key))} />
+      ),
     },
     {
       id: 'system_need_by',
@@ -98,7 +102,7 @@ export function overviewColumns(deps: OverviewColumnDeps): Column<Row>[] {
       header: 'Adjusted Date',
       text: (row) => (row.adjusted_need_by_date ? date(row.adjusted_need_by_date) : '+ set date'),
       sortValue: (row) => row.adjusted_need_by_date ?? LATE_LAST,
-      cell: (row) => <AdjustedDate row={row} canEdit={canEdit} onEdit={onEditRow} />,
+      cell: (row) => <AdjustedDate row={row} canEdit={canEdit} onEdit={onOpenWindow && ((key) => onOpenWindow('needby', key))} />,
     },
     {
       id: 'sla_deadline',
@@ -126,7 +130,7 @@ export function overviewColumns(deps: OverviewColumnDeps): Column<Row>[] {
       header: 'Status',
       text: (row) => statusOf(row).text,
       sortValue: (row) => row.plan.days_remaining ?? Number.MAX_SAFE_INTEGER,
-      cell: (row, { hl }) => <StatusCell row={row} hl={hl} />,
+      cell: (row, { hl }) => <StatusCell row={row} hl={hl} onOpenStatus={onOpenWindow && (() => onOpenWindow('status', row.row_key))} />,
     },
     {
       id: 'expected',

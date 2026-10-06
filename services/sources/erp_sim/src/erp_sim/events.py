@@ -24,7 +24,20 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from erp_sim import schemas
-from erp_sim.models import Counter, Ekpo, Lfa1, Mara, Mcha, Mchb, Mdez, Mseg, Qals, T001l, Zinbchk
+from erp_sim.models import (
+    Counter,
+    Ekpo,
+    Lfa1,
+    Mara,
+    Mcha,
+    Mchb,
+    Mdez,
+    Mseg,
+    Qals,
+    T001l,
+    Zinbchk,
+    ZinbchkItem,
+)
 
 ZERO = Decimal(0)
 
@@ -164,6 +177,26 @@ def _reopen_line(session: Session, receipt: Mseg, reversed_quantity: Decimal) ->
     return found
 
 
+def _set_items(session: Session, prueflos: str, items: list[schemas.InboundItemIn]) -> list[ZinbchkItem]:
+    """Replace the sub-checks of a lot's inbound check (F19-FR-02); the position gives the sequence number."""
+    for old in session.scalars(select(ZinbchkItem).where(ZinbchkItem.prueflos == prueflos)):
+        session.delete(old)
+    session.flush()
+    rows = [
+        ZinbchkItem(
+            prueflos=prueflos,
+            seq=number,
+            check_code=item.check_code,
+            check_label=item.check_label,
+            outcome=item.outcome,
+        )
+        for number, item in enumerate(items, start=1)
+    ]
+    session.add_all(rows)
+    session.flush()
+    return rows
+
+
 # --- events ------------------------------------------------------------------------------------
 
 
@@ -219,13 +252,16 @@ def goods_receipt(session: Session, body: schemas.GoodsReceiptIn) -> dict[str, A
     check = Zinbchk(prueflos=lot.prueflos, status="open", completed_on=None, notes="")
     session.add(check)
     session.flush()
-    return {
+    result: dict[str, Any] = {
         "mcha": row_dict(batch),
         "mseg": row_dict(movement),
         "mchb": row_dict(stock),
         "qals": row_dict(lot),
         "zinbchk": row_dict(check),
     }
+    if body.items:
+        result["zinbchk_item"] = [row_dict(i) for i in _set_items(session, lot.prueflos, body.items)]
+    return result
 
 
 def goods_receipt_reversal(session: Session, body: schemas.ReversalIn) -> dict[str, Any]:
@@ -315,7 +351,10 @@ def inbound_check(session: Session, body: schemas.InboundCheckIn) -> dict[str, A
     check.completed_on = None if body.status == "open" else _today(body.completed_on)
     check.notes = body.notes
     session.flush()
-    return {"zinbchk": row_dict(check)}
+    result: dict[str, Any] = {"zinbchk": row_dict(check)}
+    if body.items is not None:
+        result["zinbchk_item"] = [row_dict(i) for i in _set_items(session, body.prueflos, body.items)]
+    return result
 
 
 def usage_decision(session: Session, body: schemas.UsageDecisionIn) -> dict[str, Any]:
@@ -358,6 +397,8 @@ def results_recorded(session: Session, body: schemas.ResultsRecordedIn) -> dict[
 def reeval_lot(session: Session, body: schemas.ReevalLotIn) -> dict[str, Any]:
     """Open a re-evaluation lot (09) on an existing batch. An inbound check row exists only if asked for."""
     _batch(session, body.matnr, body.charg)
+    if body.items and body.inbound_check == "none":
+        raise Invalid("items need an inbound check: set inbound_check to open, passed, resolved or failed")
     open_lots = session.scalars(
         select(Qals).where(
             Qals.matnr == body.matnr, Qals.charg == body.charg, Qals.art == "09", Qals.vcode.is_(None)
@@ -383,6 +424,8 @@ def reeval_lot(session: Session, body: schemas.ReevalLotIn) -> dict[str, Any]:
         session.add(check)
         session.flush()
         result["zinbchk"] = row_dict(check)
+        if body.items:
+            result["zinbchk_item"] = [row_dict(i) for i in _set_items(session, lot.prueflos, body.items)]
     return result
 
 

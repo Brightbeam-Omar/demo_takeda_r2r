@@ -55,7 +55,8 @@ def test_f08_fr05_first_sync_replaces_every_mirror_and_sets_the_watermark(
     done = sync(app_factory, FakeReader(published("run-A")))
     assert (done.status, done.error) == ("done", None)
     expected = {"batch_pipeline_v": 3, "weekly_metrics_v": 3, "weekly_metric_rows_v": 3, "pipeline_status_v": 1,
-                "stage_reference_v": 3, "metric_reference_v": 3, "reason_codes_v": 3, "deviations_v": 0, "expected_deliveries_v": 3}  # fmt: skip
+                "stage_reference_v": 3, "metric_reference_v": 3, "reason_codes_v": 3, "deviations_v": 0, "expected_deliveries_v": 3,
+                "inbound_checks_v": 3, "change_controls_v": 3, "samples_v": 3}  # fmt: skip
     for name, (table, *_) in MIRRORS.items():
         assert count(app_factory, table) == expected[name], table
     assert done.rows_upserted == sum(expected.values())
@@ -145,7 +146,16 @@ def test_f08_fr05_readers_see_the_old_mirror_until_commit(
 
 
 @pytest.mark.parametrize(
-    "stale_object", ["batch_pipeline_v", "weekly_metrics_v", "weekly_metric_rows_v", "expected_deliveries_v"]
+    "stale_object",
+    [
+        "batch_pipeline_v",
+        "weekly_metrics_v",
+        "weekly_metric_rows_v",
+        "expected_deliveries_v",
+        "inbound_checks_v",
+        "change_controls_v",
+        "samples_v",
+    ],
 )
 def test_f08_ac08_a_mixed_publish_fails_the_event_and_leaves_the_mirror_alone(
     app_factory: sessionmaker[Session], stale_object: str
@@ -246,6 +256,6 @@ def test_f08_ac04_a_reclaimed_stale_event_is_completed_by_the_next_drain(
 def test_f08_fr04_drain_processes_every_queued_event_then_stops(app_factory: sessionmaker[Session]) -> None:
     first, second = queue(app_factory, "run-A"), queue(app_factory, "run-A")
     assert drain_once(app_factory, FakeReader(published("run-A"))) == 2
-    assert event(app_factory, first).rows_upserted == 22
+    assert event(app_factory, first).rows_upserted == 31
     assert event(app_factory, second).rows_upserted == 0
     assert drain_once(app_factory, FakeReader(published("run-A"))) == 0

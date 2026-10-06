@@ -42,7 +42,8 @@ def test_f06_fr01_every_table_of_the_contract_has_a_schema_with_updated_at() -> 
     names = {name for tables in STAGING.values() for name in tables}
     assert names == {
         "stg_mara", "stg_lfa1", "stg_t001l", "stg_mcha", "stg_mchb", "stg_mseg", "stg_qals", "stg_zinbchk",
-        "stg_mdez", "stg_ekpo", "stg_sample", "stg_deviation", "stg_deviation_link",
+        "stg_zinbchk_item", "stg_mdez", "stg_ekpo", "stg_sample", "stg_deviation", "stg_deviation_link", "stg_change_control",
+        "stg_change_control_link",
     }  # fmt: skip
     assert all("updated_at" in schema.names for schema in STAGING_SCHEMAS.values())
 

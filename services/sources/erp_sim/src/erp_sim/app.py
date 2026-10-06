@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from erp_sim import events, schemas
 from erp_sim.db import get_session
-from erp_sim.models import Mara, Mcha, Mchb, Mseg, Qals, Zinbchk
+from erp_sim.models import Mara, Mcha, Mchb, Mseg, Qals, Zinbchk, ZinbchkItem
 
 SessionDep = Annotated[Session, Depends(get_session, scope="function")]
 
@@ -54,7 +54,14 @@ def lot(prueflos: str, session: SessionDep) -> dict[str, Any]:
     if found is None:
         raise HTTPException(status_code=404, detail=f"unknown inspection lot {prueflos}")
     check = session.get(Zinbchk, prueflos)
-    return {"lot": row_dict(found), "inbound_check": row_dict(check) if check is not None else None}
+    items = session.scalars(
+        select(ZinbchkItem).where(ZinbchkItem.prueflos == prueflos).order_by(ZinbchkItem.seq)
+    )
+    return {
+        "lot": row_dict(found),
+        "inbound_check": row_dict(check) if check is not None else None,
+        "inbound_items": [row_dict(i) for i in items],
+    }
 
 
 # --- scenario writes ---------------------------------------------------------------------------

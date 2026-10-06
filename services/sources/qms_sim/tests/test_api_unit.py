@@ -14,7 +14,12 @@ def client(monkeypatch: pytest.MonkeyPatch) -> TestClient:
 
 
 def test_f04_fr05_the_expected_write_endpoints_exist() -> None:
-    assert WRITE_PATHS == ["/events/deviation-closed", "/events/deviation-opened"]
+    assert WRITE_PATHS == [
+        "/events/change-control-opened",
+        "/events/change-control-status",
+        "/events/deviation-closed",
+        "/events/deviation-opened",
+    ]
 
 
 @pytest.mark.parametrize("path", WRITE_PATHS)

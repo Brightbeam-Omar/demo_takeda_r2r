@@ -79,6 +79,8 @@ Exceptions first. Show the provenance (every number explains itself). Screen-sha
 ## 5. Windows (modals)
 Centred modal, 720–880 px wide, max height 85 vh with internal scroll, title `<Window> — <batch>`, × close, Esc closes, focus trapped. A grey summary panel sits at the top of each. Specified in F19.
 
+**Batch drawer:** non-modal, 560 px, right side, the batch's home with summary sections linking to the windows. The table stays interactive behind it. A window opens on top of the drawer and closing it leaves the drawer open.
+
 ## 6. Terminology (profile `terms`)
 All UI copy that names a system or step reads `terms` from the profile. **Vocabulary rule (amends 03 §9, decided by the product owner):** widely used commercial platform names (e.g. SAP) may appear **only** as values of profile `terms` and stage labels. They never appear in code, data, fixtures or commits, and client-internal platform names never appear anywhere. site_a values:
 `erp: "SAP"`, `lims: "LIMS"`, `qms: "QMS"`, `qc_lab: "QCL"`, `insights_banner: "LIMS–SAP Insights"`, `erp_blocked_tag: "SAP BLOCKED"`, `planner_overrides: "planner overrides"`. Stage labels come from `stages[].label` (site_a: "QCL Ship For External Testing", "QCL Testing"). The data model and code keep generic names (`erp_*`).

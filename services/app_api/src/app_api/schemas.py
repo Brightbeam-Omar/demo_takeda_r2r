@@ -1,6 +1,7 @@
 """Response models of the read API (F09-FR-01, FR-07). They are the source of the generated OpenAPI schema."""
 
 import datetime as dt
+from dataclasses import asdict
 from decimal import Decimal
 from typing import Any
 
@@ -63,6 +64,20 @@ class FlagsOut(BaseModel):
     late: bool
 
 
+class LatestStatusOut(BaseModel):
+    """The newest status-log entry that has a status, with its profile label and colour (F19-FR-05)."""
+
+    status: str
+    label: str
+    colour: str
+    team: str | None
+    reason_code: str | None
+    reason_label: str | None
+    comment: str
+    author_user_key: str
+    at: dt.datetime
+
+
 class RowOut(BaseModel):
     """One lot: the facts the table shows, the human input and the plan computed from both."""
 
@@ -95,7 +110,7 @@ class RowOut(BaseModel):
     adjusted_reason_code: str | None
     operative_need_by: dt.date | None
     expedite: bool
-    manual_status: dict[str, Any] | None
+    latest_status: LatestStatusOut | None
     plan: PlanOut
     air_gap: bool
     air_gap_hours: int
@@ -104,7 +119,8 @@ class RowOut(BaseModel):
     deviation_light: str | None
     inbound_light: str | None
     flags: FlagsOut
-    comment_count: int
+    status_log_count: int
+    sample_count: int
     manual_hold_reason: str | None
     coa_release_reason: str | None
 
@@ -141,7 +157,7 @@ class RowOut(BaseModel):
             adjusted_reason_code=row.adjusted.reason_code if row.adjusted else None,
             operative_need_by=row.operative_need_by,
             expedite=row.expedite,
-            manual_status=dict(row.manual_status) if row.manual_status else None,
+            latest_status=LatestStatusOut(**asdict(row.latest_status)) if row.latest_status else None,
             plan=PlanOut.of(row.plan),
             air_gap=row.air_gap,
             air_gap_hours=row.air_gap_hours,
@@ -165,7 +181,8 @@ class RowOut(BaseModel):
                 air_gap=row.air_gap,
                 late=row.plan.late,
             ),
-            comment_count=row.comment_count,
+            status_log_count=row.status_log_count,
+            sample_count=row.sample_count,
             manual_hold_reason=row.manual_hold["reason"] if row.manual_hold else None,
             coa_release_reason=row.coa_release["reason"] if row.coa_release else None,
         )
@@ -181,6 +198,17 @@ class OverrideOut(BaseModel):
     author_user_key: str
     created_at: dt.datetime
     is_current: bool
+
+
+class StatusLogOut(BaseModel):
+    id: int
+    row_key: str
+    status: str | None
+    team: str | None
+    reason_code: str | None
+    comment: str
+    author_user_key: str
+    at: dt.datetime
 
 
 class CommentOut(BaseModel):
@@ -199,16 +227,56 @@ class DeviationOut(BaseModel):
     opened_on: dt.date | None
     closed_on: dt.date | None
     root_cause_category: str | None
+    causal_factor: str | None
+    investigation_summary: str | None
+    description: str | None
     owner: str | None
 
 
+class InboundItemOut(BaseModel):
+    seq: int
+    check_code: str
+    check_label: str
+    outcome: str
+
+
+class InboundCheckOut(BaseModel):
+    """The inbound check of the lot and its sub-checks (F19-FR-02); a lot without a check has none."""
+
+    prueflos: str
+    status: str
+    deadline: dt.date | None
+    failed_count: int
+    items: list[InboundItemOut]
+
+
+class ChangeControlOut(BaseModel):
+    cc_no: str
+    title: str | None
+    status: str | None
+    current_state: str | None
+    proposed_state: str | None
+    opened_on: dt.date | None
+    effective_on: dt.date | None
+
+
+class SampleOut(BaseModel):
+    sample_id: str
+    status: str | None
+    collected_date: dt.date | None
+    approved_at: dt.datetime | None
+
+
 class RowDetail(RowOut):
-    """``GET /api/rows/{row_key}``: the row with every mirror column, its overrides, comments and siblings."""
+    """``GET /api/rows/{row_key}``: the row with every mirror column, overrides, status log and siblings."""
 
     freshness: Freshness
     facts: dict[str, Any]
     current_overrides: dict[str, OverrideOut]
     override_history: list[OverrideOut]
-    comments: list[CommentOut]
+    status_log: list[StatusLogOut]
     deviations: list[DeviationOut]
+    inbound_check: InboundCheckOut | None
+    changes: list[ChangeControlOut]
+    samples: list[SampleOut]
     siblings: list[RowOut]

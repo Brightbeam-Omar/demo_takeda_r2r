@@ -135,10 +135,32 @@ class Zinbchk(TimestampMixin, Base):
 
     __tablename__ = "zinbchk"
     prueflos: Mapped[str] = mapped_column(ForeignKey("qals.prueflos"), primary_key=True)
-    status: Mapped[str] = mapped_column(Text)  # open / passed / failed
+    status: Mapped[str] = mapped_column(Text)  # open / passed / resolved / failed (F19)
     completed_on: Mapped[date | None] = mapped_column(Date)
     notes: Mapped[str] = mapped_column(Text, default="", server_default="")
-    __table_args__ = (CheckConstraint("status in ('open', 'passed', 'failed')", name="ck_zinbchk_status"),)
+    __table_args__ = (
+        CheckConstraint("status in ('open', 'passed', 'resolved', 'failed')", name="ck_zinbchk_status"),
+    )
+
+
+INBOUND_OUTCOMES = ("PASS", "FAIL", "PENDING", "NO", "COMP", "APRV", "DCPS")
+
+
+class ZinbchkItem(TimestampMixin, Base):
+    """One sub-check of an inbound check (F19-FR-02)."""
+
+    __tablename__ = "zinbchk_item"
+    prueflos: Mapped[str] = mapped_column(ForeignKey("zinbchk.prueflos"), primary_key=True)
+    seq: Mapped[int] = mapped_column(primary_key=True, autoincrement=False)
+    check_code: Mapped[str] = mapped_column(Text)
+    check_label: Mapped[str] = mapped_column(Text)
+    outcome: Mapped[str] = mapped_column(Text)  # PASS FAIL PENDING NO COMP APRV DCPS
+    __table_args__ = (
+        CheckConstraint(
+            "outcome in ('PASS', 'FAIL', 'PENDING', 'NO', 'COMP', 'APRV', 'DCPS')",
+            name="ck_zinbchk_item_outcome",
+        ),
+    )
 
 
 class Mdez(TimestampMixin, Base):

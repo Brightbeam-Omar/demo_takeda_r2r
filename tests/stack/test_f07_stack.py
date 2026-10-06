@@ -25,7 +25,8 @@ LAKE = Path(os.environ.get("LAKEHOUSE_HOST_DIR", REPO_ROOT / "lakehouse"))
 STEPS = ["setup", "extract", "transform", "snapshot_aggregate", "publish", "notify"]
 PUBLISHED = [
     "batch_pipeline_v", "weekly_metrics_v", "weekly_metric_rows_v", "stage_reference_v", "metric_reference_v",
-    "reason_codes_v", "deviations_v", "expected_deliveries_v", "pipeline_status_v",
+    "reason_codes_v", "deviations_v", "expected_deliveries_v", "inbound_checks_v", "change_controls_v",
+    "samples_v", "pipeline_status_v",
 ]  # fmt: skip
 
 

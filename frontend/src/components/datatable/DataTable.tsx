@@ -21,6 +21,13 @@ export type { CellContext, Column } from './types'
 const PAGE_SIZES = [25, 50, 100]
 const STORAGE_PREFIX = 'r2r.columns.'
 
+/** Sets one header filter box from outside (a new `token` is a new request): the drawer fills Batch on close. */
+export interface ColumnFilterRequest {
+  column: string
+  value: string
+  token: number
+}
+
 interface Props<T> {
   rows: T[]
   columns: Column<T>[]
@@ -53,8 +60,11 @@ interface Props<T> {
   onRowOpen?: (row: T) => void
   /** A letter pressed while the table has focus, with the row in focus (`b` bookmarks). */
   onRowKey?: (key: string, row: T) => void
+  filterRequest?: ColumnFilterRequest | null
   keyboardHint?: string
   ariaLabel?: string
+  /** Small tables (the Sample Data window) drop the second toolbar and the pager. Default: both shown. */
+  compact?: boolean
 }
 
 const text = (value: unknown) => String(value ?? '')
@@ -101,8 +111,10 @@ export function DataTable<T>({
   rowAccent,
   onRowOpen,
   onRowKey,
+  filterRequest,
   keyboardHint,
   ariaLabel = 'Table',
+  compact = false,
 }: Props<T>) {
   // Unsorted = the order the rows arrive in (the server's exceptions-first order for the Overview).
   const [sorting, setSorting] = useState<SortingState>([])
@@ -113,6 +125,12 @@ export function DataTable<T>({
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: defaultPageSize })
   const [visible, setVisible] = useState<Set<string>>(() => loadVisible(columns, columnsKey))
   const [active, setActive] = useState<number | null>(null)
+  // A new request replaces that column's filter (adjusting state while rendering, not in an effect).
+  const [seenRequest, setSeenRequest] = useState(filterRequest?.token ?? null)
+  if (filterRequest && filterRequest.token !== seenRequest) {
+    setSeenRequest(filterRequest.token)
+    setColumnFilters((current) => [...current.filter((entry) => entry.id !== filterRequest.column), { id: filterRequest.column, value: filterRequest.value }])
+  }
   const scroller = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -340,8 +358,8 @@ export function DataTable<T>({
           {keyboardHint}
         </p>
       )}
-      {toolbar('bottom')}
-      <Pagination table={table} pageSizes={pageSizes} />
+      {!compact && toolbar('bottom')}
+      {!compact && <Pagination table={table} pageSizes={pageSizes} />}
     </div>
   )
 }

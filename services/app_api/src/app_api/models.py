@@ -124,12 +124,29 @@ class OverrideValue(Base):
 
 
 class Comment(Base):
+    """Legacy since F19: the rows were copied into ``status_log``. Kept for history, no longer read."""
+
     __tablename__ = "comment"
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     row_key: Mapped[str] = mapped_column(Text, index=True)
     body: Mapped[str] = mapped_column(Text)
     author_user_key: Mapped[str] = mapped_column(ForeignKey("app_user.user_key"))
     created_at: Mapped[datetime] = mapped_column(STAMP)
+
+
+class StatusLog(Base):
+    """Insert-only status and comment entries of a row (F19-FR-05). ``status`` is null for plain comments."""
+
+    __tablename__ = "status_log"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    row_key: Mapped[str] = mapped_column(Text)
+    status: Mapped[str | None] = mapped_column(Text)  # a profile `status_options` key
+    team: Mapped[str | None] = mapped_column(Text)
+    reason_code: Mapped[str | None] = mapped_column(Text)  # a profile `status_reasons` key
+    comment: Mapped[str] = mapped_column(Text)
+    author_user_key: Mapped[str] = mapped_column(ForeignKey("app_user.user_key"))
+    at: Mapped[datetime] = mapped_column(STAMP)  # demo clock
+    __table_args__ = (Index("ix_status_log_row_key", "row_key", "id"),)
 
 
 class AuditEvent(Base):
@@ -327,7 +344,8 @@ MIRRORS: dict[str, tuple[str, MirrorColumns, tuple[str, ...], tuple[tuple[str, .
         "mirror_deviations",
         (("deviation_no", TEXT), ("material_no", TEXT), ("batch_no", TEXT), ("title", TEXT),
          ("severity", TEXT), ("status", TEXT), ("opened_on", DATE), ("closed_on", DATE),
-         ("root_cause_category", TEXT), ("owner", TEXT)),
+         ("root_cause_category", TEXT), ("causal_factor", TEXT), ("investigation_summary", TEXT),
+         ("description", TEXT), ("owner", TEXT), ("run_id", TEXT)),
         ("deviation_no", "material_no", "batch_no"),
         (("material_no", "batch_no"),),
     ),
@@ -339,6 +357,28 @@ MIRRORS: dict[str, tuple[str, MirrorColumns, tuple[str, ...], tuple[tuple[str, .
          ("planned_location_type", TEXT), ("overdue", BOOLEAN), ("run_id", TEXT)),
         ("ebeln", "ebelp"),
         (("material_no",),),
+    ),
+    "inbound_checks_v": (
+        "mirror_inbound_checks",
+        (("row_key", TEXT), ("prueflos", TEXT), ("status", TEXT), ("deadline", DATE),
+         ("failed_count", INTEGER), ("items_json", TEXT), ("run_id", TEXT)),
+        ("row_key",),
+        (),
+    ),
+    "change_controls_v": (
+        "mirror_change_controls",
+        (("cc_no", TEXT), ("material_no", TEXT), ("batch_no", TEXT), ("title", TEXT), ("status", TEXT),
+         ("current_state", TEXT), ("proposed_state", TEXT), ("opened_on", DATE), ("effective_on", DATE),
+         ("run_id", TEXT)),
+        ("cc_no", "material_no", "batch_no"),
+        (("material_no", "batch_no"),),
+    ),
+    "samples_v": (
+        "mirror_samples",
+        (("row_key", TEXT), ("sample_id", TEXT), ("status", TEXT), ("collected_date", DATE),
+         ("approved_at", TIMESTAMP), ("run_id", TEXT)),
+        ("row_key", "sample_id"),
+        (),
     ),
 }  # fmt: skip
 

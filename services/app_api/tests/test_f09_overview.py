@@ -71,9 +71,9 @@ def test_f09_fr02_the_response_shape_and_freshness(client: TestClient, mirror: l
     assert body["freshness"]["contract_run_id"] == "run-1" and body["freshness"]["freshness_minutes"] == 0
     assert body["flow_strip"][0]["stage_key"] == "pending"
     first = body["rows"][0]
-    for field in ("operative_need_by", "adjusted_need_by_date", "expedite", "manual_status", "plan",
+    for field in ("operative_need_by", "adjusted_need_by_date", "expedite", "latest_status", "plan",
                   "air_gap", "air_gap_hours", "late", "days_in_stage", "deviation_light", "inbound_light",
-                  "flags", "comment_count"):  # fmt: skip
+                  "flags", "status_log_count"):  # fmt: skip
         assert field in first, field
 
 

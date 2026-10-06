@@ -1,9 +1,10 @@
 """Row detail, the explain endpoints and human input on one row (F09-FR-04, FR-06)."""
 
 import datetime as dt
+import json
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
 from r2r_core.profile import SiteProfile
 from sqlalchemy import select, text
@@ -12,17 +13,28 @@ from sqlalchemy.orm import Session
 from app_api.auth import current_user, require_role
 from app_api.db import get_session
 from app_api.deps import get_profile
-from app_api.models import AppUser, Comment, OverrideValue
-from app_api.schemas import CommentOut, DeviationOut, OverrideOut, PlanOut, RowDetail, RowOut
-from app_api.services import overrides
+from app_api.models import AppUser, OverrideValue
+from app_api.schemas import (
+    ChangeControlOut,
+    CommentOut,
+    DeviationOut,
+    InboundCheckOut,
+    InboundItemOut,
+    OverrideOut,
+    PlanOut,
+    RowDetail,
+    RowOut,
+    SampleOut,
+    StatusLogOut,
+)
+from app_api.services import overrides, status_log
 from app_api.services.compose import ADJUSTED, EXPEDITE, CurrentOverride, compose_row
 from app_api.services.store import load_composed
 
 router = APIRouter()
 
 PLANNERS = ("planner", "admin")
-STATUS_SETTERS = ("qc_lead", "qa_release", "admin")
-COMMENTERS = ("planner", "qc_lead", "qa_release", "admin")
+LOGGERS = ("planner", "qc_lead", "qa_release", "admin")  # F19-FR-05: every role except viewer
 HOLDERS = ("planner", "qa_release", "admin")  # F18-FR-08
 COA_RELEASERS = ("qa_release", "admin")
 
@@ -44,13 +56,33 @@ class PreviewOut(BaseModel):
 
 
 class StatusIn(BaseModel):
+    """Deprecated body of ``PUT /rows/{row_key}/status`` (F19-FR-05): a wrapper over the status log."""
+
     rag: Literal["red", "amber", "green"] | None = None
     reason: str | None = None
     team: str | None = None
 
 
 class CommentIn(BaseModel):
+    """Deprecated body of ``POST /rows/{row_key}/comments`` (F19-FR-05): a wrapper over the status log."""
+
     body: str
+
+
+class StatusLogIn(BaseModel):
+    status: str
+    team: str | None = None
+    reason_code: str | None = None
+    comment: str
+
+
+class StatusLogPage(BaseModel):
+    count: int
+    latest: StatusLogOut | None
+    entries: list[StatusLogOut]
+
+
+DEPRECATION = {"Deprecation": "true", "Link": '</api/rows/{row_key}/status-log>; rel="successor-version"'}
 
 
 class ToggleIn(BaseModel):
@@ -58,6 +90,44 @@ class ToggleIn(BaseModel):
 
     on: bool
     reason: str
+
+
+def _inbound_check(session: Session, row_key: str) -> InboundCheckOut | None:
+    found = (
+        session.execute(
+            text(
+                "SELECT prueflos, status, deadline, failed_count, items_json FROM mirror_inbound_checks "
+                "WHERE row_key = :k"
+            ),
+            {"k": row_key},
+        )
+        .mappings()
+        .first()
+    )
+    if found is None:
+        return None
+    return InboundCheckOut(
+        prueflos=found["prueflos"],
+        status=found["status"],
+        deadline=found["deadline"],
+        failed_count=found["failed_count"],
+        items=[InboundItemOut(**item) for item in json.loads(found["items_json"] or "[]")],
+    )
+
+
+def _latest_of(row: object) -> dict[str, object] | None:
+    """The composed row's latest status as the mapping ``compose_row`` takes again (used by the preview)."""
+    latest = getattr(row, "latest_status", None)
+    if latest is None:
+        return None
+    return {
+        "status": latest.status,
+        "team": latest.team,
+        "reason_code": latest.reason_code,
+        "comment": latest.comment,
+        "author_user_key": latest.author_user_key,
+        "at": latest.at,
+    }
 
 
 def recomputed(session: Session, profile: SiteProfile, row_key: str) -> RowOut:
@@ -99,14 +169,29 @@ def get_row(
             select(OverrideValue).where(OverrideValue.row_key == row_key).order_by(OverrideValue.id.desc())
         )
     )
-    comments = session.scalars(select(Comment).where(Comment.row_key == row_key).order_by(Comment.id.desc()))
+    log = status_log.entries(session, row_key)
     batch_key = (found.facts["material_no"], found.facts["batch_no"])
     deviations = session.execute(
         text(
-            "SELECT deviation_no, title, severity, status, opened_on, closed_on, root_cause_category, owner "
+            "SELECT deviation_no, title, severity, status, opened_on, closed_on, root_cause_category, "
+            "causal_factor, investigation_summary, description, owner "
             "FROM mirror_deviations WHERE material_no = :m AND batch_no = :b ORDER BY deviation_no"
         ),
         {"m": batch_key[0], "b": batch_key[1]},
+    ).mappings()
+    changes = session.execute(
+        text(
+            "SELECT cc_no, title, status, current_state, proposed_state, opened_on, effective_on "
+            "FROM mirror_change_controls WHERE material_no = :m AND batch_no = :b ORDER BY cc_no"
+        ),
+        {"m": batch_key[0], "b": batch_key[1]},
+    ).mappings()
+    samples = session.execute(
+        text(
+            "SELECT sample_id, status, collected_date, approved_at FROM mirror_samples "
+            "WHERE row_key = :k ORDER BY sample_id"
+        ),
+        {"k": row_key},
     ).mappings()
     siblings = [
         RowOut.of(row, labels)
@@ -119,8 +204,11 @@ def get_row(
         facts=dict(found.facts),
         current_overrides={o.field: _override_out(o) for o in history if o.is_current},
         override_history=[_override_out(o) for o in history],
-        comments=[CommentOut.model_validate(c, from_attributes=True) for c in comments],
+        status_log=[StatusLogOut.model_validate(e, from_attributes=True) for e in log],
         deviations=[DeviationOut(**d) for d in deviations],
+        inbound_check=_inbound_check(session, row_key),
+        changes=[ChangeControlOut(**c) for c in changes],
+        samples=[SampleOut(**x) for x in samples],
         siblings=siblings,
     )
 
@@ -167,7 +255,7 @@ def preview_need_by(
         now,
     )
     proposed[EXPEDITE] = CurrentOverride(body.expedite, None, body.note, 0, "preview", now)
-    after = compose_row(found.facts, proposed, found.comment_count, profile, now)
+    after = compose_row(found.facts, proposed, _latest_of(found), found.status_log_count, profile, now)
     return PreviewOut(
         current=PlanOut.of(found.plan),
         preview=PlanOut.of(after.plan),
@@ -176,15 +264,49 @@ def preview_need_by(
     )
 
 
-@router.put("/rows/{row_key}/status")
+@router.get("/rows/{row_key}/status-log", dependencies=[Depends(current_user)])
+def get_status_log(
+    row_key: str, session: Annotated[Session, Depends(get_session, scope="function")]
+) -> StatusLogPage:
+    status_log.require_row(session, row_key)
+    found = [
+        StatusLogOut.model_validate(e, from_attributes=True) for e in status_log.entries(session, row_key)
+    ]
+    return StatusLogPage(
+        count=len(found), latest=next((e for e in found if e.status is not None), None), entries=found
+    )
+
+
+@router.post("/rows/{row_key}/status-log", status_code=201)
+def post_status_log(
+    row_key: str,
+    body: StatusLogIn,
+    session: Annotated[Session, Depends(get_session, scope="function")],
+    user: Annotated[AppUser, Depends(require_role(*LOGGERS))],
+    profile: Annotated[SiteProfile, Depends(get_profile)],
+) -> StatusLogOut:
+    entry = status_log.add_entry(
+        session, profile, user, row_key, body.status, body.comment, body.team, body.reason_code
+    )
+    return StatusLogOut.model_validate(entry, from_attributes=True)
+
+
+@router.put("/rows/{row_key}/status", deprecated=True)
 def put_status(
     row_key: str,
     body: StatusIn,
+    response: Response,
     session: Annotated[Session, Depends(get_session, scope="function")],
-    user: Annotated[AppUser, Depends(require_role(*STATUS_SETTERS))],
+    user: Annotated[AppUser, Depends(require_role(*LOGGERS))],
     profile: Annotated[SiteProfile, Depends(get_profile)],
 ) -> RowOut:
-    overrides.set_status(session, user, row_key, body.rag, body.reason, body.team)
+    """Deprecated: appends a status-log entry (green/amber/red map to on_track/at_risk/blocked)."""
+    if body.rag is not None and not (body.reason and body.reason.strip()):
+        raise HTTPException(status_code=422, detail="reason is required when a status is set")
+    status = status_log.RAG_TO_STATUS[body.rag] if body.rag else "on_track"
+    comment = body.reason if body.rag else "Cleared"
+    status_log.add_entry(session, profile, user, row_key, status, comment or "", body.team)
+    response.headers.update({k: v.replace("{row_key}", row_key) for k, v in DEPRECATION.items()})
     return recomputed(session, profile, row_key)
 
 
@@ -212,18 +334,22 @@ def post_coa_release(
     return recomputed(session, profile, row_key)
 
 
-@router.post("/rows/{row_key}/comments", status_code=201)
+@router.post("/rows/{row_key}/comments", status_code=201, deprecated=True)
 def post_comment(
     row_key: str,
     body: CommentIn,
+    response: Response,
     session: Annotated[Session, Depends(get_session, scope="function")],
-    user: Annotated[AppUser, Depends(require_role(*COMMENTERS))],
+    user: Annotated[AppUser, Depends(require_role(*LOGGERS))],
+    profile: Annotated[SiteProfile, Depends(get_profile)],
 ) -> CommentOut:
-    comment = overrides.add_comment(session, user, row_key, body.body)
+    """Deprecated: appends a status-log entry without a status."""
+    entry = status_log.add_entry(session, profile, user, row_key, None, body.body)
+    response.headers.update({k: v.replace("{row_key}", row_key) for k, v in DEPRECATION.items()})
     return CommentOut(
-        id=comment.id,
-        row_key=comment.row_key,
-        body=comment.body,
-        author_user_key=comment.author_user_key,
-        created_at=comment.created_at,
+        id=entry.id,
+        row_key=entry.row_key,
+        body=entry.comment,
+        author_user_key=entry.author_user_key,
+        created_at=entry.at,
     )
