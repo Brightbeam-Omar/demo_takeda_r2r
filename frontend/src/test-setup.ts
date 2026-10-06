@@ -10,3 +10,6 @@ globalThis.ResizeObserver ??= class {
   unobserve() {}
   disconnect() {}
 }
+
+// jsdom has no layout: scrolling a row into view is a no-op there.
+Element.prototype.scrollIntoView = () => undefined

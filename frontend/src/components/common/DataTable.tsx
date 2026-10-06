@@ -35,7 +35,10 @@ const PAGE_SIZES = [10, 25, 50]
 
 const csvCell = (value: string) => (/[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value)
 
-/** The shared list table for the Overview windows: search all columns, sort, paginate, reset, export (F16-FR-07). F18 extends it. */
+/**
+ * The list table of the Overview windows (F16-FR-07). F18's shared table is `components/datatable`; this one stays
+ * until its tests can move with it (OQ-105: Reset Table there also clears the search, here it does not).
+ */
 export function DataTable<T>({ rows, columns, exportName, rowKey, empty = 'Nothing to show.' }: Props<T>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [search, setSearch] = useState('')
