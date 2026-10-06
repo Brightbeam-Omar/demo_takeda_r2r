@@ -53,7 +53,7 @@ export function BatchDrawer({ rowKey, onOpenRow, onClose, onOpenWindow }: Props)
     >
       <div className="flex items-start justify-between gap-3 px-5 py-4">
         <div className="min-w-0">
-          <h2 className="truncate text-lg font-semibold text-slate-900">{data ? `${data.material_no} · ${data.material_desc ?? ''}` : 'Batch'}</h2>
+          <h2 className="text-lg leading-tight font-semibold break-words text-slate-900">{data ? `${data.material_no} · ${data.material_desc ?? ''}` : 'Batch'}</h2>
           {data ? (
             <p className="text-[13px] text-slate-600">
               Batch {data.batch_no} · lot {data.inspection_lot_no} ({data.lot_type === '01' ? 'initial' : 're-evaluation'})
@@ -64,7 +64,7 @@ export function BatchDrawer({ rowKey, onOpenRow, onClose, onOpenWindow }: Props)
           ✕
         </button>
       </div>
-      <div className="flex-1 overflow-auto pb-16">
+      <div className="flex-1 overflow-auto pb-24">
         {detail.isPending ? (
           <div className="p-5">
             <Skeleton label="batch" height="h-64" />

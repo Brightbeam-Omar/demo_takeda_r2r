@@ -117,3 +117,37 @@ test('F11-FR-07: ?row= opens the drawer even when the table filter hides that ro
   await page.goto('/overview?row=' + encodeURIComponent('NOPE|B0|0'))
   await expect(page.getByTestId('batch-drawer')).toContainText('Batch not found')
 })
+
+test('F19 review: the sidebar folds to icons while the drawer is open and comes back; a sidebar the user collapsed stays collapsed', async ({ page }) => {
+  await page.goto('/overview')
+  const sidebar = page.getByTestId('sidebar')
+  const rows = page.getByTestId('batch-row')
+  await expect(rows.first()).toBeVisible()
+  await expect(sidebar).toHaveCSS('width', '232px')
+  await clickRow(rows.first())
+  await expect(page.getByTestId('batch-drawer')).toBeVisible()
+  await expect(sidebar).toHaveCSS('width', '49px')
+  await expect(page.getByRole('combobox', { name: 'Persona' })).toBeVisible() // still reachable while folded
+  await page.getByRole('button', { name: 'Close drawer' }).click()
+  await expect(sidebar).toHaveCSS('width', '232px') // restored
+
+  await page.getByRole('button', { name: 'Collapse sidebar' }).click()
+  await expect(sidebar).toHaveCSS('width', '49px')
+  await clickRow(rows.first())
+  await expect(page.getByTestId('batch-drawer')).toBeVisible()
+  await page.getByRole('button', { name: 'Close drawer' }).click()
+  await expect(sidebar).toHaveCSS('width', '49px') // the user's own choice stays
+})
+
+test('F19 review: the Feedback button never covers the last row of the drawer', async ({ page }) => {
+  await page.goto('/overview')
+  await clickRow(page.getByTestId('batch-row').first())
+  const drawer = page.getByTestId('batch-drawer')
+  const last = drawer.getByRole('group', { name: 'Source refs' }).or(drawer.locator('section[aria-label="Source refs"]'))
+  await last.scrollIntoViewIfNeeded()
+  await drawer.locator('div.overflow-auto').evaluate((el) => el.scrollTo(0, el.scrollHeight))
+  const section = (await last.first().boundingBox())!
+  const feedback = (await page.getByRole('button', { name: /Feedback/ }).first().boundingBox())!
+  const overlaps = section.x < feedback.x + feedback.width && feedback.x < section.x + section.width && section.y < feedback.y + feedback.height && feedback.y < section.y + section.height
+  expect(overlaps).toBe(false)
+})

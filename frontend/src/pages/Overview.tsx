@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Row } from '../api/queries'
 import { useExpectedDeliveries, useMe, useMetrics, useOverview, useReference, useToggleBookmark } from '../api/queries'
 import { EmptyState, ErrorState, Skeleton } from '../components/common/States'
@@ -21,6 +21,7 @@ import { ShowingLine, TagRow } from '../components/tags/TagRow'
 import { MetricsRibbon, metricsTitle } from '../components/metrics/MetricsRibbon'
 import { useJustSaved } from '../state/just-saved'
 import { useRowChanges } from '../state/row-changes'
+import { setDrawerOpen } from '../state/sidebar'
 import { useBatchView } from '../state/batch-view'
 import { EMPTY_FILTERS, activeFilterCount, toApiParams, useUrlFilters } from '../state/url-filters'
 import type { ColumnFilterRequest } from '../components/datatable/DataTable'
@@ -28,6 +29,12 @@ import type { ColumnFilterRequest } from '../components/datatable/DataTable'
 export function Overview() {
   const { filters, update, clearAll } = useUrlFilters()
   const view = useBatchView()
+  const drawerShowing = view.drawerRow !== null
+  // The sidebar folds to icons while the drawer is open and comes back when it closes (F19 review).
+  useEffect(() => {
+    setDrawerOpen(drawerShowing)
+    return () => setDrawerOpen(false)
+  }, [drawerShowing])
   const [batchFilter, setBatchFilter] = useState<ColumnFilterRequest | null>(null)
   const [openWindow, setOpenWindow] = useState<'adjusted' | 'insights' | 'deliveries' | null>(null)
   const justSaved = useJustSaved()

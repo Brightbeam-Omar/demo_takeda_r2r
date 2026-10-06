@@ -1,6 +1,6 @@
-import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useMe, useReference, useUsers } from '../../api/queries'
+import { toggleSidebar, useSidebarCollapsed } from '../../state/sidebar'
 import { PersonaSwitcher } from './PersonaSwitcher'
 import { ADMIN, VIEWS, type NavItem } from './nav'
 
@@ -39,7 +39,7 @@ function Group({ title, items, collapsed }: { title: string; items: NavItem[]; c
 }
 
 export function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false)
+  const collapsed = useSidebarCollapsed()
   const me = useMe()
   const users = useUsers()
   const reference = useReference()
@@ -74,7 +74,7 @@ export function Sidebar() {
           type="button"
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           className="rounded-chip px-2 py-1 text-ink-2 hover:bg-panel"
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={toggleSidebar}
         >
           {collapsed ? '»' : '«'}
         </button>
@@ -83,10 +83,10 @@ export function Sidebar() {
         <Group title="VIEWS" items={VIEWS} collapsed={collapsed} />
         <Group title="ADMIN" items={admin} collapsed={collapsed} />
       </nav>
-      {!collapsed && demoMode && (
-        <div className="space-y-2 border-t border-hairline p-3 text-xs text-ink-2">
-          <PersonaSwitcher />
-          <div>{reference.data?.site_name ?? ''}</div>
+      {demoMode && (
+        <div className={`space-y-2 border-t border-hairline text-xs text-ink-2 ${collapsed ? 'p-1.5' : 'p-3'}`}>
+          <PersonaSwitcher compact={collapsed} />
+          {!collapsed && <div>{reference.data?.site_name ?? ''}</div>}
         </div>
       )}
     </aside>

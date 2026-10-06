@@ -88,6 +88,35 @@ test('F18-AC-01: at 1440x900 no header or cell of the default view is truncated 
   await expect(page.getByTestId('batch-row').first().getByText(/Onsite|3PL/)).toBeVisible()
 })
 
+test('F18-AC-01 / F19 review: with the drawer open at 1440x900 no metric title, stage card label or table cell is clipped by an ellipsis', async ({ page }) => {
+  await page.goto('/overview')
+  const row = page.getByTestId('batch-row').first()
+  await expect(row).toBeVisible()
+  await row.locator('td').nth(1).click()
+  await expect(page.getByTestId('batch-drawer')).toBeVisible()
+  await expect(page.getByTestId('sidebar')).toHaveCSS('width', '49px') // the sidebar folded to icons
+  const clipped = await page.evaluate(() => {
+    const out: string[] = []
+    const scopes = ['[data-testid^=metric-M]', 'button[data-testid^=flow-]', '[role=grid] th', '[role=grid] td']
+    for (const scope of scopes) {
+      for (const root of document.querySelectorAll(scope)) {
+        for (const el of [root, ...root.querySelectorAll('*')]) {
+          const style = getComputedStyle(el)
+          const squeezed = el.scrollWidth > el.clientWidth + 1 && el.clientWidth > 0
+          if (style.textOverflow === 'ellipsis') out.push(`ellipsis: ${scope} "${(el.textContent ?? '').trim().slice(0, 40)}"`)
+          if (squeezed && el.textContent?.trim() && style.overflowX !== 'visible' && !el.matches('[data-testid^=metric-M]')) {
+            out.push(`clipped: ${scope} "${el.textContent.trim().slice(0, 40)}" ${el.scrollWidth}>${el.clientWidth}`)
+          }
+        }
+      }
+    }
+    return out
+  })
+  expect(clipped).toEqual([])
+  // A metric title wraps to a second line instead of being cut: Metric 6 shows its whole title.
+  await expect(page.getByTestId('metric-M6')).toContainText('Testing On-Time')
+})
+
 test('F18-AC-02: searching B20 narrows the table, marks matches in Batch and updates the count; × clears it', async ({ page }) => {
   await page.goto('/overview')
   await expect(page.getByTestId('batch-row').first()).toBeVisible()

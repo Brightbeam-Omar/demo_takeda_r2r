@@ -27,7 +27,7 @@ export function MetricCard({ metric, stageLabel }: Props) {
   const heading = (
     <>
       <div className="text-[11px] font-semibold tracking-wider text-ink-2 uppercase">Metric {number}</div>
-      <div className="truncate text-sm font-medium text-ink" title={metric.label}>
+      <div className="text-sm leading-tight font-medium break-words text-ink" title={metric.label}>
         {metric.label}
       </div>
     </>
