@@ -21,12 +21,23 @@ from r2r_pipeline.sql_shim import render_file
 _PACKAGE_SQL = Path(__file__).parent / "sql"
 SQL_DIR = (_PACKAGE_SQL if _PACKAGE_SQL.is_dir() else Path(__file__).resolve().parents[2] / "sql") / "metrics"
 
-COMPLETE_WEEKS = 12
+COMPLETE_WEEKS = 52  # F20-FR-02 (was 12)
+COMPLETE_MONTHS = 12
 
 WEEKLY_METRICS_SCHEMA = pa.schema(
     [
         ("metric_id", pa.string()),
         ("week_start", pa.date32()),
+        ("completed", pa.int64()),
+        ("on_time", pa.int64()),
+        ("pct", pa.decimal128(5, 1)),
+        ("run_id", pa.string()),
+    ]
+)
+MONTHLY_METRICS_SCHEMA = pa.schema(
+    [
+        ("metric_id", pa.string()),
+        ("month_start", pa.date32()),
         ("completed", pa.int64()),
         ("on_time", pa.int64()),
         ("pct", pa.decimal128(5, 1)),
@@ -58,13 +69,26 @@ def pipeline_metrics(profile: SiteProfile) -> list[Metric]:
 
 
 def metric_weeks(snapshot_date: date) -> list[tuple[date, date]]:
-    """``(week_start, week_end)`` of the 12 complete ISO weeks before the snapshot's week, then that week to
+    """``(week_start, week_end)`` of the 52 complete ISO weeks before the snapshot's week, then that week to
     date. ``week_end`` is exclusive; for the current week it is the day after the snapshot date."""
     current = snapshot_date - timedelta(days=snapshot_date.weekday())
     weeks = [
         (current - timedelta(weeks=n), current - timedelta(weeks=n - 1)) for n in range(COMPLETE_WEEKS, 0, -1)
     ]
     return [*weeks, (current, snapshot_date + timedelta(days=1))]
+
+
+def _add_months(first_of_month: date, months: int) -> date:
+    index = first_of_month.year * 12 + first_of_month.month - 1 + months
+    return date(index // 12, index % 12 + 1, 1)
+
+
+def metric_months(snapshot_date: date) -> list[tuple[date, date]]:
+    """``(month_start, month_end)`` of the 12 complete calendar months before the snapshot's month, then that
+    month to date. ``month_end`` is exclusive; for the current month it is the day after the snapshot date."""
+    current = snapshot_date.replace(day=1)
+    months = [(_add_months(current, -n), _add_months(current, -n + 1)) for n in range(COMPLETE_MONTHS, 0, -1)]
+    return [*months, (current, snapshot_date + timedelta(days=1))]
 
 
 def sla_rows(snapshot: pa.Table) -> pa.Table:
@@ -81,9 +105,10 @@ def sla_rows(snapshot: pa.Table) -> pa.Table:
     return pa.Table.from_pylist(out, schema=schema)
 
 
-def compute_weekly_metrics(ctx: RunContext, snapshot: pa.Table) -> tuple[pa.Table, pa.Table]:
-    """``(weekly_metrics, weekly_metric_rows)`` for the snapshot, each with the run id."""
+def compute_metrics(ctx: RunContext, snapshot: pa.Table) -> tuple[pa.Table, pa.Table, pa.Table]:
+    """``(weekly_metrics, weekly_metric_rows, monthly_metrics)`` for the snapshot, each with the run id."""
     weeks = metric_weeks(ctx.snapshot_date)
+    months = metric_months(ctx.snapshot_date)
     connection = duckdb.connect()
     connection.register("snapshot", snapshot)
     connection.register("row_sla", sla_rows(snapshot))
@@ -93,6 +118,15 @@ def compute_weekly_metrics(ctx: RunContext, snapshot: pa.Table) -> tuple[pa.Tabl
             {
                 "week_start": pa.array([w[0] for w in weeks], pa.date32()),
                 "week_end": pa.array([w[1] for w in weeks], pa.date32()),
+            }
+        ),
+    )
+    connection.register(
+        "metric_months",
+        pa.table(
+            {
+                "month_start": pa.array([m[0] for m in months], pa.date32()),
+                "month_end": pa.array([m[1] for m in months], pa.date32()),
             }
         ),
     )
@@ -106,8 +140,13 @@ def compute_weekly_metrics(ctx: RunContext, snapshot: pa.Table) -> tuple[pa.Tabl
     rows = connection.execute(
         "SELECT * FROM metric_rows ORDER BY metric_id, week_start, row_key"
     ).to_arrow_table()
-    return _with_run_id(weekly, ctx, WEEKLY_METRICS_SCHEMA), _with_run_id(
-        rows, ctx, WEEKLY_METRIC_ROWS_SCHEMA
+    monthly = connection.execute(
+        "SELECT * FROM monthly_metrics ORDER BY metric_id, month_start"
+    ).to_arrow_table()
+    return (
+        _with_run_id(weekly, ctx, WEEKLY_METRICS_SCHEMA),
+        _with_run_id(rows, ctx, WEEKLY_METRIC_ROWS_SCHEMA),
+        _with_run_id(monthly, ctx, MONTHLY_METRICS_SCHEMA),
     )
 
 

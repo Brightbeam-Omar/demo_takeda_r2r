@@ -23,7 +23,7 @@ ITEMS = [
 def test_f19_fr08_the_new_objects_are_mirrored_and_carry_a_run_id() -> None:
     assert {"inbound_checks_v", "change_controls_v", "samples_v", "deviations_v"} <= set(MIRRORS)
     assert {"inbound_checks_v", "change_controls_v", "samples_v", "deviations_v"} <= set(OBJECTS_WITH_RUN_ID)
-    assert len(MIRRORS) == 12
+    assert len(MIRRORS) == 15  # F20 adds three
     deviation_columns = [c for c, _ in MIRRORS["deviations_v"][1]]
     assert deviation_columns[-5:] == [
         "causal_factor",
@@ -38,7 +38,7 @@ def test_f19_fr08_the_new_objects_are_mirrored_and_carry_a_run_id() -> None:
 
 
 @pytest.mark.integration
-def test_f19_fr08_a_sync_mirrors_all_twelve_objects_with_one_watermark_each(
+def test_f19_fr08_a_sync_mirrors_all_fifteen_objects_with_one_watermark_each(
     app_factory: sessionmaker[Session],
 ) -> None:
     done = sync(app_factory, FakeReader(published("run-A")))
@@ -49,7 +49,7 @@ def test_f19_fr08_a_sync_mirrors_all_twelve_objects_with_one_watermark_each(
             table: session.execute(text(f"SELECT count(*) FROM {table}")).scalar()
             for table in ("mirror_inbound_checks", "mirror_change_controls", "mirror_samples")
         }
-    assert marks == set(MIRRORS) and len(marks) == 12
+    assert marks == set(MIRRORS) and len(marks) == 15
     assert counts == {"mirror_inbound_checks": 3, "mirror_change_controls": 3, "mirror_samples": 3}
 
 

@@ -109,14 +109,32 @@ def test_f07_ac05_app_side_metrics_are_awaiting_signal(run: Run) -> None:
 
 
 def test_f07_fr02_the_seeded_history_has_enough_completions_for_every_pipeline_metric(run: Run) -> None:
-    """F05 promises at least 10 completions per week for M3, M6 and M7 across the 12 metric weeks."""
+    """F05 promises at least 10 completions per week for M3, M6 and M7 across the last 12 complete metric weeks (F20 keeps 52)."""
     start = run.profile.demo.start_datetime.date()
     last_complete = start - timedelta(days=start.weekday() + 7)
     weekly = read_delta(run.lake, "published.weekly_metrics_v").to_pylist()
     for metric in ("M3", "M6", "M7"):
         rows = {r["week_start"]: r for r in weekly if r["metric_id"] == metric}
-        assert len(rows) == 13
-        complete = [r for week, r in rows.items() if week <= last_complete]
+        assert len(rows) == 53
+        recent = last_complete - timedelta(weeks=11)
+        complete = [r for week, r in rows.items() if recent <= week <= last_complete]
         assert all(r["completed"] >= 10 for r in complete), (metric, [r["completed"] for r in complete])
         assert rows[last_complete]["pct"] is not None
     assert date(2026, 10, 5) == last_complete
+
+
+def test_f20_ac04_the_latest_day_of_pipeline_daily_equals_the_open_non_pending_rows(run: Run) -> None:
+    """F20-AC-04: the stacked total of the snapshot day is every open lot that has a stage (468 at demo start)."""
+    day = run.profile.demo.start_datetime.date()
+    batch = read_delta(run.lake, "published.batch_pipeline_v").to_pylist()
+    current = {}
+    for row in batch:
+        if row["stage_key"] not in ("pending", "released"):
+            current[row["stage_key"]] = current.get(row["stage_key"], 0) + 1
+    last = {
+        r["stage_key"]: r["open_count"]
+        for r in read_delta(run.lake, "published.pipeline_daily_v").to_pylist()
+        if r["day"] == day
+    }
+    assert {k: v for k, v in last.items() if v} == current
+    assert sum(last.values()) == sum(current.values()) == 468

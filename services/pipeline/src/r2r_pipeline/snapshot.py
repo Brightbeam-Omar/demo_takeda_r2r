@@ -12,13 +12,17 @@ import pyarrow.compute as pc
 
 from r2r_pipeline.context import RunContext
 from r2r_pipeline.lake import delta_exists, read_delta, replace_partition, write_delta
-from r2r_pipeline.metrics import compute_weekly_metrics
+from r2r_pipeline.metrics import compute_metrics
+from r2r_pipeline.reports import compute_reports, read_calendar
 from r2r_pipeline.runlog import StepResult
 
 BATCH_SNAPSHOT = "intelligence.batch_snapshot"
 WEEKLY_METRICS = "intelligence.weekly_metrics"
 WEEKLY_METRIC_ROWS = "intelligence.weekly_metric_rows"
 NEED_BY_HISTORY = "intelligence.need_by_history"
+MONTHLY_METRICS = "intelligence.monthly_metrics"
+PIPELINE_DAILY = "intelligence.pipeline_daily"
+RELEASES_WEEKLY = "intelligence.releases_weekly"
 
 NEED_BY_HISTORY_SCHEMA = pa.schema(
     [
@@ -81,14 +85,21 @@ def snapshot_aggregate(ctx: RunContext) -> StepResult:
     history, inserted = lock_need_by(ctx, flat)
     snapshot = build_snapshot(ctx, flat, stage, history)
     replace_partition(ctx.lake_root, BATCH_SNAPSHOT, snapshot, "snapshot_date", ctx.snapshot_date)
-    weekly, contributing = compute_weekly_metrics(ctx, snapshot)
+    weekly, contributing, monthly = compute_metrics(ctx, snapshot)
     write_delta(ctx.lake_root, WEEKLY_METRICS, weekly)  # replaced wholesale each run
     write_delta(ctx.lake_root, WEEKLY_METRIC_ROWS, contributing)
+    write_delta(ctx.lake_root, MONTHLY_METRICS, monthly)
+    daily, releases = compute_reports(ctx, snapshot, read_calendar(ctx))
+    write_delta(ctx.lake_root, PIPELINE_DAILY, daily)
+    write_delta(ctx.lake_root, RELEASES_WEEKLY, releases)
     return StepResult(
         rows=snapshot.num_rows,
         detail={
             "need_by_locked_new": inserted,
             "weekly_metrics": weekly.num_rows,
             "metric_rows": contributing.num_rows,
+            "monthly_metrics": monthly.num_rows,
+            "pipeline_daily": daily.num_rows,
+            "releases_weekly": releases.num_rows,
         },
     )

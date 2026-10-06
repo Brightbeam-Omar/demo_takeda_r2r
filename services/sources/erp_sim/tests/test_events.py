@@ -539,3 +539,45 @@ def test_f05_oq039_a_usage_decision_does_not_record_results(factory: sessionmake
         prueflos = str(receive(session)["qals"]["prueflos"])  # type: ignore[index]
         events.usage_decision(session, schemas.UsageDecisionIn(prueflos=prueflos, vcode="A"))
         assert lot(session, prueflos).zresrec is None
+
+
+def test_f20_fr02_expedite_requested_sets_the_batch_dates(factory: sessionmaker[Session]) -> None:
+    """F20-FR-02(d): the event writes mcha.zexprq and mcha.zexpdd; a later event replaces them."""
+    with factory() as session:
+        receive(session)
+        out = events.expedite_requested(
+            session,
+            schemas.ExpediteRequestedIn(
+                matnr="RM10001", charg="B1001", requested_on=date(2026, 9, 1), due_date=date(2026, 9, 20)
+            ),
+        )
+        session.commit()
+        assert out["mcha"]["zexprq"] == date(2026, 9, 1)
+        batch = session.get(Mcha, ("RM10001", "B1001"))
+        assert batch is not None
+        assert (batch.zexprq, batch.zexpdd) == (date(2026, 9, 1), date(2026, 9, 20))
+        events.expedite_requested(
+            session,
+            schemas.ExpediteRequestedIn(
+                matnr="RM10001", charg="B1001", requested_on=date(2026, 9, 2), due_date=date(2026, 9, 25)
+            ),
+        )
+        assert batch.zexpdd == date(2026, 9, 25)
+
+
+def test_f20_fr02_expedite_due_date_may_not_precede_the_request_and_the_batch_must_exist(
+    factory: sessionmaker[Session],
+) -> None:
+    with factory() as session:
+        receive(session)
+        with pytest.raises(Exception, match="due"):
+            schemas.ExpediteRequestedIn(
+                matnr="RM10001", charg="B1001", requested_on=date(2026, 9, 5), due_date=date(2026, 9, 1)
+            )
+        with pytest.raises(Invalid, match="batch"):
+            events.expedite_requested(
+                session,
+                schemas.ExpediteRequestedIn(
+                    matnr="RM10001", charg="NOPE", requested_on=date(2026, 9, 1), due_date=date(2026, 9, 2)
+                ),
+            )

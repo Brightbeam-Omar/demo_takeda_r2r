@@ -55,7 +55,8 @@ def test_f07_ac01_all_published_objects_exist_and_the_status_has_one_row(
     assert PUBLISH_ORDER == (
         "batch_pipeline_v", "weekly_metrics_v", "weekly_metric_rows_v", "stage_reference_v",
         "metric_reference_v", "reason_codes_v", "deviations_v", "expected_deliveries_v", "inbound_checks_v",
-        "change_controls_v", "samples_v", "pipeline_status_v",
+        "change_controls_v", "samples_v", "monthly_metrics_v", "pipeline_daily_v", "releases_weekly_v",
+        "pipeline_status_v",
     )  # fmt: skip
     assert all(delta_exists(tmp_path, f"published.{name}") for name in PUBLISH_ORDER)
     [status] = table(tmp_path, "pipeline_status_v")
@@ -375,3 +376,33 @@ def test_f19_fr04_a_lot_without_a_sample_has_no_rows_and_cancelled_lots_stay_out
     world.demand(1, D(2026, 11, 20))
     run_all(world, tmp_path, profile)
     assert table(tmp_path, "samples_v") == []
+
+
+@pytest.mark.usefixtures("demo_clock")
+def test_f20_fr02_the_report_objects_are_copies_of_the_intelligence_tables_with_the_run_id(
+    world: World, tmp_path: Path, profile: SiteProfile
+) -> None:
+    run_all(world, tmp_path, profile)
+    expected = {
+        "monthly_metrics_v": ["metric_id", "month_start", "completed", "on_time", "pct", "run_id"],
+        "pipeline_daily_v": ["day", "stage_key", "open_count", "run_id"],
+        "releases_weekly_v": ["week_start", "released_count", "run_id"],
+    }
+    for name, columns in expected.items():
+        published = read_delta(tmp_path, f"published.{name}")
+        assert published.schema.names == columns, name
+        assert set(published["run_id"].to_pylist()) == {"run-1"}, name
+        assert published.to_pylist() == read_delta(tmp_path, f"intelligence.{name[:-2]}").to_pylist()
+    import pyarrow as pa
+
+    assert read_delta(tmp_path, "published.monthly_metrics_v").schema.field("pct").type == pa.decimal128(5, 1)
+
+
+@pytest.mark.usefixtures("demo_clock")
+def test_f20_fr02_batch_pipeline_publishes_the_new_facts(
+    world: World, tmp_path: Path, profile: SiteProfile
+) -> None:
+    run_all(world, tmp_path, profile)
+    columns = read_delta(tmp_path, "published.batch_pipeline_v").schema.names
+    for name in ("need_by_at_release", "expedite_requested_on", "expedite_due_date"):
+        assert name in columns

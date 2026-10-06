@@ -26,7 +26,16 @@ STAGING: dict[str, dict[str, tuple[str, pa.Schema]]] = {
         "stg_mcha": (
             "mcha",
             _schema(
-                matnr=TEXT, charg=TEXT, lifnr=TEXT, licha=TEXT, hsdat=DATE, vfdat=DATE, zstat=TEXT, qnext=DATE
+                matnr=TEXT,
+                charg=TEXT,
+                lifnr=TEXT,
+                licha=TEXT,
+                hsdat=DATE,
+                vfdat=DATE,
+                zstat=TEXT,
+                qnext=DATE,
+                zexprq=DATE,
+                zexpdd=DATE,
             ),
         ),
         "stg_mchb": (
@@ -157,7 +166,7 @@ _FLAT_COLUMNS: dict[str, pa.DataType] = dict(
     offsite_test=BOOL, external_lab=TEXT, sample_shipped_date=DATE, lims_status=TEXT, lims_approved_date=DATE,
     lims_approved_at=STAMP, ud_code=TEXT, ud_date=DATE, erp_results_recorded_at=STAMP, campaign=TEXT,
     system_need_by_date=DATE, open_deviation_count=INT, closed_deviation_count=INT,
-    next_inspection_date=DATE,
+    next_inspection_date=DATE, need_by_at_release=DATE, expedite_requested_on=DATE, expedite_due_date=DATE,
 )  # fmt: skip
 
 # ``staging.batch_flat`` (04-data-contracts section 3): the stage engine's input.

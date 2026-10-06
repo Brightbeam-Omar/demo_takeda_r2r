@@ -1,0 +1,28 @@
+-- Open lots per day and stage (F20-FR-02(b)), derived from the stage entry and exit dates of the snapshot:
+-- a lot is in stage s on day d when entry <= d and (exit is NULL or d < exit). The stage engine makes the next
+-- entry equal to this exit, so a lot is in at most one stage per day, and a released lot is counted nowhere on
+-- or after its usage decision date. Pending lots have no stage dates and are not counted.
+CREATE OR REPLACE TABLE pipeline_daily AS
+WITH stage_list AS (
+{% for stage in stages %}
+  SELECT '{{ stage }}' AS stage_key
+{% if not loop.last %}
+  UNION ALL
+{% endif %}
+{% endfor %}
+),
+in_stage AS (
+{% for stage in stages %}
+  SELECT c.day, '{{ stage }}' AS stage_key, COUNT(*) AS open_count
+  FROM calendar c
+  JOIN snapshot s ON s.{{ stage }}_entry <= c.day AND (s.{{ stage }}_exit IS NULL OR c.day < s.{{ stage }}_exit)
+  GROUP BY c.day
+{% if not loop.last %}
+  UNION ALL
+{% endif %}
+{% endfor %}
+)
+SELECT c.day, l.stage_key, COALESCE(i.open_count, 0) AS open_count
+FROM calendar c
+CROSS JOIN stage_list l
+LEFT JOIN in_stage i ON i.day = c.day AND i.stage_key = l.stage_key;

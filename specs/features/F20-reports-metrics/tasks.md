@@ -1,7 +1,7 @@
 # F20 · Tasks
 - [x] T1 `docs(specs)`: contract changes + decisions
 - [x] T2 [TDD] Profile targets (FR-01)
-- [ ] T3 [TDD] Pipeline: 52-week metrics, `pipeline_daily_v`, `releases_weekly_v` + mirror + consistency (FR-02, AC-04)
+- [x] T3 [TDD] Pipeline: 52-week metrics, `pipeline_daily_v`, `releases_weekly_v` + mirror + consistency (FR-02, AC-04)
 - [ ] T4 [TDD] r2r_core.reports (FR-03, AC-06)
 - [ ] T5 Report endpoints + exports (FR-06)
 - [ ] T6 Datagen tuning for YTD figures and expedites (FR-07)

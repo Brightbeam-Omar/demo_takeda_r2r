@@ -56,7 +56,8 @@ def test_f08_fr05_first_sync_replaces_every_mirror_and_sets_the_watermark(
     assert (done.status, done.error) == ("done", None)
     expected = {"batch_pipeline_v": 3, "weekly_metrics_v": 3, "weekly_metric_rows_v": 3, "pipeline_status_v": 1,
                 "stage_reference_v": 3, "metric_reference_v": 3, "reason_codes_v": 3, "deviations_v": 0, "expected_deliveries_v": 3,
-                "inbound_checks_v": 3, "change_controls_v": 3, "samples_v": 3}  # fmt: skip
+                "inbound_checks_v": 3, "change_controls_v": 3, "samples_v": 3, "monthly_metrics_v": 3,
+                "pipeline_daily_v": 3, "releases_weekly_v": 3}  # fmt: skip
     for name, (table, *_) in MIRRORS.items():
         assert count(app_factory, table) == expected[name], table
     assert done.rows_upserted == sum(expected.values())
@@ -256,6 +257,6 @@ def test_f08_ac04_a_reclaimed_stale_event_is_completed_by_the_next_drain(
 def test_f08_fr04_drain_processes_every_queued_event_then_stops(app_factory: sessionmaker[Session]) -> None:
     first, second = queue(app_factory, "run-A"), queue(app_factory, "run-A")
     assert drain_once(app_factory, FakeReader(published("run-A"))) == 2
-    assert event(app_factory, first).rows_upserted == 31
+    assert event(app_factory, first).rows_upserted == 40
     assert event(app_factory, second).rows_upserted == 0
     assert drain_once(app_factory, FakeReader(published("run-A"))) == 0

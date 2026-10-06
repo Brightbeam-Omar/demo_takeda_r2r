@@ -1,0 +1,7 @@
+-- Released lots (an accept usage decision) per ISO week of the usage decision date (F20-FR-02(c)).
+-- The weeks are the same list as the weekly metrics; empty weeks are emitted with a zero.
+CREATE OR REPLACE TABLE releases_weekly AS
+SELECT w.week_start, COUNT(s.row_key) AS released_count
+FROM metric_weeks w
+LEFT JOIN snapshot s ON s.ud_effective AND s.ud_date >= w.week_start AND s.ud_date < w.week_end
+GROUP BY w.week_start;
