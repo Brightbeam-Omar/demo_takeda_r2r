@@ -62,6 +62,7 @@ def batch(
         "inbound_light": "none",
         "open_deviation_count": 0,
         "closed_deviation_count": 0,
+        "next_inspection_date": None,
         "snapshot_date": D(10, 12),
         "run_id": RUN,
         "published_at": NOW,

@@ -103,7 +103,7 @@ One row per `row_key`, built by the SQL steps `50`–`90` from `batch_flat`: `ro
 
 ### 4.1 `batch_pipeline_v`
 `row_key` (`material_no|batch_no|inspection_lot_no`), every `batch_flat` business column (including `erp_results_recorded_at`), plus:
-`stage_key, stage_rule_id, cycle_start_date, ud_effective, stage_sort, current_stage_entry_date, lims_rejected, receipt_entry, receipt_exit, call_off_entry, call_off_exit, sampling_entry, sampling_exit, qc_ship_entry, qc_ship_exit, qc_testing_entry, qc_testing_exit, qa_release_entry, qa_release_exit, applicable_sla_json, source_refs_json, system_need_by_locked, next_inspection_date, on_hold, erp_blocked, re_eval, offsite, full_spec, ud_rejected, deviation_light, inbound_light, snapshot_date, run_id, published_at`
+`stage_key, stage_rule_id, cycle_start_date, ud_effective, stage_sort, current_stage_entry_date, lims_rejected, receipt_entry, receipt_exit, call_off_entry, call_off_exit, sampling_entry, sampling_exit, qc_ship_entry, qc_ship_exit, qc_testing_entry, qc_testing_exit, qa_release_entry, qa_release_exit, applicable_sla_json, source_refs_json, system_need_by_locked, on_hold, erp_blocked, re_eval, offsite, full_spec, ud_rejected, deviation_light, inbound_light, snapshot_date, run_id, published_at`
 
 ### 4.2 `weekly_metrics_v`
 `metric_id, week_start (date), completed (int), on_time (int), pct (decimal 5,1 null), run_id`

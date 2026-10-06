@@ -78,6 +78,7 @@ def test_f06_fr03_a_received_lot_becomes_one_row_with_its_erp_facts(
         None,
     )
     assert (row["open_deviation_count"], row["closed_deviation_count"]) == (0, 0)
+    assert row["next_inspection_date"] is None
 
 
 def test_f06_ac04_a_same_day_reversal_leaves_the_batch_pending(tmp_path: Path, profile: SiteProfile) -> None:
@@ -389,6 +390,7 @@ def test_f06_fr09_transform_is_a_plain_function_that_writes_batch_flat(
         "system_need_by_date",
         "open_deviation_count",
         "closed_deviation_count",
+        "next_inspection_date",
     ]
     assert table.column_names == ["row_key", *expected]
 
@@ -396,3 +398,15 @@ def test_f06_fr09_transform_is_a_plain_function_that_writes_batch_flat(
 @pytest.mark.parametrize("name", [p.name for p in transform_files()])
 def test_f06_fr08_the_sql_files_are_named_in_lexical_order(name: str) -> None:
     assert name[:2].isdigit()
+
+
+def test_f18_fr03g_the_batch_next_inspection_date_reaches_every_lot_of_the_batch(
+    tmp_path: Path, profile: SiteProfile
+) -> None:
+    world = World()
+    world.receive("B1", "10000001", D(2026, 10, 1), qnext=D(2027, 11, 3))
+    world.reeval("B1", "10000002", D(2026, 10, 8))
+    con, _ = build(world, tmp_path, profile)
+    found = rows(con)
+    assert found["RM1|B1|10000001"]["next_inspection_date"] == D(2027, 11, 3)
+    assert found["RM1|B1|10000002"]["next_inspection_date"] == D(2027, 11, 3)

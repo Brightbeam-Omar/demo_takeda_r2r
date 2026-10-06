@@ -21,6 +21,7 @@ from datagen.model import (
     Plan,
     current_stage_entry,
 )
+from datagen.next_inspection import plan_next_inspection
 from datagen.params import Params
 from datagen.po_lines import plan_po_lines
 from datagen.quirks import apply_quirks
@@ -57,6 +58,7 @@ def build_plan(profile: SiteProfile, params: Params, seed: int, world: World | N
     _need_by_and_demand(builder, plan, story)
     apply_quirks(plan, params, profile)
     plan_po_lines(plan, params)
+    plan_next_inspection(plan)
     return plan
 
 

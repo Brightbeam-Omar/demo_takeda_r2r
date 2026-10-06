@@ -10,6 +10,7 @@ from datetime import date, datetime, timedelta
 from typing import Any
 
 from datagen.model import BatchPlan, LotPlan, Plan
+from datagen.next_inspection import MANUFACTURE_LEAD
 
 HISTORY_BEFORE_FIRST_EVENT = timedelta(days=1)
 
@@ -52,8 +53,9 @@ def _lot_events(batch: BatchPlan, lot: LotPlan) -> list[Event]:
                     "lgort": batch.lgort,
                     "menge": batch.quantity,
                     "budat": lot.start,
-                    "hsdat": lot.start - timedelta(days=21),
+                    "hsdat": lot.start - MANUFACTURE_LEAD,
                     "vfdat": lot.start + timedelta(days=730),
+                    "qnext": batch.next_inspection,
                     "pastrterm": lot.start,
                     "ebeln": po_ref(batch),
                     "ebelp": "00010",

@@ -17,7 +17,8 @@ SELECT concat_key(l.material_no, l.batch_no, l.inspection_lot_no) AS row_key,
        CASE WHEN l.ud_code IN {{ accept_codes | sql }} THEN NULL ELSE n.campaign END AS campaign,
        CASE WHEN l.ud_code IN {{ accept_codes | sql }} THEN NULL ELSE n.system_need_by_date END AS system_need_by_date,
        COALESCE(d.open_deviation_count, 0) AS open_deviation_count,
-       COALESCE(d.closed_deviation_count, 0) AS closed_deviation_count
+       COALESCE(d.closed_deviation_count, 0) AS closed_deviation_count,
+       l.next_inspection_date
 FROM t_lot l
 LEFT JOIN t_lims s ON s.inspection_lot_no = l.inspection_lot_no
 LEFT JOIN t_deviation d ON d.material_no = l.material_no AND d.batch_no = l.batch_no

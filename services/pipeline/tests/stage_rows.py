@@ -25,7 +25,7 @@ DEFAULTS: dict[str, Any] = {
     "offsite_test": False, "external_lab": None, "sample_shipped_date": None, "lims_status": "none",
     "lims_approved_date": None, "lims_approved_at": None, "ud_code": None, "ud_date": None,
     "erp_results_recorded_at": None, "campaign": None, "system_need_by_date": None,
-    "open_deviation_count": 0, "closed_deviation_count": 0,
+    "open_deviation_count": 0, "closed_deviation_count": 0, "next_inspection_date": None,
 }  # fmt: skip
 
 
