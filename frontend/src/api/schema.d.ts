@@ -815,6 +815,8 @@ export interface components {
             re_eval: boolean;
             /** Release On Coa */
             release_on_coa: boolean;
+            /** Released */
+            released: boolean;
             /** Ud Rejected */
             ud_rejected: boolean;
         };

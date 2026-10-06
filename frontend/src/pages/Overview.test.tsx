@@ -31,8 +31,8 @@ test('F10-FR-10: a failing overview shows an error band with Retry and a loading
 
 const freshness = { contract_run_id: 'r1', last_success_at: null, freshness_minutes: 0 }
 const rowOf = (n: number, rag: string) => ({
-  row_key: `RM${n}|B${n}|1`, material_no: `RM${n}`, material_desc: 'x', batch_no: `B${n}`, stage_key: 'sampling', stage_label: 'Sampling',
-  flags: {}, plan: { expected_completion: '2026-10-20', rag, days_remaining: 3 }, manual_status: null,
+  row_key: `RM${n}|B${n}|1`, material_no: `RM${n}`, material_desc: 'x', batch_no: `B${n}`, inspection_lot_no: '1', supplier_batch: null, material_class: null, campaign: null, storage_location: null, stage_key: 'sampling', stage_label: 'Sampling', days_in_stage: 1, adjusted_need_by_date: null, system_need_by_locked: null, next_inspection_date: null, inbound_light: 'grey', deviation_light: 'grey',
+  flags: {}, plan: { expected_completion: '2026-10-20', must_complete_by: {}, rag, days_remaining: 3, late: false }, manual_status: null,
 })
 
 function stubApi(overview: object, metrics: object, seen: { url: string; user: string | null }[] = []) {
@@ -65,22 +65,21 @@ test('F10-FR-10: a failing metrics call shows its own error band while the table
   expect(await screen.findByText(/Could not load the weekly metrics: boom/, {}, { timeout: 4000 })).toBeInTheDocument()
 })
 
-test('F10-FR-09: rows keep the server (exceptions-first) order and Export CSV sends the persona header and current filters', async () => {
+test('F10-FR-09 / F18-FR-05: rows keep the server (exceptions-first) order; the search runs in the browser and is not sent to the API', async () => {
   const seen: { url: string; user: string | null }[] = []
   sessionStorage.setItem('r2r.persona', 'sam')
-  window.history.pushState({}, '', '/overview?flag=late&q=RM')
+  window.history.pushState({}, '', '/overview?flag=late&q=RM1')
   stubApi({ freshness, flow_strip: [], on_hold_count: 0, total: 2, mode: 'snapshot', alerts: [], rows: [rowOf(9, 'red'), rowOf(1, 'green')] }, { freshness, filtered: false, week_starts: [], metrics: [] }, seen)
-  URL.createObjectURL = vi.fn(() => 'blob:x')
-  URL.revokeObjectURL = vi.fn()
   render(<App />)
   const rows = await screen.findAllByTestId('batch-row')
-  expect(rows[0]).toHaveAttribute('data-row-key', 'RM9|B9|1')
-  await userEvent.click(screen.getByRole('button', { name: 'Export CSV' }))
-  await waitFor(() => expect(seen.some((call) => call.url.startsWith('/api/export.csv'))).toBe(true))
-  const call = seen.find((entry) => entry.url.startsWith('/api/export.csv'))!
-  expect(call.user).toBe('sam')
-  expect(call.url).toContain('flags%5B%5D=late')
-  expect(call.url).toContain('q=RM')
+  expect(rows).toHaveLength(1) // RM1 only: the search narrowed the two server rows
+  expect(rows[0]).toHaveAttribute('data-row-key', 'RM1|B1|1')
+  const overview = seen.filter((call) => call.url.startsWith('/api/overview'))
+  expect(overview.length).toBeGreaterThan(0)
+  expect(overview.every((call) => call.user === 'sam' && !call.url.includes('q='))).toBe(true)
+  await userEvent.click(screen.getAllByRole('button', { name: 'Clear search' })[0]!)
+  expect(await screen.findAllByTestId('batch-row')).toHaveLength(2)
+  expect(screen.getAllByTestId('batch-row')[0]).toHaveAttribute('data-row-key', 'RM9|B9|1')
   sessionStorage.clear()
 })
 

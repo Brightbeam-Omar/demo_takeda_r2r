@@ -51,6 +51,7 @@ class FlagsOut(BaseModel):
     erp_hold: bool
     manual_hold: bool
     release_on_coa: bool
+    released: bool
     erp_blocked: bool
     re_eval: bool
     offsite: bool
@@ -153,6 +154,7 @@ class RowOut(BaseModel):
                 erp_hold=bool(facts["on_hold"]),
                 manual_hold=row.manual_hold is not None,
                 release_on_coa=row.coa_release is not None,
+                released=row.stage_terminal,
                 erp_blocked=bool(facts["erp_blocked"]),
                 re_eval=bool(facts["re_eval"]),
                 offsite=bool(facts["offsite"]),

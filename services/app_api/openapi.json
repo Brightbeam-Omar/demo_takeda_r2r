@@ -917,6 +917,10 @@
             "title": "Release On Coa",
             "type": "boolean"
           },
+          "released": {
+            "title": "Released",
+            "type": "boolean"
+          },
           "ud_rejected": {
             "title": "Ud Rejected",
             "type": "boolean"
@@ -927,6 +931,7 @@
           "erp_hold",
           "manual_hold",
           "release_on_coa",
+          "released",
           "erp_blocked",
           "re_eval",
           "offsite",

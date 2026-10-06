@@ -4,7 +4,7 @@
 - [x] T3 `next_inspection_date` end to end: erp_sim → datagen → pipeline → mirror (FR-03g)
 - [x] T4 [TDD] Hold / COA endpoints, versioning, audit, roles, on_hold display (FR-08, FR-09, AC-03)
 - [x] T5 Shared DataTable: sort, header filters, pagination, toolbar, Reset Table, Columns panel (FR-01, FR-02, AC-01)
-- [ ] T6 Cell renderers incl. status text, SLA deadline, expected-completion overdue, exception styling (FR-03, FR-04, AC-07)
+- [x] T6 Cell renderers incl. status text, SLA deadline, expected-completion overdue, exception styling (FR-03, FR-04, AC-07)
 - [ ] T7 Search-all with highlight + count (FR-05, FR-06, AC-02)
 - [ ] T8 [TDD] Export endpoints + menu (FR-07, AC-05)
 - [ ] T9 Row actions menu + keyboard navigation (FR-08, FR-11, AC-06)
