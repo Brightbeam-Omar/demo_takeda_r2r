@@ -11,7 +11,7 @@ type Page = Schemas['AuditPage']
 
 const PAGE_SIZE = 50
 /** The audit action vocabulary (OQ-058). Agent actions arrive with F12. */
-const ACTIONS = ['need_by_set', 'need_by_cleared', 'expedite_set', 'expedite_cleared', 'status_set', 'status_cleared', 'comment_added', 'forbidden']
+const ACTIONS = ['need_by_set', 'need_by_cleared', 'expedite_set', 'expedite_cleared', 'status_set', 'status_cleared', 'comment_added', 'forbidden', 'sync_triggered', 'pipeline_triggered']
 
 const field = 'rounded-chip border border-slate-300 bg-white px-2 py-1.5 text-sm'
 

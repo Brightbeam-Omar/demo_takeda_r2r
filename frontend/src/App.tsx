@@ -6,6 +6,7 @@ import { ToastProvider } from './components/common/Toasts'
 import { ADMIN, VIEWS } from './components/shell/nav'
 import { AdminFeedback } from './pages/AdminFeedback'
 import { Audit } from './pages/Audit'
+import { SlaConfig } from './pages/admin/SlaConfig'
 import { SchemaReference } from './pages/admin/SchemaReference'
 import { TeamDashboard } from './pages/admin/TeamDashboard'
 import { SyncStatus } from './pages/admin/SyncStatus'
@@ -23,7 +24,7 @@ const createQueryClient = () =>
   })
 
 // Pages that exist. Every other menu item renders a titled placeholder (F15-FR-02, OQ-081).
-const BUILT = new Set(['/overview', '/reports', '/admin/audit', '/admin/team', '/admin/schema', '/admin/sync', '/admin/webhooks', '/admin/feedback'])
+const BUILT = new Set(['/overview', '/reports', '/admin/audit', '/admin/team', '/admin/schema', '/admin/sla', '/admin/sync', '/admin/webhooks', '/admin/feedback'])
 const PLACEHOLDERS = [...VIEWS, ...ADMIN].filter((item) => !BUILT.has(item.to))
 
 export default function App() {
@@ -40,6 +41,7 @@ export default function App() {
               <Route path="/reports" element={<Reports />} />
               <Route path="/admin/team" element={<TeamDashboard />} />
               <Route path="/admin/schema" element={<SchemaReference />} />
+              <Route path="/admin/sla" element={<SlaConfig />} />
               <Route path="/admin/sync" element={<SyncStatus />} />
               <Route path="/admin/webhooks" element={<WebhookStatus />} />
               <Route path="/admin/audit" element={<Audit />} />
@@ -51,7 +53,7 @@ export default function App() {
                 <Route
                   key={item.to}
                   path={item.to}
-                  element={<PlaceholderPage title={item.label} note={item.coming ?? 'Coming soon'} />}
+                  element={<PlaceholderPage title={item.label} note={item.coming ?? 'Coming soon'} about={item.about} roadmap={item.roadmap} />}
                 />
               ))}
               <Route path="*" element={<Navigate to="/overview" replace />} />

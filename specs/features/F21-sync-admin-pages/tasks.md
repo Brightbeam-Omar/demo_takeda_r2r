@@ -6,5 +6,5 @@
 - [x] T5 Webhook Sync Status page: cards, event list, buttons with confirmation and roles (FR-03–05, AC-03, AC-04)
 - [x] T6 [TDD] Team dashboard endpoint + page (FR-06, AC-05)
 - [x] T7 `contract.json` generator + CI check + Schema Reference page (FR-06, AC-06)
-- [ ] T8 SLA Configuration page, placeholders, Audit Log move, Feedback list (FR-06)
+- [x] T8 SLA Configuration page, placeholders, Audit Log move, Feedback list (FR-06)
 - [ ] T9 Remove deprecated endpoints, redirect `/sync` (FR-07). Playwright, screenshots, spec check, PR (AC-07)

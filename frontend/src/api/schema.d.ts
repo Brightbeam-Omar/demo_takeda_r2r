@@ -1726,6 +1726,8 @@ export interface components {
             }[];
             /** Periods */
             periods: string[];
+            /** Profile File */
+            profile_file: string;
             /** Reason Codes */
             reason_codes: {
                 [key: string]: unknown;

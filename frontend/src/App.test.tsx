@@ -86,39 +86,45 @@ test('F20: Reports & Metrics is a built page, not a placeholder', async () => {
   expect(screen.queryByTestId('placeholder-page')).not.toBeInTheDocument()
 })
 
-test('F15-FR-02 / OQ-081: unbuilt pages render a titled placeholder', async () => {
-  stub()
-  render(<App />)
-  const nav = within(await screen.findByRole('navigation', { name: 'Pages' }))
-  await userEvent.click(nav.getByRole('link', { name: 'SLA Configuration' }))
-  expect(await screen.findByTestId('placeholder-page')).toHaveTextContent('Coming in F21')
-  await userEvent.click(nav.getByRole('link', { name: 'Upload Data' }))
-  expect(screen.getByTestId('placeholder-page')).toHaveTextContent('Tier 2')
-})
-
-test('OQ-135: Feedback is the last ADMIN item, and the Sync, Webhook and Audit pages live under /admin', async () => {
-  stub('admin', DEMO_USERS)
-  render(<App />)
-  const nav = within(await screen.findByRole('navigation', { name: 'Pages' }))
-  await nav.findByRole('link', { name: 'Demo Controls' })
-  const links = nav.getAllByRole('link').map((link) => link.getAttribute('aria-label'))
-  expect(links.at(-1)).toBe('Feedback')
-  expect(links.at(-2)).toBe('Demo Controls')
-  expect(nav.getByRole('link', { name: 'Sync Status' })).toHaveAttribute('href', '/admin/sync')
-  expect(nav.getByRole('link', { name: 'Webhook Sync Status' })).toHaveAttribute('href', '/admin/webhooks')
-  expect(nav.getByRole('link', { name: 'Audit Log' })).toHaveAttribute('href', '/admin/audit')
-})
-
 test.each([
-  ['/sync', '/admin/sync'],
-  ['/sync/webhook', '/admin/webhooks'],
-  ['/audit', '/admin/audit'],
-])('F21-FR-07 / OQ-135: the old route %s redirects to %s', async (from, to) => {
+  ['Upload Data', /spreadsheet/, 'T2-07'],
+  ['Process / Campaign Mapping', /campaign/, undefined],
+  ['POC — Integrations', /source/, 'T2-01'],
+  ['Configuration', /site profile/, undefined],
+])('F21-FR-06: %s is a placeholder with a paragraph about the capability and a Tier 2 tag', async (label, about, roadmap) => {
   stub()
-  window.history.pushState({}, '', from)
   render(<App />)
-  await screen.findByRole('navigation', { name: 'Pages' })
-  expect(window.location.pathname).toBe(to)
+  const nav = within(await screen.findByRole('navigation', { name: 'Pages' }))
+  await userEvent.click(nav.getByRole('link', { name: label }))
+  const page = await screen.findByTestId('placeholder-page')
+  expect(page).toHaveTextContent(label)
+  expect(within(page).getByTestId('placeholder-about')).toHaveTextContent(about)
+  expect(within(page).getByTestId('tier-tag')).toHaveTextContent(roadmap ? `Tier 2 · ${roadmap}` : 'Tier 2')
+})
+
+test('F15-FR-02 / OQ-081: an unbuilt view page still renders a titled placeholder', async () => {
+  stub()
+  render(<App />)
+  const nav = within(await screen.findByRole('navigation', { name: 'Pages' }))
+  await userEvent.click(nav.getByRole('link', { name: 'Agents' }))
+  expect(await screen.findByTestId('placeholder-page')).toHaveTextContent('Coming in F12')
+})
+
+test('F21-FR-06: Team Dashboard, Schema Reference and SLA Configuration are built pages', async () => {
+  stub()
+  render(<App />)
+  const nav = within(await screen.findByRole('navigation', { name: 'Pages' }))
+  for (const [label, page] of [
+    ['Team Dashboard', 'team-dashboard-page'],
+    ['Schema Reference', 'schema-reference-page'],
+    ['SLA Configuration', 'sla-config-page'],
+    ['Sync Status', 'sync-status-page'],
+    ['Webhook Sync Status', 'webhook-status-page'],
+  ]) {
+    await userEvent.click(nav.getByRole('link', { name: label }))
+    expect(await screen.findByTestId(page)).toBeInTheDocument()
+    expect(screen.queryByTestId('placeholder-page')).not.toBeInTheDocument()
+  }
 })
 
 test('F15-FR-02: the sidebar collapses to icons and expands again', async () => {

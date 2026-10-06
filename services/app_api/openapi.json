@@ -2917,6 +2917,10 @@
             "title": "Periods",
             "type": "array"
           },
+          "profile_file": {
+            "title": "Profile File",
+            "type": "string"
+          },
           "reason_codes": {
             "items": {
               "additionalProperties": true,
@@ -2989,6 +2993,7 @@
           "metric_rag",
           "terms",
           "release_badge",
+          "profile_file",
           "air_gap_threshold_hours"
         ],
         "title": "ReferenceOut",
