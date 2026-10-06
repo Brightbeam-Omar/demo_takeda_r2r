@@ -1552,6 +1552,8 @@ export interface components {
         };
         /** PipelineStepOut */
         PipelineStepOut: {
+            /** Duration Ms */
+            duration_ms: number | null;
             /** Error */
             error: string | null;
             /** Finished At */

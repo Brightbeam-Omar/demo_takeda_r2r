@@ -425,7 +425,8 @@ MIRRORS: dict[str, tuple[str, MirrorColumns, tuple[str, ...], tuple[tuple[str, .
     "pipeline_run_steps_v": (
         "mirror_pipeline_run_steps",
         (("pipeline_run_id", TEXT), ("step", TEXT), ("status", TEXT), ("started_at", TIMESTAMP),
-         ("finished_at", TIMESTAMP), ("rows", INTEGER), ("error", TEXT), ("run_id", TEXT)),
+         ("finished_at", TIMESTAMP), ("duration_ms", INTEGER), ("rows", INTEGER), ("error", TEXT),
+         ("run_id", TEXT)),
         ("pipeline_run_id", "step"),
         (),
     ),

@@ -37,6 +37,7 @@ class PipelineStepOut(BaseModel):
     status: str
     started_at: dt.datetime | None
     finished_at: dt.datetime | None
+    duration_ms: int | None
     rows: int | None
     error: str | None
 
@@ -75,7 +76,8 @@ def pipeline_run_steps(
     rows = (
         session.execute(
             text(
-                "SELECT step, status, started_at, finished_at, rows, error FROM mirror_pipeline_run_steps "
+                "SELECT step, status, started_at, finished_at, duration_ms, rows, error "
+                "FROM mirror_pipeline_run_steps "
                 "WHERE pipeline_run_id = :run "
                 "ORDER BY array_position("
                 "ARRAY['setup','extract','transform','snapshot_aggregate','publish','notify'], step)"

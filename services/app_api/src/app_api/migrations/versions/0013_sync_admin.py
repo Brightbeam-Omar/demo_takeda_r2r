@@ -60,6 +60,7 @@ def upgrade() -> None:
         sa.Column("status", sa.Text(), nullable=True),
         sa.Column("started_at", STAMP, nullable=True),
         sa.Column("finished_at", STAMP, nullable=True),
+        sa.Column("duration_ms", sa.BigInteger(), nullable=True),
         sa.Column("rows", sa.BigInteger(), nullable=True),
         sa.Column("error", sa.Text(), nullable=True),
         sa.Column("run_id", sa.Text(), nullable=True),

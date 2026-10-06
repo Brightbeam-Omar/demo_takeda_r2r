@@ -9,7 +9,7 @@ import {
   type PaginationState,
   type SortingState,
 } from '@tanstack/react-table'
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { saveBlob } from '../../lib/download'
 import { highlight } from '../../lib/highlight'
 import { Pagination } from './Pagination'
@@ -63,6 +63,8 @@ interface Props<T> {
   filterRequest?: ColumnFilterRequest | null
   keyboardHint?: string
   ariaLabel?: string
+  /** A detail line under a row: returns its content while the row is expanded, else null (F21-FR-04). */
+  expansion?: (row: T) => ReactNode | null
   /** Small tables (the Sample Data window) drop the second toolbar and the pager. Default: both shown. */
   compact?: boolean
 }
@@ -115,6 +117,7 @@ export function DataTable<T>({
   keyboardHint,
   ariaLabel = 'Table',
   compact = false,
+  expansion,
 }: Props<T>) {
   // Unsorted = the order the rows arrive in (the server's exceptions-first order for the Overview).
   const [sorting, setSorting] = useState<SortingState>([])
@@ -317,36 +320,45 @@ export function DataTable<T>({
             {pageRows.map((row, index) => {
               const accent = rowAccent?.(row.original)
               const tint = rowTint?.(row.original)
+              const detail = expansion?.(row.original) ?? null
               return (
-                <tr
-                  key={rowKey(row.original)}
-                  id={`row-${rowKey(row.original)}`}
-                  data-testid={rowTestId}
-                  data-row-key={rowKey(row.original)}
-                  data-index={index}
-                  data-active={active === index ? 'true' : undefined}
-                  onClick={() => {
-                    setActive(index)
-                    onRowOpen?.(row.original)
-                  }}
-                  style={tint ? { backgroundColor: tint } : undefined}
-                  className={`group border-t border-slate-100 align-middle ${tint ? '' : 'bg-white hover:bg-slate-50'} ${onRowOpen ? 'cursor-pointer' : ''} ${
-                    active === index ? 'outline-2 -outline-offset-2 outline-accent' : ''
-                  } ${rowClassName?.(row.original) ?? ''}`}
-                >
-                  {row.getVisibleCells().map((cell, cellIndex) => {
-                    const column = byId.get(cell.column.id)
-                    return (
-                      <td
-                        key={cell.id}
-                        className={`px-2 py-2 ${stickyFirst && cellIndex === 0 ? sticky : ''}`}
-                        style={accent && cellIndex === 0 ? { boxShadow: `inset 3px 0 0 ${accent}` } : undefined}
-                      >
-                        {column ? column.cell(row.original, context) : text(cell.getValue())}
+                <Fragment key={rowKey(row.original)}>
+                  <tr
+                    id={`row-${rowKey(row.original)}`}
+                    data-testid={rowTestId}
+                    data-row-key={rowKey(row.original)}
+                    data-index={index}
+                    data-active={active === index ? 'true' : undefined}
+                    onClick={() => {
+                      setActive(index)
+                      onRowOpen?.(row.original)
+                    }}
+                    style={tint ? { backgroundColor: tint } : undefined}
+                    className={`group border-t border-slate-100 align-middle ${tint ? '' : 'bg-white hover:bg-slate-50'} ${onRowOpen ? 'cursor-pointer' : ''} ${
+                      active === index ? 'outline-2 -outline-offset-2 outline-accent' : ''
+                    } ${rowClassName?.(row.original) ?? ''}`}
+                  >
+                    {row.getVisibleCells().map((cell, cellIndex) => {
+                      const column = byId.get(cell.column.id)
+                      return (
+                        <td
+                          key={cell.id}
+                          className={`px-2 py-2 ${stickyFirst && cellIndex === 0 ? sticky : ''}`}
+                          style={accent && cellIndex === 0 ? { boxShadow: `inset 3px 0 0 ${accent}` } : undefined}
+                        >
+                          {column ? column.cell(row.original, context) : text(cell.getValue())}
+                        </td>
+                      )
+                    })}
+                  </tr>
+                  {detail !== null && (
+                    <tr data-testid="row-expansion" className="bg-slate-50">
+                      <td colSpan={visibleColumns.length} className="px-4 py-2">
+                        {detail}
                       </td>
-                    )
-                  })}
-                </tr>
+                    </tr>
+                  )}
+                </Fragment>
               )
             })}
           </tbody>

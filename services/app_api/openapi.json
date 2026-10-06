@@ -2468,6 +2468,17 @@
       },
       "PipelineStepOut": {
         "properties": {
+          "duration_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Ms"
+          },
           "error": {
             "anyOf": [
               {
@@ -2528,6 +2539,7 @@
           "status",
           "started_at",
           "finished_at",
+          "duration_ms",
           "rows",
           "error"
         ],

@@ -8,6 +8,9 @@ export type Me = Schemas['UserOut']
 export type Clock = Schemas['ClockOut']
 export type Reference = Schemas['ReferenceOut']
 export type SyncStatus = Schemas['SyncStatusOut']
+export type SyncHealth = Schemas['SyncHealthOut']
+export type PipelineRun = Schemas['PipelineRunOut']
+export type PipelineSteps = Schemas['PipelineStepsOut']
 export type Overview = Schemas['OverviewOut']
 export type Row = Schemas['RowOut']
 export type Metrics = Schemas['MetricsOut']
@@ -47,6 +50,30 @@ export function useSyncStatus(intervalMs: number = POLL_MS) {
     queryKey: useKey('sync-status'),
     queryFn: () => apiGet<SyncStatus>('/sync/status'),
     refetchInterval: intervalMs,
+  })
+}
+
+export function useSyncHealth(intervalMs: number = POLL_MS) {
+  return useQuery({
+    queryKey: useKey('sync-health'),
+    queryFn: () => apiGet<SyncHealth>('/sync/health'),
+    refetchInterval: intervalMs,
+  })
+}
+
+export function usePipelineRuns(intervalMs: number = POLL_MS) {
+  return useQuery({
+    queryKey: useKey('pipeline-runs'),
+    queryFn: () => apiGet<PipelineRun[]>('/pipeline/runs'),
+    refetchInterval: intervalMs,
+  })
+}
+
+export function usePipelineRunSteps(runId: string | null) {
+  return useQuery({
+    queryKey: useKey('pipeline-run-steps', runId),
+    queryFn: () => apiGet<PipelineSteps>(`/pipeline/runs/${encodeURIComponent(runId ?? '')}/steps`),
+    enabled: runId !== null,
   })
 }
 

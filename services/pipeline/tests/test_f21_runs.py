@@ -163,6 +163,7 @@ def test_f21_fr01_the_steps_view_lists_each_run_step_by_step(tmp_path: Path, pro
     assert failed["error"] == "RuntimeError: forced failure"
     publish_row = next(s for s in steps if (s["pipeline_run_id"], s["step"]) == ("run-3", "publish"))
     assert publish_row["rows"] == 2
+    assert all(s["duration_ms"] is not None and s["duration_ms"] >= 0 for s in steps)
 
 
 @pytest.mark.usefixtures("demo_clock")

@@ -96,6 +96,31 @@ test('F15-FR-02 / OQ-081: unbuilt pages render a titled placeholder', async () =
   expect(screen.getByTestId('placeholder-page')).toHaveTextContent('Tier 2')
 })
 
+test('OQ-135: Feedback is the last ADMIN item, and the Sync, Webhook and Audit pages live under /admin', async () => {
+  stub('admin', DEMO_USERS)
+  render(<App />)
+  const nav = within(await screen.findByRole('navigation', { name: 'Pages' }))
+  await nav.findByRole('link', { name: 'Demo Controls' })
+  const links = nav.getAllByRole('link').map((link) => link.getAttribute('aria-label'))
+  expect(links.at(-1)).toBe('Feedback')
+  expect(links.at(-2)).toBe('Demo Controls')
+  expect(nav.getByRole('link', { name: 'Sync Status' })).toHaveAttribute('href', '/admin/sync')
+  expect(nav.getByRole('link', { name: 'Webhook Sync Status' })).toHaveAttribute('href', '/admin/webhooks')
+  expect(nav.getByRole('link', { name: 'Audit Log' })).toHaveAttribute('href', '/admin/audit')
+})
+
+test.each([
+  ['/sync', '/admin/sync'],
+  ['/sync/webhook', '/admin/webhooks'],
+  ['/audit', '/admin/audit'],
+])('F21-FR-07 / OQ-135: the old route %s redirects to %s', async (from, to) => {
+  stub()
+  window.history.pushState({}, '', from)
+  render(<App />)
+  await screen.findByRole('navigation', { name: 'Pages' })
+  expect(window.location.pathname).toBe(to)
+})
+
 test('F15-FR-02: the sidebar collapses to icons and expands again', async () => {
   stub()
   render(<App />)

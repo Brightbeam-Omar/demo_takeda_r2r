@@ -26,7 +26,7 @@ export const ADMIN: NavItem[] = [
     icon: '◉',
     coming: 'Coming in F21',
   },
-  { to: '/audit', label: 'Audit Log', icon: '☰' },
+  { to: '/admin/audit', label: 'Audit Log', icon: '☰' },
   {
     to: '/admin/schema',
     label: 'Schema Reference',
@@ -58,9 +58,8 @@ export const ADMIN: NavItem[] = [
     icon: '⏱',
     coming: 'Coming in F21',
   },
-  { to: '/sync', label: 'Sync Status', icon: '⟳' },
-  { to: '/sync/webhook', label: 'Webhook Sync Status', icon: '⇋' },
-  { to: '/admin/feedback', label: 'Feedback', icon: '✎' },
+  { to: '/admin/sync', label: 'Sync Status', icon: '⟳' },
+  { to: '/admin/webhooks', label: 'Webhook Sync Status', icon: '⇋' },
   {
     to: '/admin/demo',
     label: 'Demo Controls',
@@ -68,15 +67,16 @@ export const ADMIN: NavItem[] = [
     coming: 'Coming in F13',
     demoAdminOnly: true,
   },
+  { to: '/admin/feedback', label: 'Feedback', icon: '✎' },
 ]
 
 const TITLES: Record<string, string> = {
   '/overview': 'R2R Overview',
   '/reports': 'Reports & Metrics',
   '/agents': 'Agents',
-  '/audit': 'Audit Log',
-  '/sync': 'Sync Status',
-  '/sync/webhook': 'Webhook Sync Status',
+  '/admin/audit': 'Audit Log',
+  '/admin/sync': 'Sync Status',
+  '/admin/webhooks': 'Webhook Sync Status',
   '/admin/feedback': 'Feedback',
   '/admin/demo': 'Demo Controls',
 }
