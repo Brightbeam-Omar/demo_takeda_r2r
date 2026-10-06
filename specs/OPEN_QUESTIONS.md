@@ -565,3 +565,45 @@ Add entries as: `## OQ-NNN · <feature> · <date>` then context, question, optio
 **Question:** What is the source of truth if they disagree?
 **Proposal:** Check the seeded week-41 percentages against `metric_rag` (90/80) before starting T7. If they match, nothing to do. If not, the frozen F05 numbers win and the AC colours are corrected in the spec (data is not retuned).
 **Decision:** Confirmed, no conflict. Seeded week 41 is M3 94% (green), M6 84% (amber), M7 69% (red). AC-04 asserts those values.
+
+## OQ-100 · F18 · 2026-10-06
+**Context:** F18-FR-03g adds a Next Inspection column fed by `mcha.qnext`, which datagen fills "for released drug substances with release + 12–24 months, and for re-eval stories". OQ-096 hides released rows by default, so for the default in-flight table the column would be empty except for the re-eval story rows. F18 also says the F05 counts and week-41 percentages must not move (UI-PARITY-README).
+**Question:** Which in-flight rows should carry a next inspection date, and does a scenario event set it?
+**Proposal:** Follow the spec literally (released drug substances and re-eval stories), on a new `rng.stream`, so the column is mostly "—" in the default view and filled when Released is selected. No scenario event touches `qnext` in Tier 1. The new column is added to `mcha`, the pipeline, `batch_pipeline_v` and the mirror as `next_inspection_date` (additive, nullable).
+**Decision:** Changed. Fill `mcha.qnext` for every drug-substance batch, in-flight and released, on a new `rng.stream`: most batches get manufacturing date (`hsdat`) + a retest interval of 12–36 months; re-eval story batches keep their story dates; consumables stay NULL (shown as "—"). The F05 counts and week-41 percentages must not move. No scenario events touch it in Tier 1.
+
+## OQ-101 · F18 · 2026-10-06
+**Context:** F18-FR-10 makes the COA plan "cycle start + `release_on_coa.sla_days` as the single deadline for release". Unspecified: (a) what `must_complete_by` is for stages after the current one, (b) how an adjusted or system need-by interacts (AC-04 mentions "with need-by present" but not the outcome), (c) rows at `pending` (no `cycle_start_date`), (d) whether `compressed` and `compression_ratio` are cleared.
+**Question:** Exact `plan(coa_release=True)` outputs.
+**Proposal:** (a) `expected_completion = cycle_start + 14d` for every non-terminal stage, and `must_complete_by` for each remaining applicable stage equals that same date. (b) The need-by is ignored by the plan but still displayed and still drives `late_reason_auto`. (c) `pending` and `released` rows are rejected by the endpoint (409 `not_applicable`) and `plan()` raises `ValueError` if called with `coa_release=True` and no cycle start. (d) `compressed = False`, `compression_ratio = None`. The 100% branch coverage on `sla.py` is kept with tests for on track, late, need-by present, re-eval cycle start, and `ValueError`.
+**Decision:** Accepted (a)–(d): one COA deadline for every remaining stage; need-by ignored by the plan but still displayed; 409 for `pending`/`released` and `ValueError` with no cycle start; compression cleared; 100% branch coverage kept.
+
+## OQ-102 · F18 · 2026-10-06
+**Context:** F18-FR-09 says a manual hold counts on the On Hold card and in the ON HOLD filter. The card and filter currently query the published `on_hold` (OQ-097 deferred the re-point to F18). It is not stated whether a held row still counts in its own stage card, or whether a row can be both ERP-held and manually held, or released from a manual hold while the ERP hold remains.
+**Question:** How do manual and ERP holds compose?
+**Proposal:** Hold is an overlay as today: a held row stays in its stage card count and also counts on On Hold. `on_hold_display = on_hold OR manual_hold`. A manual hold on an ERP-held row is allowed (it records the planner's reason); Release Hold clears only the manual hold, and the menu shows "Release Hold" only when `manual_hold` is on. The ERP hold is never changeable in the app. The row's tag and the flow-strip, `flags[]=on_hold` and exceptions-first sort all read `on_hold_display`. Place Hold on `released` rows returns 409. `pending` rows may be held.
+**Decision:** Accepted: hold is an overlay and the row stays in its stage card. `on_hold_display` drives the tag, the On Hold card, the filter and the sort. Release Hold clears only the manual hold; ERP holds are never editable. 409 on released rows. Pending rows can be held.
+
+## OQ-103 · F18 · 2026-10-06
+**Context:** 04 §5 lists the override `field` values as a closed set, and F18 adds `manual_hold` and `release_on_coa` with `value_json = {"on": bool, "reason": str}`. The `override_value` table already has `reason_code` and `note` columns, and F18 asks for a "short, required" reason with no limits. The endpoints are `POST /api/rows/{row_key}/hold` and `/coa-release`, but the spec does not say which role gets 403 and which gets 409 on a no-op (placing a hold twice).
+**Question:** Reason limits, storage and no-op behaviour?
+**Proposal:** Store the reason once, inside `value_json` (as the spec's shape says), and leave `reason_code` and `note` null. Reason is trimmed, 3–200 characters, required for both setting and clearing. Roles are enforced server-side (403 `forbidden_role`) per FR-08; qc_lead and viewer are denied for both actions. Setting a state that is already set, or clearing one that is not, returns 409. Audit actions are `hold_placed`, `hold_released`, `coa_release_set`, `coa_release_cleared`, with `{reason, previous}` in `details_json`. The field check constraint is extended in an Alembic migration.
+**Decision:** Accepted: the reason lives in `value_json`, 3–200 characters, required to set and to clear. 403 for the wrong role, 409 for a no-op. Audit records `{reason, previous}`. The field constraint is extended in a migration.
+
+## OQ-104 · F18 · 2026-10-06
+**Context:** F18-FR-01 asks for client-side pagination, and column filters and search-all work on displayed text (FR-05). F18-FR-07 offers "All filtered results (n rows)" with the visible columns, but also server endpoints `GET /api/export/table.csv`. The server cannot see header filters, hidden-column choices or the search text unless they are sent (the existing `q` is server-side).
+**Question:** Is "This page" and "All filtered results" built in the browser or on the server?
+**Proposal:** Build both in the browser from the data already loaded (displayed text of the visible columns, after header filters and search), so the export always matches the screen. `table.csv` stays a server alias of the existing `/api/export.csv` (the same filters as the overview query, default columns) for scripted use. Sampling Plan and QC Queue are server-side with the Overview query filters (type, class, campaign, period, tags). They intersect with the stage sets in the profile `exports` block, ignore the stage cards (a Sampling Plan under a QC stage selection would otherwise be empty), and ignore column filters and search. Viewers may export. `tags` is a `|`-joined list of tag labels.
+**Decision:** Accepted: "This page" and "All filtered" are built in the browser from what is on screen. `table.csv` is the server alias. Sampling Plan and QC Queue are built on the server with the Overview filters, intersected with the profile `exports` stage sets, ignoring stage cards, column filters and search. Viewers can export.
+
+## OQ-105 · F18 · 2026-10-06
+**Context:** F18-FR-01 says the shared `DataTable` "is used by the Overview and by every list window (F16, F19, F20, F21)". The F16/F17 list windows (Insights, Adjusted Needs-by, Expected Deliveries) already exist and F19–F21 are later features.
+**Question:** Does F18 migrate the existing windows to `DataTable`?
+**Proposal:** F18 builds `DataTable`, migrates the Overview, and migrates the three existing windows only where their tests keep passing unchanged. Otherwise they are migrated by the feature that next touches them (F19 for Insights, per the F12 proposal column). F20/F21 adopt it on creation.
+**Decision:** Accepted: migrate the existing windows only where their tests pass unchanged; otherwise the next feature that touches them migrates them.
+
+## OQ-106 · F18 · 2026-10-06
+**Context:** F18-FR-11 binds the key `B` to toggle the bookmark of the focused row. The search box and header filter boxes are always visible text inputs. FR-03d says the sample-count badge and FR-03h the status comment are rendered only when `sample_count` / `latest_status` exist (F19). AC-07 does not say what `DUE IN` shows on the day itself.
+**Question:** Minor behaviours.
+**Proposal:** Row shortcuts (↑/↓/Enter/B) are active only when the table, not a text input, has focus. `DUE IN Nd` uses `days_remaining` (0, 1 or 2), so day 0 reads `DUE IN 0d`; `LATE +Nd` uses `-days_remaining`; the `(Nd over)` suffix uses the same N. Enter opens the F11 drawer until F19 ships.
+**Decision:** Accepted: shortcuts only work when the table has focus. `DUE IN 0d` reads literally. Enter opens the F11 drawer until F19.
