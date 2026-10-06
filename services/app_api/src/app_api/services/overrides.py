@@ -16,6 +16,8 @@ from sqlalchemy.orm import Session
 from app_api.models import AppUser, AuditEvent, OverrideValue
 from app_api.services.compose import ADJUSTED, EXPEDITE, MANUAL_HOLD, RELEASE_ON_COA
 
+OTHER_REASON = "OTHER"  # F19-FR-06: the one reason code that needs a note
+
 
 def require_open_row(session: Session, row_key: str) -> str:
     """The row's stage key; 404 for an unknown row, 409 for a released one (nothing left to adjust)."""
@@ -108,6 +110,8 @@ def set_need_by(
             raise HTTPException(status_code=422, detail="reason_code is required when a date is set")
         if reason_code not in codes:
             raise HTTPException(status_code=422, detail=f"unknown reason_code {reason_code!r}")
+        if reason_code == OTHER_REASON and not (note and note.strip()):
+            raise HTTPException(status_code=422, detail="a note is required when the reason is OTHER")
 
     previous = current(session, row_key, ADJUSTED)
     old_date = previous.value_json if previous is not None else None

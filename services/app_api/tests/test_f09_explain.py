@@ -102,7 +102,9 @@ def test_f09_fr06_the_formula_covers_forward_overdue_and_no_plan(
     client: TestClient, mirror: SiteProfile
 ) -> None:
     assert "forward" in explain(client, "RM10041|B4|9001", "expected_completion")["formula"]
-    client.put(f"/api/rows/{B1042}/need-by", json={"adjusted_date": "2026-09-01", "reason_code": "OTHER"})
+    client.put(
+        f"/api/rows/{B1042}/need-by", json={"adjusted_date": "2026-09-01", "reason_code": "SUPPLIER_DELAY"}
+    )
     late = explain(client, B1042, "expected_completion")
     assert "already late" in late["formula"]
     released = explain(client, "RM10042|B5|9001", "expected_completion")
