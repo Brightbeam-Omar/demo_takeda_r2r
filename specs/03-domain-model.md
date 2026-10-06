@@ -212,7 +212,7 @@ For metric `m` bound to stage `s`, week `w` (ISO week, Monday start, site timezo
 - UI colour from `metric_rag`: `pct ≥ green_min_pct` green, `pct ≥ amber_min_pct` amber, otherwise red.
 
 ### 7.1 Report figures (F20, `r2r_core.reports`, read-time)
-- **Release rate:** released lots (rows with `ud_effective`) with `ud_date` in the year. Target marker = `release_annual × coverage_weeks / 52`; coverage starts at the year's earliest effective `ud_date` and runs in whole ISO weeks to the snapshot week, inclusive (OQ-117).
+- **Release rate:** released lots (rows with `ud_effective`) with `ud_date` in the year and on or after the coverage start. Target marker = `release_annual × coverage_weeks / 52`; coverage starts at the first ISO week of the metric history (the first week in `weekly_metrics_v` with any completion; OQ-117 as superseded by the F20 review) and runs in whole ISO weeks to the snapshot week, inclusive.
 - **Needs-by adherence:** a released lot is on time when `ud_date ≤` its need-by. The need-by is `need_by_at_release` (earliest `mdez.bdter ≥ cycle_start_date` for the material, closed lines included), replaced by the latest `adjusted_need_by_date` version created on or before `ud_date` (a clear falls back to `need_by_at_release`). Lots with no need-by are excluded and counted separately (OQ-119, OQ-121).
 - **Expedite on-time:** source facts only: lots of a batch with `expedite_due_date`, on time when `ud_date ≤ expedite_due_date`. App-only expedites have no due date and are shown as a count, not in the ratio (OQ-120).
 - **Late items:** rows with RAG red. Days over SLA = `−days_remaining`; late-reason category = label of the latest status-log entry that has a reason, else the label of `late_reason_auto`, else none (OQ-123).

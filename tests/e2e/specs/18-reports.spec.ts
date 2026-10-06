@@ -23,7 +23,7 @@ test('F20-AC-01: Executive Summary shows the year-to-date release rate with the 
   await expect(card.getByTestId('card-release-figure')).toHaveText(`${data.release.released} / ${data.release.annual_target}`)
   await expect(card.getByTestId('card-release-counts')).toContainText(`${data.release.pct_of_prorata}% of pro-rata target`)
   const marker = Math.min(100, (data.release.prorata_target / data.release.annual_target) * 100)
-  await expect(card.getByTestId('card-release-marker')).toHaveAttribute('style', new RegExp(`left: ${marker.toFixed(0)}(\\.\\d+)?%`))
+  await expect(card.getByTestId('card-release-marker')).toHaveAttribute('style', new RegExp(`left: ${Math.floor(marker)}(\\.\\d+)?%`))
   await expect(page.getByTestId('card-expedite')).toContainText('does not penalise the standard SLA')
   await expect(page.getByTestId('reports-coverage')).toContainText('Coverage from')
   await expect(page.getByTestId('reports-na-banner')).toContainText('M1, M2, M4, M5 show N/A')

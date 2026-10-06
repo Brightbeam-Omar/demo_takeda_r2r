@@ -41,32 +41,31 @@ def lot(
 # --- coverage and release rate (OQ-117, F20-AC-01) ----------------------------------------------
 
 
-def test_f20_ac01_coverage_runs_in_whole_iso_weeks_from_the_earliest_release_to_the_snapshot_week() -> None:
-    rows = [lot("a", D(2026, 4, 15)), lot("b", D(2026, 6, 1)), lot("c", D(2025, 12, 30))]  # c is another year
-    first, weeks = coverage(rows, 2026, TODAY)
-    assert first == D(2026, 4, 15)  # a Wednesday: its ISO week starts 13 Apr
+def test_f20_ac01_coverage_runs_in_whole_iso_weeks_from_the_first_week_of_the_metric_history() -> None:
+    start, weeks = coverage(D(2026, 4, 15), 2026, TODAY)  # a Wednesday: its ISO week starts 13 Apr
+    assert start == D(2026, 4, 13)
     assert weeks == 27  # weeks starting 13 Apr .. 12 Oct inclusive
 
 
-def test_f20_ac01_coverage_is_capped_at_52_and_empty_without_releases() -> None:
-    assert coverage([lot("a", D(2026, 1, 1))], 2026, TODAY)[1] == 42  # Jan 1 is in the week of 29 Dec 2025
-    assert coverage([lot("a", D(2025, 1, 1))], 2025, TODAY) == (D(2025, 1, 1), 52)  # past year: ends 31 Dec
-    assert coverage([], 2026, TODAY) == (None, 0)
-    assert coverage([lot("a", None)], 2026, TODAY) == (None, 0)
+def test_f20_ac01_coverage_is_capped_at_52_starts_at_new_year_and_is_empty_without_history() -> None:
+    assert coverage(D(2025, 3, 3), 2026, TODAY) == (D(2026, 1, 1), 42)  # history older than the year
+    assert coverage(D(2024, 1, 1), 2025, TODAY) == (D(2025, 1, 1), 52)  # past year, ends 31 Dec: capped
+    assert coverage(None, 2026, TODAY) == (None, 0)
+    assert coverage(D(2026, 4, 13), 2025, TODAY) == (None, 0)  # the history starts after that year ended
 
 
-def test_f20_ac01_release_rate_counts_lots_with_an_effective_ud_in_the_year_and_prorates_the_target() -> None:
+def test_f20_ac01_release_rate_counts_releases_from_the_history_start_and_prorates_the_target() -> None:
     rows = [lot(f"r{i}", D(2026, 4, 13) + (D(2026, 10, 1) - D(2026, 4, 13)) * i // 317) for i in range(318)]
-    rows += [lot("old", D(2025, 11, 3)), lot("open", None)]
-    rate = release_rate(rows, 2026, TODAY, annual_target=700)
-    assert rate.released == 318
+    rows += [lot("old", D(2026, 2, 3)), lot("older", D(2025, 11, 3)), lot("open", None)]  # before the history
+    rate = release_rate(rows, 2026, TODAY, annual_target=700, history_start=D(2026, 4, 15))
+    assert rate.released == 318  # the lots before 13 Apr are not counted
     assert (rate.coverage_start, rate.coverage_weeks) == (D(2026, 4, 13), 27)
     assert rate.prorata_target == Decimal(700 * 27) / Decimal(52)
     assert rate.pct_of_prorata == 87  # 318 / 363.46 rounded half up
 
 
-def test_f20_ac01_a_year_without_releases_has_no_percentage() -> None:
-    rate = release_rate([], 2026, TODAY, annual_target=700)
+def test_f20_ac01_a_year_without_history_has_no_percentage() -> None:
+    rate = release_rate([], 2026, TODAY, annual_target=700, history_start=None)
     assert (rate.released, rate.coverage_weeks, rate.prorata_target, rate.pct_of_prorata) == (
         0,
         0,
@@ -77,7 +76,7 @@ def test_f20_ac01_a_year_without_releases_has_no_percentage() -> None:
 
 def test_f20_ac01_a_rejected_lot_is_not_a_release() -> None:
     rejected = ReleasedLot("x", D(2026, 5, 5), False, None, None)
-    assert release_rate([rejected, lot("a", D(2026, 5, 6))], 2026, TODAY, 700).released == 1
+    assert release_rate([rejected, lot("a", D(2026, 5, 6))], 2026, TODAY, 700, D(2026, 4, 13)).released == 1
 
 
 # --- needs-by adherence (OQ-119, OQ-121, F20-AC-06) -----------------------------------------------

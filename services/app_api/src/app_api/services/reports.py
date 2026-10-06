@@ -239,6 +239,14 @@ def _metric_reference(session: Session) -> list[dict[str, object]]:
     ]
 
 
+def history_start(session: Session) -> dt.date | None:
+    """The first ISO week of the metric history: the first week with any completion (OQ-127 review)."""
+    found = session.execute(
+        text("SELECT min(week_start) FROM mirror_weekly_metrics WHERE completed > 0")
+    ).scalar()
+    return found if isinstance(found, dt.date) else None
+
+
 def meta(session: Session, profile: SiteProfile, year: int | None, lots: Sequence[ReleasedLot]) -> ReportMeta:
     now = clock.now()
     today = now.astimezone(profile.site.tz).date()
@@ -254,7 +262,7 @@ def meta(session: Session, profile: SiteProfile, year: int | None, lots: Sequenc
         )
     }
     years.add(today.year)
-    start, _ = coverage(lots, chosen, today)
+    start, _ = coverage(history_start(session), chosen, today)
     awaiting = [
         AwaitingMetric(
             metric_id=str(r["metric_id"]), label=str(r["label"]), null_reason=_text(r["null_reason"])
@@ -329,7 +337,9 @@ def summary(session: Session, profile: SiteProfile, year: int | None) -> Summary
     versions = need_by_versions(session, profile)
     return SummaryOut(
         **base.model_dump(),
-        release=release_card(release_rate(lots, base.year, today, profile.targets.release_annual)),
+        release=release_card(
+            release_rate(lots, base.year, today, profile.targets.release_annual, history_start(session))
+        ),
         adherence=adherence_card(needs_by_adherence(lots, versions, base.year), profile),
         expedite=expedite_card(expedite_on_time(lots, app_expedited(session), base.year), profile),
     )
@@ -533,7 +543,9 @@ def release_rate_tab(session: Session, profile: SiteProfile, year: int | None) -
         **base.model_dump(),
         weekly_target=profile.targets.release_weekly,
         weeks=weeks,
-        release=release_card(release_rate(lots, base.year, today, profile.targets.release_annual)),
+        release=release_card(
+            release_rate(lots, base.year, today, profile.targets.release_annual, history_start(session))
+        ),
     )
 
 

@@ -84,7 +84,7 @@ def mirror(app_factory: sessionmaker[Session], profile: SiteProfile) -> None:
         batch("OK", "RM10042", current_stage_entry_date=D(10, 10), system_need_by_locked=None),  # not late
     ]
     metrics = [
-        week("M3", D(10, 5), 18, 17, "94.4"), week("M3", D(9, 28), 33, 27, "81.8"),
+        week("M3", D(4, 13), 5, 4, "80.0"), week("M3", D(10, 5), 18, 17, "94.4"), week("M3", D(9, 28), 33, 27, "81.8"),
         week("M3", D(9, 21), 32, 27, "84.4"), week("M3", D(9, 14), 28, 22, "78.6"),
         week("M3", D(9, 7), 32, 28, "87.5"), week("M3", D(10, 12), 0, 0, None),
         week("M6", D(10, 5), 43, 36, "83.7"), week("M6", D(9, 28), 15, 12, "80.0"),
@@ -125,10 +125,10 @@ def test_f20_ac01_release_rate_ytd_counts_released_lots_with_a_ud_date_in_the_ye
     assert body["year"] == 2026 and body["years"] == [2026, 2025]
     release = body["release"]
     assert (release["released"], release["annual_target"]) == (4, 700)
-    assert release["coverage_weeks"] == 27  # 13 Apr (the week of the first release) to 12 Oct
+    assert release["coverage_weeks"] == 27  # 13 Apr (the first week of the history) to 12 Oct
     assert release["prorata_target"] == 363  # 700 * 27 / 52, rounded
     assert release["pct_of_prorata"] == 1  # 4 / 363
-    assert body["coverage_from"] == "2026-04-15"
+    assert body["coverage_from"] == "2026-04-13"  # the first week of the metric history
     assert body["freshness"]["contract_run_id"] == "run-1"
 
 
@@ -178,7 +178,7 @@ def test_f20_ac06_an_adjusted_need_by_set_before_the_release_replaces_the_origin
 
 def test_f20_oq124_the_year_filters_the_summary(client: TestClient) -> None:
     body = get(client, "summary", year=2025)
-    assert body["year"] == 2025 and body["release"]["released"] == 1
+    assert body["year"] == 2025 and body["release"]["released"] == 0  # the metric history starts in 2026
     assert body["adherence"]["late"] == 1
     assert get(client, "summary", year=2030)["release"]["released"] == 0
     assert client.get("/api/reports/summary", params={"year": 1999}).status_code == 422

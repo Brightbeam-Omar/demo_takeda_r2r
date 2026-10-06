@@ -729,3 +729,8 @@ Add entries as: `## OQ-NNN · <feature> · <date>` then context, question, optio
 **Question:** Confirm the small rules?
 **Proposal:** (a) Trend is the difference in percentage points, shown as "▲ +3.2 pp" and "▼ −4.0 pp"; the Stable band is |Δ| < 2 pp; fewer than two periods with `completed > 0` gives "—". (b) Executive Summary exports the three cards as rows (metric, value, target, counts). Trends exports the SLA Trends table; the stage-trend series has its own second file via `?part=stage`. Others export the table or series shown. Exports are not audited (as the F18 exports). (c) Add `recharts` to the frontend dependencies in T7. (d) The banner shows when any `mirror_metric_reference` row has `status = 'awaiting_signal'`, so it disappears by itself when T2-01 changes the data.
 **Decision:** Accepted as proposed (2026-10-06).
+
+## OQ-127 · F20 review · 2026-10-06
+**Context:** Release Rate coverage now starts at the first ISO week of the metric history (the first week in `weekly_metrics_v` with any completion), and counts releases from that date (supersedes the coverage part of OQ-117). The synthetic history starts from empty: the first weeks have few lots in flight, so early-week volumes and metrics are low until the pipeline fills up.
+**Question (after Tier 1):** Datagen warm-up: generate lots received before the history window, so the pipeline is in steady state at window start. This changes the F05 frozen counts and early-week metrics, so it needs a product decision.
+**Decision:** Open. Not for Tier 1.

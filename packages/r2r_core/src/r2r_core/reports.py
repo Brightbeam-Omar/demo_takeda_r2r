@@ -55,19 +55,21 @@ def _pct(part: int, whole: int) -> Decimal | None:
 # --- release rate (OQ-117) ---------------------------------------------------------------------
 
 
-def coverage(rows: Sequence[ReleasedLot], year: int, today: date) -> tuple[date | None, int]:
-    """``(first release date of the year, whole ISO weeks covered)``.
+def coverage(history_start: date | None, year: int, today: date) -> tuple[date | None, int]:
+    """``(coverage start, whole ISO weeks covered)`` for ``year``.
 
-    Coverage starts at the year's earliest effective ``ud_date`` and runs to the snapshot week, or to the end
-    of the year for a past year. The week count is inclusive of both weeks and capped at 52.
+    Coverage starts at the first ISO week of the metric history (the first week with a completion), or at
+    1 Jan if the history began earlier. It runs to the snapshot week, or to the end of the year for a past
+    year. The week count is inclusive of both weeks and capped at 52. A year the history has not reached
+    has none.
     """
-    released = _released_in(rows, year)
-    if not released:
+    if history_start is None:
         return None, 0
-    first = min(r.ud_date for r in released if r.ud_date is not None)
+    start = max(_monday(history_start), date(year, 1, 1))
     end = min(today, date(year, 12, 31))
-    weeks = (_monday(end) - _monday(first)).days // 7 + 1
-    return first, min(weeks, WEEKS_PER_YEAR)
+    if start > end:
+        return None, 0
+    return start, min((_monday(end) - _monday(start)).days // 7 + 1, WEEKS_PER_YEAR)
 
 
 @dataclass(frozen=True)
@@ -80,9 +82,16 @@ class ReleaseRate:
     coverage_weeks: int
 
 
-def release_rate(rows: Sequence[ReleasedLot], year: int, today: date, annual_target: int) -> ReleaseRate:
-    released = len(_released_in(rows, year))
-    start, weeks = coverage(rows, year, today)
+def release_rate(
+    rows: Sequence[ReleasedLot], year: int, today: date, annual_target: int, history_start: date | None
+) -> ReleaseRate:
+    """Releases in the year on or after the start of the metric history, against the pro-rata target."""
+    start, weeks = coverage(history_start, year, today)
+    released = sum(
+        1
+        for r in _released_in(rows, year)
+        if start is not None and r.ud_date is not None and r.ud_date >= start
+    )
     prorata = Decimal(annual_target) * weeks / WEEKS_PER_YEAR
     share = None
     if prorata > 0:

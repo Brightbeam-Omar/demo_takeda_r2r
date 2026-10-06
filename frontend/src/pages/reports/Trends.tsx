@@ -8,6 +8,10 @@ import { dayLabel, formatPct, monthLabel, trendView, weekLabel, type TrendsRepor
 type Grain = 'weekly' | 'monthly'
 type StageGrain = 'daily' | 'weekly'
 
+/** The scrubber opens on the last 8 weeks; the whole history stays reachable (F20 review). */
+const DEFAULT_WEEKS = 8
+const DEFAULT_DAYS = DEFAULT_WEEKS * 7
+
 const GRAINS: [Grain, string][] = [['weekly', 'Weekly'], ['monthly', 'Monthly']]
 const STAGE_GRAINS: [StageGrain, string][] = [['daily', 'Daily'], ['weekly', 'Weekly']]
 
@@ -114,7 +118,7 @@ export function Trends({ params }: { params: URLSearchParams }) {
               {data.stages.map((stage) => (
                 <Bar key={stage.stage_key} dataKey={stage.stage_key} name={stage.label} stackId="open" fill={stageHex(stage.sort)} isAnimationActive={false} />
               ))}
-              <Brush dataKey="label" height={24} stroke={INK_2} startIndex={stageGrain === 'daily' ? Math.max(0, points.length - 120) : 0} />
+              <Brush key={stageGrain} dataKey="label" height={24} stroke={INK_2} startIndex={Math.max(0, points.length - (stageGrain === 'daily' ? DEFAULT_DAYS : DEFAULT_WEEKS))} />
             </BarChart>
           </ResponsiveContainer>
         </div>
