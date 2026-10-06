@@ -550,27 +550,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/rows/{row_key}/comments": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Post Comment
-         * @deprecated
-         * @description Deprecated: appends a status-log entry without a status.
-         */
-        post: operations["post_comment_api_rows__row_key__comments_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/rows/{row_key}/explain": {
         parameters: {
             query?: never;
@@ -636,27 +615,6 @@ export interface paths {
          * @description Recompute the row with the proposed override, through the composition a read uses. Writes nothing.
          */
         post: operations["preview_need_by_api_rows__row_key__need_by_preview_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/rows/{row_key}/status": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Put Status
-         * @deprecated
-         * @description Deprecated: appends a status-log entry (green/amber/red map to on_track/at_risk/blocked).
-         */
-        put: operations["put_status_api_rows__row_key__status_put"];
-        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1010,30 +968,6 @@ export interface components {
             name: string;
             /** Type */
             type: string;
-        };
-        /**
-         * CommentIn
-         * @description Deprecated body of ``POST /rows/{row_key}/comments`` (F19-FR-05): a wrapper over the status log.
-         */
-        CommentIn: {
-            /** Body */
-            body: string;
-        };
-        /** CommentOut */
-        CommentOut: {
-            /** Author User Key */
-            author_user_key: string;
-            /** Body */
-            body: string;
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-            /** Id */
-            id: number;
-            /** Row Key */
-            row_key: string;
         };
         /** CompletionExplain */
         CompletionExplain: {
@@ -2108,18 +2042,6 @@ export interface components {
             total: number;
             /** Week Start */
             week_start: string | null;
-        };
-        /**
-         * StatusIn
-         * @description Deprecated body of ``PUT /rows/{row_key}/status`` (F19-FR-05): a wrapper over the status log.
-         */
-        StatusIn: {
-            /** Rag */
-            rag?: ("red" | "amber" | "green") | null;
-            /** Reason */
-            reason?: string | null;
-            /** Team */
-            team?: string | null;
         };
         /** StatusLogIn */
         StatusLogIn: {
@@ -3638,43 +3560,6 @@ export interface operations {
             };
         };
     };
-    post_comment_api_rows__row_key__comments_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "x-demo-user"?: string | null;
-            };
-            path: {
-                row_key: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CommentIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CommentOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     explain_row_api_rows__row_key__explain_get: {
         parameters: {
             query: {
@@ -3808,43 +3693,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PreviewOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    put_status_api_rows__row_key__status_put: {
-        parameters: {
-            query?: never;
-            header?: {
-                "x-demo-user"?: string | null;
-            };
-            path: {
-                row_key: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["StatusIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RowOut"];
                 };
             };
             /** @description Validation Error */

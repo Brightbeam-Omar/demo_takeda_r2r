@@ -41,6 +41,8 @@ OBJECTS = {
     "monthly_metrics_v": "mirror_monthly_metrics",
     "pipeline_daily_v": "mirror_pipeline_daily",
     "releases_weekly_v": "mirror_releases_weekly",
+    "pipeline_runs_v": "mirror_pipeline_runs",
+    "pipeline_run_steps_v": "mirror_pipeline_run_steps",
     "pipeline_status_v": "mirror_pipeline_status",
 }
 

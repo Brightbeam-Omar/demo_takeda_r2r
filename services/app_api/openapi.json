@@ -546,54 +546,6 @@
         "title": "ColumnOut",
         "type": "object"
       },
-      "CommentIn": {
-        "description": "Deprecated body of ``POST /rows/{row_key}/comments`` (F19-FR-05): a wrapper over the status log.",
-        "properties": {
-          "body": {
-            "title": "Body",
-            "type": "string"
-          }
-        },
-        "required": [
-          "body"
-        ],
-        "title": "CommentIn",
-        "type": "object"
-      },
-      "CommentOut": {
-        "properties": {
-          "author_user_key": {
-            "title": "Author User Key",
-            "type": "string"
-          },
-          "body": {
-            "title": "Body",
-            "type": "string"
-          },
-          "created_at": {
-            "format": "date-time",
-            "title": "Created At",
-            "type": "string"
-          },
-          "id": {
-            "title": "Id",
-            "type": "integer"
-          },
-          "row_key": {
-            "title": "Row Key",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "row_key",
-          "body",
-          "author_user_key",
-          "created_at"
-        ],
-        "title": "CommentOut",
-        "type": "object"
-      },
       "CompletionExplain": {
         "properties": {
           "adjusted_reason_code": {
@@ -4403,51 +4355,6 @@
           "total"
         ],
         "title": "StagePoint",
-        "type": "object"
-      },
-      "StatusIn": {
-        "description": "Deprecated body of ``PUT /rows/{row_key}/status`` (F19-FR-05): a wrapper over the status log.",
-        "properties": {
-          "rag": {
-            "anyOf": [
-              {
-                "enum": [
-                  "red",
-                  "amber",
-                  "green"
-                ],
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Rag"
-          },
-          "reason": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Reason"
-          },
-          "team": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Team"
-          }
-        },
-        "title": "StatusIn",
         "type": "object"
       },
       "StatusLogIn": {
@@ -8958,73 +8865,6 @@
         "summary": "Post Coa Release"
       }
     },
-    "/api/rows/{row_key}/comments": {
-      "post": {
-        "deprecated": true,
-        "description": "Deprecated: appends a status-log entry without a status.",
-        "operationId": "post_comment_api_rows__row_key__comments_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "row_key",
-            "required": true,
-            "schema": {
-              "title": "Row Key",
-              "type": "string"
-            }
-          },
-          {
-            "in": "header",
-            "name": "x-demo-user",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Demo-User"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CommentIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommentOut"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Post Comment"
-      }
-    },
     "/api/rows/{row_key}/explain": {
       "get": {
         "operationId": "explain_row_api_rows__row_key__explain_get",
@@ -9292,73 +9132,6 @@
           }
         },
         "summary": "Preview Need By"
-      }
-    },
-    "/api/rows/{row_key}/status": {
-      "put": {
-        "deprecated": true,
-        "description": "Deprecated: appends a status-log entry (green/amber/red map to on_track/at_risk/blocked).",
-        "operationId": "put_status_api_rows__row_key__status_put",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "row_key",
-            "required": true,
-            "schema": {
-              "title": "Row Key",
-              "type": "string"
-            }
-          },
-          {
-            "in": "header",
-            "name": "x-demo-user",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Demo-User"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/StatusIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RowOut"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Put Status"
       }
     },
     "/api/rows/{row_key}/status-log": {

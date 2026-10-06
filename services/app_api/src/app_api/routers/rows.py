@@ -2,9 +2,9 @@
 
 import datetime as dt
 import json
-from typing import Annotated, Literal
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from r2r_core.profile import SiteProfile
 from sqlalchemy import select, text
@@ -16,7 +16,6 @@ from app_api.deps import get_profile
 from app_api.models import AppUser, OverrideValue
 from app_api.schemas import (
     ChangeControlOut,
-    CommentOut,
     DeviationOut,
     InboundCheckOut,
     InboundItemOut,
@@ -55,20 +54,6 @@ class PreviewOut(BaseModel):
     operative_need_by: dt.date | None
 
 
-class StatusIn(BaseModel):
-    """Deprecated body of ``PUT /rows/{row_key}/status`` (F19-FR-05): a wrapper over the status log."""
-
-    rag: Literal["red", "amber", "green"] | None = None
-    reason: str | None = None
-    team: str | None = None
-
-
-class CommentIn(BaseModel):
-    """Deprecated body of ``POST /rows/{row_key}/comments`` (F19-FR-05): a wrapper over the status log."""
-
-    body: str
-
-
 class StatusLogIn(BaseModel):
     status: str
     team: str | None = None
@@ -80,9 +65,6 @@ class StatusLogPage(BaseModel):
     count: int
     latest: StatusLogOut | None
     entries: list[StatusLogOut]
-
-
-DEPRECATION = {"Deprecation": "true", "Link": '</api/rows/{row_key}/status-log>; rel="successor-version"'}
 
 
 class ToggleIn(BaseModel):
@@ -291,25 +273,6 @@ def post_status_log(
     return StatusLogOut.model_validate(entry, from_attributes=True)
 
 
-@router.put("/rows/{row_key}/status", deprecated=True)
-def put_status(
-    row_key: str,
-    body: StatusIn,
-    response: Response,
-    session: Annotated[Session, Depends(get_session, scope="function")],
-    user: Annotated[AppUser, Depends(require_role(*LOGGERS))],
-    profile: Annotated[SiteProfile, Depends(get_profile)],
-) -> RowOut:
-    """Deprecated: appends a status-log entry (green/amber/red map to on_track/at_risk/blocked)."""
-    if body.rag is not None and not (body.reason and body.reason.strip()):
-        raise HTTPException(status_code=422, detail="reason is required when a status is set")
-    status = status_log.RAG_TO_STATUS[body.rag] if body.rag else "on_track"
-    comment = body.reason if body.rag else "Cleared"
-    status_log.add_entry(session, profile, user, row_key, status, comment or "", body.team)
-    response.headers.update({k: v.replace("{row_key}", row_key) for k, v in DEPRECATION.items()})
-    return recomputed(session, profile, row_key)
-
-
 @router.post("/rows/{row_key}/hold")
 def post_hold(
     row_key: str,
@@ -332,24 +295,3 @@ def post_coa_release(
 ) -> RowOut:
     overrides.set_coa_release(session, user, row_key, body.on, body.reason)
     return recomputed(session, profile, row_key)
-
-
-@router.post("/rows/{row_key}/comments", status_code=201, deprecated=True)
-def post_comment(
-    row_key: str,
-    body: CommentIn,
-    response: Response,
-    session: Annotated[Session, Depends(get_session, scope="function")],
-    user: Annotated[AppUser, Depends(require_role(*LOGGERS))],
-    profile: Annotated[SiteProfile, Depends(get_profile)],
-) -> CommentOut:
-    """Deprecated: appends a status-log entry without a status."""
-    entry = status_log.add_entry(session, profile, user, row_key, None, body.body)
-    response.headers.update({k: v.replace("{row_key}", row_key) for k, v in DEPRECATION.items()})
-    return CommentOut(
-        id=entry.id,
-        row_key=entry.row_key,
-        body=entry.comment,
-        author_user_key=entry.author_user_key,
-        created_at=entry.at,
-    )

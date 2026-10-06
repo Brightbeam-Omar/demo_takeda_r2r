@@ -151,35 +151,6 @@ def test_f19_fr05_the_reference_lists_the_status_options_and_reasons(client: Tes
     ]  # fmt: skip
 
 
-# --- the deprecated endpoints are thin wrappers (kept until F21) ------------------------------------
-
-
-def test_f19_fr05_the_old_status_endpoint_appends_a_log_entry_and_says_it_is_deprecated(
-    client: TestClient,
-) -> None:
-    response = client.put(
-        f"/api/rows/{ROW}/status",
-        json={"rag": "red", "reason": "Out of reagent", "team": "QC Lab"},
-        headers=QUINN,
-    )
-    assert response.status_code == 200 and "deprecation" in {k.lower() for k in response.headers}
-    latest = response.json()["latest_status"]
-    assert (latest["status"], latest["team"], latest["comment"]) == ("blocked", "QC Lab", "Out of reagent")
-    cleared = client.put(f"/api/rows/{ROW}/status", json={"rag": None}, headers=QUINN)
-    assert cleared.json()["latest_status"]["status"] == "on_track"  # a clear is an on_track entry
-    assert cleared.json()["latest_status"]["comment"] == "Cleared"
-    assert client.get(URL).json()["count"] == 2
-
-
-def test_f19_fr05_the_old_comment_endpoint_appends_an_entry_without_a_status(client: TestClient) -> None:
-    created = client.post(f"/api/rows/{ROW}/comments", json={"body": "  Called the supplier  "})
-    assert created.status_code == 201 and "deprecation" in {k.lower() for k in created.headers}
-    assert created.json()["body"] == "Called the supplier"
-    assert client.get(URL).json()["entries"][0]["status"] is None
-    assert overview_row(client)["status_log_count"] == 1
-    assert overview_row(client)["latest_status"] is None  # latest is the newest entry WITH a status
-
-
 # --- the one-off migration --------------------------------------------------------------------------
 
 

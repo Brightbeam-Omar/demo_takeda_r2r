@@ -6,8 +6,8 @@ EXPECTED = {
     ("get", "/api/me"), ("get", "/api/clock"), ("get", "/api/users"), ("get", "/api/reference"),
     ("get", "/api/overview"), ("get", "/api/metrics"), ("get", "/api/rows/{row_key}"),
     ("get", "/api/rows/{row_key}/explain"), ("get", "/api/explain"),
-    ("put", "/api/rows/{row_key}/need-by"), ("put", "/api/rows/{row_key}/status"),
-    ("post", "/api/rows/{row_key}/comments"), ("get", "/api/audit"), ("get", "/api/export.csv"),
+    ("put", "/api/rows/{row_key}/need-by"), ("post", "/api/rows/{row_key}/status-log"),
+    ("get", "/api/audit"), ("get", "/api/export.csv"),
 }  # fmt: skip
 
 

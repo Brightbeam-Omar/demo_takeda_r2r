@@ -79,11 +79,11 @@ test('F15-AC-03: site_a reads SAP BLOCKED and QCL Testing; a profile with erp "E
 
 test('F15-AC-04: feedback posted by Sam is stored and listed for Admin', async ({ page }) => {
   const message = `Shell feedback ${Date.now()}`
-  await page.goto('/audit')
+  await page.goto('/admin/audit')
   await page.getByRole('combobox', { name: 'Persona' }).selectOption('sam')
   await expect(page.getByTestId('user-chip')).toHaveText('Sam · Viewer')
   await page.getByTestId('feedback-button').click()
-  await expect(page.getByTestId('feedback-page')).toHaveText('/audit')
+  await expect(page.getByTestId('feedback-page')).toHaveText('/admin/audit')
   await page.getByLabel('Feedback message').fill(message)
   await page.getByRole('button', { name: 'Send' }).click()
   await expect(page.getByRole('status').filter({ hasText: 'feedback was sent' })).toBeVisible()
@@ -94,7 +94,7 @@ test('F15-AC-04: feedback posted by Sam is stored and listed for Admin', async (
   const row = page.getByTestId('feedback-row').filter({ hasText: message })
   await expect(row).toBeVisible()
   await expect(row).toContainText('sam')
-  await expect(row).toContainText('/audit')
+  await expect(row).toContainText('/admin/audit')
   await page.getByRole('combobox', { name: 'Persona' }).selectOption('pat')
 })
 

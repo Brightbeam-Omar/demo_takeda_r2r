@@ -16,8 +16,8 @@ The REST API behind the UI. It composes the mirror with current overrides and ap
 | `GET /api/rows/{row_key}/explain?field=stage|expected_completion` | any | Row explanation payload (see FR-06) |
 | `GET /api/explain?field=metric:M3&week=…` or `field=flow:<stage_key>` (+ overview filters) | any | Metric / flow-count explanation (see FR-06) |
 | `PUT /api/rows/{row_key}/need-by` | planner, admin | Body `{adjusted_date|null, reason_code, expedite:bool, note}`. Reason is required when setting a date. Returns the recomputed row |
-| `PUT /api/rows/{row_key}/status` | qc_lead, qa_release, admin | `{rag:'red'|'amber'|'green', reason, team}` |
-| `POST /api/rows/{row_key}/comments` | all except viewer | `{body}` |
+| ~~`PUT /api/rows/{row_key}/status`~~ | removed in F21-FR-07 | superseded by the F19 status log (`POST /api/rows/{row_key}/status-log`) |
+| ~~`POST /api/rows/{row_key}/comments`~~ | removed in F21-FR-07 | superseded by the F19 status log |
 | `GET /api/audit` | any | Paginated audit events, filter by row_key/actor/action and a demo-date range (`from`, `to`, inclusive, site timezone; F11, OQ-068) |
 | `GET /api/export.csv` | any | Current overview rows (filters applied; same in-flight default as the overview, F17-FR-10) |
 | `GET /api/expected-deliveries` | any | Open PO lines (F17): `period` filters and `type[]`/`class[]`/`campaign[]`; stage, tags and bookmarks never apply |

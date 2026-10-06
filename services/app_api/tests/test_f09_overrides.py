@@ -151,19 +151,15 @@ def test_f09_ac01_a_viewer_cannot_set_a_need_by(
         ("PUT", f"/api/rows/{ROW}/need-by", "admin", True),
         ("PUT", f"/api/rows/{ROW}/need-by", "quinn", False),
         ("PUT", f"/api/rows/{ROW}/need-by", "alex", False),
-        ("PUT", f"/api/rows/{ROW}/status", "quinn", True),
-        ("PUT", f"/api/rows/{ROW}/status", "alex", True),
-        ("PUT", f"/api/rows/{ROW}/status", "admin", True),
-        ("PUT", f"/api/rows/{ROW}/status", "pat", True),  # F19: every role except viewer
-        ("PUT", f"/api/rows/{ROW}/status", "sam", False),
-        ("POST", f"/api/rows/{ROW}/comments", "sam", False),
-        ("POST", f"/api/rows/{ROW}/comments", "pat", True),
-        ("POST", f"/api/rows/{ROW}/comments", "quinn", True),
+        ("POST", f"/api/rows/{ROW}/status-log", "quinn", True),
+        ("POST", f"/api/rows/{ROW}/status-log", "alex", True),
+        ("POST", f"/api/rows/{ROW}/status-log", "admin", True),
+        ("POST", f"/api/rows/{ROW}/status-log", "pat", True),  # F19: every role except viewer
+        ("POST", f"/api/rows/{ROW}/status-log", "sam", False),
     ],
 )
 def test_f09_fr05_the_role_matrix(client: TestClient, method: str, path: str, user: str, ok: bool) -> None:
-    bodies = {"need-by": PULLED, "status": {"rag": "red", "reason": "waiting", "team": "QC Lab"},
-              "comments": {"body": "hello"}}  # fmt: skip
+    bodies = {"need-by": PULLED, "status-log": {"status": "blocked", "comment": "waiting", "team": "QC Lab"}}
     response = client.request(
         method, path, json=bodies[path.rsplit("/", 1)[1]], headers={"X-Demo-User": user}
     )
@@ -172,10 +168,12 @@ def test_f09_fr05_the_role_matrix(client: TestClient, method: str, path: str, us
 
 
 def test_f09_fr04_a_status_never_changes_the_plan_or_the_flow_strip(client: TestClient) -> None:
-    body = {"rag": "red", "reason": "Instrument down", "team": "QC Lab"}
-    response = client.put(f"/api/rows/{ROW}/status", json=body, headers={"X-Demo-User": "quinn"}).json()
-    assert response["latest_status"]["status"] == "blocked"
-    assert response["plan"]["rag"] == "green" and response["late"] is False  # OQ-057
+    body = {"status": "blocked", "comment": "Instrument down", "team": "QC Lab"}
+    created = client.post(f"/api/rows/{ROW}/status-log", json=body, headers={"X-Demo-User": "quinn"})
+    assert created.status_code == 201 and created.json()["status"] == "blocked"
+    after = row(client)
+    assert after["latest_status"]["status"] == "blocked"
+    assert after["plan"]["rag"] == "green" and after["late"] is False  # OQ-057
     overview = client.get("/api/overview").json()
     assert [r["batch_no"] for r in overview["rows"]] == [
         "B2077"
@@ -188,22 +186,33 @@ def test_f09_fr04_a_status_never_changes_the_plan_or_the_flow_strip(client: Test
         "rejected": 0,
     }
     assert (
-        client.put(
-            f"/api/rows/{ROW}/status", json={"rag": "red"}, headers={"X-Demo-User": "quinn"}
+        client.post(
+            f"/api/rows/{ROW}/status-log",
+            json={"status": "blocked", "comment": "  "},
+            headers={"X-Demo-User": "quinn"},
         ).status_code
         == 422
     )
 
 
-def test_f09_fr04_comments_are_stored_counted_and_audited(
+def test_f09_fr04_a_log_entry_is_stored_counted_and_audited(
     client: TestClient, app_factory: sessionmaker[Session]
 ) -> None:
-    created = client.post(f"/api/rows/{ROW}/comments", json={"body": "  Called the supplier  "})
-    assert created.status_code == 201 and created.json()["body"] == "Called the supplier"
+    body = {"status": "on_track", "comment": "  Called the supplier  "}
+    created = client.post(f"/api/rows/{ROW}/status-log", json=body)
+    assert created.status_code == 201 and created.json()["comment"] == "Called the supplier"
     assert row(client)["status_log_count"] == 1
     assert query(app_factory, "SELECT action, actor_user_key FROM audit_event") == [("status_logged", "pat")]
-    assert client.post(f"/api/rows/{ROW}/comments", json={"body": "   "}).status_code == 422
-    assert client.post("/api/rows/NOPE%7CX%7C1/comments", json={"body": "x"}).status_code == 404
+    assert client.post(f"/api/rows/{ROW}/status-log", json=body | {"comment": "   "}).status_code == 422
+    assert client.post("/api/rows/NOPE%7CX%7C1/status-log", json=body).status_code == 404
+
+
+def test_f21_fr07_the_deprecated_status_and_comment_endpoints_are_gone(client: TestClient) -> None:
+    assert client.put(f"/api/rows/{ROW}/status", json={"rag": "red", "reason": "x"}).status_code in (404, 405)
+    assert client.post(f"/api/rows/{ROW}/comments", json={"body": "x"}).status_code in (404, 405)
+    paths = client.get("/openapi.json").json()["paths"]
+    assert "/api/rows/{row_key}/status" not in paths and "/api/rows/{row_key}/comments" not in paths
+    assert "post" in paths["/api/rows/{row_key}/status-log"]  # the status log replaces both
 
 
 def test_f09_fr04_a_failed_write_leaves_no_version_behind(
