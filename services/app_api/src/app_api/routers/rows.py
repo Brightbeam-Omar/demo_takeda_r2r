@@ -23,6 +23,8 @@ router = APIRouter()
 PLANNERS = ("planner", "admin")
 STATUS_SETTERS = ("qc_lead", "qa_release", "admin")
 COMMENTERS = ("planner", "qc_lead", "qa_release", "admin")
+HOLDERS = ("planner", "qa_release", "admin")  # F18-FR-08
+COA_RELEASERS = ("qa_release", "admin")
 
 
 class NeedByIn(BaseModel):
@@ -49,6 +51,13 @@ class StatusIn(BaseModel):
 
 class CommentIn(BaseModel):
     body: str
+
+
+class ToggleIn(BaseModel):
+    """Body of Place/Release Hold and Release on COA/Undo: the reason is required either way (OQ-103)."""
+
+    on: bool
+    reason: str
 
 
 def recomputed(session: Session, profile: SiteProfile, row_key: str) -> RowOut:
@@ -176,6 +185,30 @@ def put_status(
     profile: Annotated[SiteProfile, Depends(get_profile)],
 ) -> RowOut:
     overrides.set_status(session, user, row_key, body.rag, body.reason, body.team)
+    return recomputed(session, profile, row_key)
+
+
+@router.post("/rows/{row_key}/hold")
+def post_hold(
+    row_key: str,
+    body: ToggleIn,
+    session: Annotated[Session, Depends(get_session, scope="function")],
+    user: Annotated[AppUser, Depends(require_role(*HOLDERS))],
+    profile: Annotated[SiteProfile, Depends(get_profile)],
+) -> RowOut:
+    overrides.set_hold(session, user, row_key, body.on, body.reason)
+    return recomputed(session, profile, row_key)
+
+
+@router.post("/rows/{row_key}/coa-release")
+def post_coa_release(
+    row_key: str,
+    body: ToggleIn,
+    session: Annotated[Session, Depends(get_session, scope="function")],
+    user: Annotated[AppUser, Depends(require_role(*COA_RELEASERS))],
+    profile: Annotated[SiteProfile, Depends(get_profile)],
+) -> RowOut:
+    overrides.set_coa_release(session, user, row_key, body.on, body.reason)
     return recomputed(session, profile, row_key)
 
 

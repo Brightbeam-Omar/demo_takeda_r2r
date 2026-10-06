@@ -104,7 +104,11 @@ def _auto_late_reason(row: RowFacts, adjusted: AdjustedNeedBy | None, late: bool
 
 
 def plan(
-    row: RowFacts, profile: SiteProfile, today: dt.date, adjusted: AdjustedNeedBy | None = None
+    row: RowFacts,
+    profile: SiteProfile,
+    today: dt.date,
+    adjusted: AdjustedNeedBy | None = None,
+    coa_release: bool = False,
 ) -> PlanResult:
     """Expected completion of the current stage, RAG and late flags (03 section 5.2 to 5.4).
 
@@ -123,7 +127,13 @@ def plan(
     Rows with nothing to plan (a stage that takes no part in SLA maths, or a started stage with no entry
     date) get ``expected_completion = None``, no RAG and ``late = False``. A stage that exists but does not
     apply to the row raises ``ValueError``; an unknown stage raises ``KeyError``.
+
+    ``coa_release=True`` (Release on COA, F18-FR-10) replaces the whole plan with one deadline,
+    ``cycle_start_date + release_on_coa.sla_days``, shared by every remaining stage. The need-by is ignored,
+    nothing is compressed, and it raises ``ValueError`` when the row has no cycle start.
     """
+    if coa_release and row.cycle_start_date is None:
+        raise ValueError(f"row {row.row_key} has no cycle start, so it cannot be released on COA")
     entry = row.current_stage_entry_date
     days_in_stage = (today - entry).days if entry is not None else None
     stages = applicable_stages(row, profile)
@@ -141,9 +151,13 @@ def plan(
 
     ratio: Decimal | None = None
     compressed = False
-    if need_by is None:
+    deadlines: list[dt.date] = []
+    if coa_release:
+        assert row.cycle_start_date is not None  # checked above
         effective = slas
-        deadlines: list[dt.date] = []
+        deadlines = [row.cycle_start_date + dt.timedelta(days=profile.release_on_coa.sla_days)] * len(slas)
+    elif need_by is None:
+        effective = slas
         cursor = entry
         for sla in effective:
             cursor += dt.timedelta(days=sla)

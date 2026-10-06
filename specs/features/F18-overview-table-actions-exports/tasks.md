@@ -1,11 +1,11 @@
 # F18 · Tasks
-- [ ] T1 `docs(specs)`: contract changes + decisions
-- [ ] T2 [TDD] r2r_core `plan(coa_release)` + profile model (FR-10, AC-04)
-- [ ] T3 `next_inspection_date` end to end: erp_sim → datagen → pipeline → mirror (FR-03g)
-- [ ] T4 [TDD] Hold / COA endpoints, versioning, audit, roles, on_hold display (FR-08, FR-09, AC-03)
-- [ ] T5 Shared DataTable: sort, header filters, pagination, toolbar, Reset Table, Columns panel (FR-01, FR-02, AC-01)
-- [ ] T6 Cell renderers incl. status text, SLA deadline, expected-completion overdue, exception styling (FR-03, FR-04, AC-07)
-- [ ] T7 Search-all with highlight + count (FR-05, FR-06, AC-02)
-- [ ] T8 [TDD] Export endpoints + menu (FR-07, AC-05)
-- [ ] T9 Row actions menu + keyboard navigation (FR-08, FR-11, AC-06)
-- [ ] T10 Remove virtualisation, keep live highlight. Playwright, screenshot, perf, spec check, PR (FR-12, AC-08)
+- [x] T1 `docs(specs)`: contract changes + decisions
+- [x] T2 [TDD] r2r_core `plan(coa_release)` + profile model (FR-10, AC-04)
+- [x] T3 `next_inspection_date` end to end: erp_sim → datagen → pipeline → mirror (FR-03g)
+- [x] T4 [TDD] Hold / COA endpoints, versioning, audit, roles, on_hold display (FR-08, FR-09, AC-03)
+- [x] T5 Shared DataTable: sort, header filters, pagination, toolbar, Reset Table, Columns panel (FR-01, FR-02, AC-01)
+- [x] T6 Cell renderers incl. status text, SLA deadline, expected-completion overdue, exception styling (FR-03, FR-04, AC-07)
+- [x] T7 Search-all with highlight + count (FR-05, FR-06, AC-02)
+- [x] T8 [TDD] Export endpoints + menu (FR-07, AC-05)
+- [x] T9 Row actions menu + keyboard navigation (FR-08, FR-11, AC-06)
+- [x] T10 Remove virtualisation, keep live highlight. Playwright, screenshot, perf, spec check, PR (FR-12, AC-08)

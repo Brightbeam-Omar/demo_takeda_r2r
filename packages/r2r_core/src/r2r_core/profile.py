@@ -17,6 +17,7 @@ from pydantic import (
     ConfigDict,
     Field,
     NonNegativeInt,
+    PositiveInt,
     ValidationError,
     field_validator,
     model_validator,
@@ -129,6 +130,19 @@ class AirGapConfig(_Model):
     threshold_hours: NonNegativeInt
 
 
+class ReleaseOnCoa(_Model):
+    """F18-FR-10: the single release deadline, in days from the cycle start, when Release on COA is set."""
+
+    sla_days: PositiveInt
+
+
+class Exports(_Model):
+    """F18-FR-07: the stage sets of the two queue exports."""
+
+    sampling_plan: list[str] = Field(min_length=1)
+    qc_queue: list[str] = Field(min_length=1)
+
+
 class FullSpecPair(_Model):
     material: str
     supplier: str
@@ -188,6 +202,8 @@ class SiteProfile(_Model):
     molecule_types: Annotated[list[Labelled], BeforeValidator(_labelled)]
     material_classes: Annotated[list[Labelled], BeforeValidator(_labelled)]
     full_spec_pairs: list[FullSpecPair]
+    release_on_coa: ReleaseOnCoa
+    exports: Exports
     reason_codes: list[str] = Field(min_length=1)
     adapters: Adapters
     terms: Terms = Terms()
@@ -205,6 +221,9 @@ class SiteProfile(_Model):
         for key in self.reeval_sla_overrides:
             if key not in keys:
                 raise ValueError(f"reeval_sla_overrides refers to unknown stage {key!r}")
+        for key in (*self.exports.sampling_plan, *self.exports.qc_queue):
+            if key not in keys:
+                raise ValueError(f"exports refers to unknown stage {key!r}")
         metric_ids: set[str] = set()
         for metric in self.metrics:
             if metric.id in metric_ids:

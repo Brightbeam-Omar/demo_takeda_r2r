@@ -4,9 +4,12 @@ import { afterEach } from 'vitest'
 
 afterEach(() => cleanup())
 
-// jsdom has no ResizeObserver; Radix popovers and the virtualiser need one.
+// jsdom has no ResizeObserver; Radix popovers need one.
 globalThis.ResizeObserver ??= class {
   observe() {}
   unobserve() {}
   disconnect() {}
 }
+
+// jsdom has no layout: scrolling a row into view is a no-op there.
+Element.prototype.scrollIntoView = () => undefined

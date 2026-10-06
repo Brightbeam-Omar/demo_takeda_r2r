@@ -41,6 +41,7 @@ def test_f03_fr04_enum_values_match_the_contracts() -> None:
     assert [m.value for m in Role] == ["planner", "qc_lead", "qa_release", "viewer", "admin"]
     assert [m.value for m in OverrideField] == [
         "adjusted_need_by_date", "expedite", "manual_status", "delivery_date", "delivery_location",
+        "manual_hold", "release_on_coa",
     ]  # fmt: skip
 
 

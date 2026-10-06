@@ -27,14 +27,18 @@
   --text-sm: 0.929rem;
   --radius-card: 10px;
   --radius-chip: 6px;
-  --color-stage-1: var(--color-sky-500);
-  --color-stage-2: var(--color-cyan-500);
-  --color-stage-3: var(--color-teal-500);
-  --color-stage-4: var(--color-emerald-500);
-  --color-stage-5: var(--color-lime-500);
-  --color-stage-6: var(--color-amber-500);
-  --color-stage-7: var(--color-orange-500);
-  --color-stage-8: var(--color-violet-500);
+}
+
+/* The stage hues are only ever read through var(), so they must be emitted even though no utility uses them. */
+@theme static {
+  --color-stage-1: #0ea5e9;
+  --color-stage-2: #06b6d4;
+  --color-stage-3: #14b8a6;
+  --color-stage-4: #10b981;
+  --color-stage-5: #84cc16;
+  --color-stage-6: #f59e0b;
+  --color-stage-7: #f97316;
+  --color-stage-8: #8b5cf6;
 }
 
 html {

@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
-import { apiBlob } from '../api/client'
+import type { Row } from '../api/queries'
 import { useExpectedDeliveries, useMe, useMetrics, useOverview, useReference, useToggleBookmark } from '../api/queries'
 import { EmptyState, ErrorState, Skeleton } from '../components/common/States'
 import { BatchDrawer } from '../components/drawer/BatchDrawer'
@@ -12,10 +12,11 @@ import { InsightsWindow } from '../components/windows/InsightsWindow'
 import { FilterBar } from '../components/filters/FilterBar'
 import { StageStrip, activeTotal } from '../components/pipeline/StageStrip'
 import { ExpectedDeliveriesWindow } from '../components/windows/ExpectedDeliveriesWindow'
-import { BatchTable } from '../components/table/BatchTable'
+import { OverviewTable } from '../components/overview/OverviewTable'
+import { QueueExports } from '../components/overview/QueueExports'
+import { RowActionsMenu } from '../components/overview/RowActionsMenu'
 import { useToast } from '../components/common/Toasts'
 import { canEditNeedBy } from '../lib/roles'
-import { saveBlob } from '../lib/download'
 import { ShowingLine, TagRow } from '../components/tags/TagRow'
 import { MetricsRibbon, metricsTitle } from '../components/metrics/MetricsRibbon'
 import { useJustSaved } from '../state/just-saved'
@@ -52,28 +53,33 @@ export function Overview() {
     [filters],
   )
   const deliveries = useExpectedDeliveries(deliveryParams)
+  // The Sampling Plan and QC Testing Queue ignore the stage cards, the column filters and the search (OQ-104).
+  const queueParams = useMemo(() => toApiParams({ ...filters, stages: [], q: '' }), [filters])
   const airGapCount = data?.alerts.find((alert) => alert.kind === 'air_gap')?.count ?? 0
   const bookmarks = useMemo(() => data?.bookmarks ?? [], [data])
   const bookmarkSet = useMemo(() => new Set(bookmarks), [bookmarks])
   const toggleBookmark = useToggleBookmark()
   const { notify } = useToast()
-  const [exporting, setExporting] = useState(false)
   // Only planners and admins may adjust a need-by (F09); everyone else sees the pencil disabled (OQ-063).
   const canEdit = canEditNeedBy(me.data?.role)
   const stageIndex = useMemo(
     () => new Map((reference.data?.stages ?? []).map((stage, index) => [String(stage.stage_key), index])),
     [reference.data],
   )
-  const exportCsv = async () => {
-    setExporting(true)
-    try {
-      saveBlob(await apiBlob('/export.csv', toApiParams(filters)), 'r2r-overview.csv')
-    } catch (error) {
-      notify(`Export failed: ${(error as Error).message}`, 'error')
-    } finally {
-      setExporting(false)
-    }
-  }
+  // B toggles the bookmark of the row in focus while the table has focus (F18-FR-11).
+  const onRowKey = useCallback(
+    (key: string, row: Row) => {
+      if (key === 'b') toggleBookmark.mutate({ rowKey: row.row_key, on: !bookmarkSet.has(row.row_key) })
+    },
+    [toggleBookmark, bookmarkSet],
+  )
+  const role = me.data?.role
+  const actions = useCallback((row: Row) => <RowActionsMenu row={row} role={role} />, [role])
+  const onToggleBookmark = useCallback(
+    (rowKey: string, on: boolean) =>
+      toggleBookmark.mutate({ rowKey, on }, { onError: (error) => notify(`Could not update the bookmark: ${error.message}`, 'error') }),
+    [toggleBookmark, notify],
+  )
 
   return (
     <>
@@ -153,14 +159,14 @@ export function Overview() {
             <Skeleton label="weekly metrics" />
           )}
         </Section>
-        <Section title="Batches">
+        <Section title="Pipeline — Exceptions First">
           <ShowingLine filters={filters} />
           <TagRow filters={filters} onChange={update} />
           {data ? (
             data.total === 0 && overview.isSuccess && activeFilterCount(filters) === 0 && filters.period === 'all' ? (
               <EmptyState>No batches yet. The pipeline has not published any data.</EmptyState>
             ) : (
-              <BatchTable
+              <OverviewTable
                 rows={data.rows}
                 stageIndex={stageIndex}
                 canEdit={canEdit}
@@ -168,22 +174,12 @@ export function Overview() {
                 onEditRow={setEditRow}
                 onOpenRow={drawer.open}
                 bookmarks={bookmarkSet}
-                onToggleBookmark={(rowKey, on) =>
-                  toggleBookmark.mutate(
-                    { rowKey, on },
-                    { onError: (error) => notify(`Could not update the bookmark: ${error.message}`, 'error') },
-                  )
-                }
-                toolbar={
-                  <button
-                    type="button"
-                    disabled={exporting}
-                    className="rounded-chip border border-slate-300 bg-white px-3 py-1.5 text-sm hover:border-slate-400 disabled:opacity-50"
-                    onClick={() => void exportCsv()}
-                  >
-                    Export CSV
-                  </button>
-                }
+                onToggleBookmark={onToggleBookmark}
+                onRowKey={onRowKey}
+                actions={actions}
+                search={{ value: filters.q, onChange: (q) => update({ q }) }}
+                columnsKey={`overview.${me.data?.user_key ?? 'default'}`}
+                toolbarExtra={<QueueExports params={queueParams} />}
               />
             )
           ) : (

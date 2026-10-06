@@ -184,6 +184,7 @@ def goods_receipt(session: Session, body: schemas.GoodsReceiptIn) -> dict[str, A
         licha=body.licha or body.charg,
         hsdat=body.hsdat,
         vfdat=body.vfdat,
+        qnext=body.qnext,
         zstat="",
     )
     session.add(batch)

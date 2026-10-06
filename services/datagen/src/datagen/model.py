@@ -116,6 +116,8 @@ class BatchPlan:
     blocks: list[tuple[date, bool]] = field(default_factory=list)  # (day, block/unblock)
     story_id: str | None = None
     po_ref: str | None = None  # the PO line this delivery closes (F17); set after the plan is built
+    supplier_batch: str | None = None  # mcha.licha: the supplier's own number, never the internal batch
+    next_inspection: date | None = None  # mcha.qnext (F18, OQ-100); None for consumables
 
     @property
     def first_day(self) -> date:

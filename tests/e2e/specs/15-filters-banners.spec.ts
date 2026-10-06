@@ -17,7 +17,7 @@ async function resetPersonal(request: APIRequestContext) {
 test.beforeEach(async ({ request }) => resetPersonal(request))
 test.afterAll(async ({ request }) => resetPersonal(request))
 
-const rowCount = async (page: Page) => Number((await page.getByTestId('row-count').innerText()).split(' ')[0])
+const rowCount = async (page: Page) => Number((await page.getByTestId('page-summary').innerText()).match(/of (\d+) lots/)?.[1])
 
 test('F16-AC-01: the pill panel collapses to chips, and removing a chip updates the table', async ({ page }) => {
   await page.goto('/overview')
@@ -57,7 +57,7 @@ test('F16-AC-02: Pat bookmarks two rows and Bookmarked shows exactly those; Quin
 
   await bookmarked.click()
   await expect(page).toHaveURL(/bookmarked=1/)
-  await expect(page.getByTestId('row-count')).toContainText('2 lots')
+  await expect(page.getByTestId('page-summary')).toContainText('2 lots')
 
   await page.getByRole('combobox', { name: 'Persona' }).selectOption('quinn')
   await expect(page.getByTestId('user-chip')).toContainText('Quinn')
@@ -67,9 +67,9 @@ test('F16-AC-02: Pat bookmarks two rows and Bookmarked shows exactly those; Quin
 
 test('F16-AC-03: a saved preset restores the URL and the results after everything is cleared', async ({ page }) => {
   await page.goto('/overview?type=small_molecule&class=consumable&class=drug_substance&period=this_week')
-  await expect(page.getByTestId('row-count')).toBeVisible()
+  await expect(page.getByTestId('page-summary')).toBeVisible()
   await expect(page.getByTestId('batch-row').first()).toBeVisible()
-  const filtered = await page.getByTestId('row-count').innerText()
+  const filtered = await page.getByTestId('page-summary').innerText()
 
   await page.getByRole('button', { name: /Presets/ }).click()
   await page.getByRole('menuitem', { name: '+ Save current filters' }).click()
@@ -84,7 +84,7 @@ test('F16-AC-03: a saved preset restores the URL and the results after everythin
   await page.getByRole('button', { name: /Presets/ }).click()
   await page.getByRole('menuitem', { name: 'My small molecules' }).click()
   await expect.poll(() => new URL(page.url()).search).toContain('type=small_molecule&class=consumable&class=drug_substance&period=this_week')
-  await expect(page.getByTestId('row-count')).toHaveText(filtered)
+  await expect(page.getByTestId('page-summary')).toHaveText(filtered)
 
   // A duplicate name asks before replacing.
   await page.getByRole('button', { name: /Presets/ }).click()
@@ -104,7 +104,7 @@ test('F16-AC-04: after the B2077 pull-forward the banner says "1 adjusted needs-
   // The F11 flow: the row's pencil, a date, a reason, Save.
   const row = page.locator(`[data-testid=batch-row][data-row-key="${B2077_KEY}"]`)
   await row.click()
-  await page.getByRole('button', { name: /Edit need-by/ }).click()
+  await page.getByTestId('batch-drawer').getByRole('button', { name: /Edit need-by/ }).click()
   const modal = page.getByTestId('need-by-modal')
   await modal.getByLabel('Adjusted need-by').fill('2026-11-26')
   await modal.getByLabel('Reason').selectOption('CAMPAIGN_PULLED_FORWARD')

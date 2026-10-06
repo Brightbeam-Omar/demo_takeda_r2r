@@ -24,6 +24,7 @@ class GoodsReceiptIn(Body):
     licha: str | None = None  # supplier batch (default: the batch number)
     hsdat: date | None = None  # manufacture date
     vfdat: date | None = None  # expiry
+    qnext: date | None = None  # next inspection (retest) date
     pastrterm: date | None = None  # lot start (default: posting date)
     mblnr: str | None = None  # explicit document number
     prueflos: str | None = None  # explicit inspection lot number

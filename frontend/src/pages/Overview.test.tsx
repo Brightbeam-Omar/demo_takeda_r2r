@@ -1,13 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, beforeAll, expect, test, vi } from 'vitest'
+import { afterEach, expect, test, vi } from 'vitest'
 import App from '../App'
-
-// jsdom has no layout, so give the scroll container a size for the virtualiser.
-beforeAll(() => {
-  Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, value: 400 })
-  Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, value: 1200 })
-})
 
 afterEach(() => {
   vi.unstubAllGlobals()
@@ -31,8 +25,8 @@ test('F10-FR-10: a failing overview shows an error band with Retry and a loading
 
 const freshness = { contract_run_id: 'r1', last_success_at: null, freshness_minutes: 0 }
 const rowOf = (n: number, rag: string) => ({
-  row_key: `RM${n}|B${n}|1`, material_no: `RM${n}`, material_desc: 'x', batch_no: `B${n}`, stage_key: 'sampling', stage_label: 'Sampling',
-  flags: {}, plan: { expected_completion: '2026-10-20', rag, days_remaining: 3 }, manual_status: null,
+  row_key: `RM${n}|B${n}|1`, material_no: `RM${n}`, material_desc: 'x', batch_no: `B${n}`, inspection_lot_no: '1', supplier_batch: null, material_class: null, campaign: null, storage_location: null, stage_key: 'sampling', stage_label: 'Sampling', days_in_stage: 1, adjusted_need_by_date: null, system_need_by_locked: null, next_inspection_date: null, inbound_light: 'grey', deviation_light: 'grey',
+  flags: {}, plan: { expected_completion: '2026-10-20', must_complete_by: {}, rag, days_remaining: 3, late: false }, manual_status: null,
 })
 
 function stubApi(overview: object, metrics: object, seen: { url: string; user: string | null }[] = []) {
@@ -65,22 +59,21 @@ test('F10-FR-10: a failing metrics call shows its own error band while the table
   expect(await screen.findByText(/Could not load the weekly metrics: boom/, {}, { timeout: 4000 })).toBeInTheDocument()
 })
 
-test('F10-FR-09: rows keep the server (exceptions-first) order and Export CSV sends the persona header and current filters', async () => {
+test('F10-FR-09 / F18-FR-05: rows keep the server (exceptions-first) order; the search runs in the browser and is not sent to the API', async () => {
   const seen: { url: string; user: string | null }[] = []
   sessionStorage.setItem('r2r.persona', 'sam')
-  window.history.pushState({}, '', '/overview?flag=late&q=RM')
+  window.history.pushState({}, '', '/overview?flag=late&q=RM1')
   stubApi({ freshness, flow_strip: [], on_hold_count: 0, total: 2, mode: 'snapshot', alerts: [], rows: [rowOf(9, 'red'), rowOf(1, 'green')] }, { freshness, filtered: false, week_starts: [], metrics: [] }, seen)
-  URL.createObjectURL = vi.fn(() => 'blob:x')
-  URL.revokeObjectURL = vi.fn()
   render(<App />)
   const rows = await screen.findAllByTestId('batch-row')
-  expect(rows[0]).toHaveAttribute('data-row-key', 'RM9|B9|1')
-  await userEvent.click(screen.getByRole('button', { name: 'Export CSV' }))
-  await waitFor(() => expect(seen.some((call) => call.url.startsWith('/api/export.csv'))).toBe(true))
-  const call = seen.find((entry) => entry.url.startsWith('/api/export.csv'))!
-  expect(call.user).toBe('sam')
-  expect(call.url).toContain('flags%5B%5D=late')
-  expect(call.url).toContain('q=RM')
+  expect(rows).toHaveLength(1) // RM1 only: the search narrowed the two server rows
+  expect(rows[0]).toHaveAttribute('data-row-key', 'RM1|B1|1')
+  const overview = seen.filter((call) => call.url.startsWith('/api/overview'))
+  expect(overview.length).toBeGreaterThan(0)
+  expect(overview.every((call) => call.user === 'sam' && !call.url.includes('q='))).toBe(true)
+  await userEvent.click(screen.getAllByRole('button', { name: 'Clear search' })[0]!)
+  expect(await screen.findAllByTestId('batch-row')).toHaveLength(2)
+  expect(screen.getAllByTestId('batch-row')[0]).toHaveAttribute('data-row-key', 'RM9|B9|1')
   sessionStorage.clear()
 })
 
@@ -144,4 +137,31 @@ test('F17-FR-09 / AC-05: the F10 alert-chip band is gone; late, rejected and on-
   expect(screen.queryByTestId('alert-late')).not.toBeInTheDocument()
   expect(screen.queryByRole('region', { name: 'Alerts' })).not.toBeInTheDocument()
   expect(screen.getByTestId('showing-line')).toHaveTextContent('Showing: All in-flight batches')
+})
+
+test('F18-FR-07: Export Sampling Plan and Export QC Testing Queue fetch with the persona header and the Overview filters', async () => {
+  const seen: { url: string; user: string | null }[] = []
+  sessionStorage.setItem('r2r.persona', 'sam')
+  window.history.pushState({}, '', '/overview?campaign=CMP-ALPHA&stage=qc_testing&q=RM')
+  URL.createObjectURL = vi.fn(() => 'blob:x')
+  URL.revokeObjectURL = vi.fn()
+  vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
+    seen.push({ url, user: (init?.headers as Record<string, string> | undefined)?.['X-Demo-User'] ?? null })
+    if (url.startsWith('/api/export/')) return new Response('material_no\n')
+    if (url.startsWith('/api/overview')) return new Response(JSON.stringify({ freshness, flow_strip: [], on_hold_count: 0, total: 1, mode: 'snapshot', alerts: [], rows: [rowOf(1, 'green')] }))
+    if (url.startsWith('/api/metrics')) return new Response(JSON.stringify({ freshness, filtered: false, week_starts: [], metrics: [] }))
+    return new Response('nf', { status: 404 })
+  }))
+  render(<App />)
+  await screen.findAllByTestId('batch-row')
+  await userEvent.click(screen.getAllByRole('button', { name: '↓ Export Sampling Plan' })[0]!)
+  await waitFor(() => expect(seen.some((call) => call.url.startsWith('/api/export/sampling-plan.csv'))).toBe(true))
+  const plan = seen.find((call) => call.url.startsWith('/api/export/sampling-plan.csv'))!
+  expect(plan.user).toBe('sam')
+  expect(plan.url).toContain('campaign%5B%5D=CMP-ALPHA')
+  expect(plan.url).not.toContain('stage=')
+  expect(plan.url).not.toContain('q=')
+  await userEvent.click(screen.getAllByRole('button', { name: '↓ Export QC Testing Queue' })[0]!)
+  await waitFor(() => expect(seen.some((call) => call.url.startsWith('/api/export/qc-queue.csv'))).toBe(true))
+  sessionStorage.clear()
 })

@@ -44,6 +44,8 @@ class OverrideField(StrEnum):
     MANUAL_STATUS = "manual_status"
     DELIVERY_DATE = "delivery_date"
     DELIVERY_LOCATION = "delivery_location"
+    MANUAL_HOLD = "manual_hold"
+    RELEASE_ON_COA = "release_on_coa"
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -63,3 +65,4 @@ class RowFacts:
     ud_effective: bool
     ud_code: str | None
     lims_approved_at: datetime | None
+    cycle_start_date: date | None = None  # F18: the Release on COA deadline counts from here

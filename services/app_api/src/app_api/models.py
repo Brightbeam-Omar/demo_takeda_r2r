@@ -110,7 +110,7 @@ class OverrideValue(Base):
     __table_args__ = (
         CheckConstraint(
             "field IN ('adjusted_need_by_date','expedite','manual_status','delivery_date',"
-            "'delivery_location')",
+            "'delivery_location','manual_hold','release_on_coa')",
             name="ck_override_value_field",
         ),
         Index(
@@ -259,7 +259,7 @@ BATCH_PIPELINE_COLUMNS: MirrorColumns = (
     ("sample_shipped_date", DATE), ("lims_status", TEXT), ("lims_approved_date", DATE),
     ("lims_approved_at", TIMESTAMP), ("ud_code", TEXT), ("ud_date", DATE),
     ("erp_results_recorded_at", TIMESTAMP), ("campaign", TEXT), ("system_need_by_date", DATE),
-    ("open_deviation_count", INTEGER), ("closed_deviation_count", INTEGER),
+    ("open_deviation_count", INTEGER), ("closed_deviation_count", INTEGER), ("next_inspection_date", DATE),
     ("stage_key", TEXT), ("stage_rule_id", TEXT), ("cycle_start_date", DATE),
     ("ud_effective", BOOLEAN), ("stage_sort", INTEGER), ("current_stage_entry_date", DATE),
     ("lims_rejected", BOOLEAN), ("receipt_entry", DATE), ("receipt_exit", DATE), ("call_off_entry", DATE),

@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import type { Reference, Row } from '../../api/queries'
 import { useTerms } from '../../hooks/useTerms'
 import { useFilterPanel, type Filters } from '../../state/url-filters'
@@ -24,19 +23,6 @@ const button = (on: boolean) =>
 export function FilterBar({ reference, rows, filters, stageLabel, bookmarks, onChange, onClear }: Props) {
   const terms = useTerms()
   const panel = useFilterPanel()
-  const [search, setSearch] = useState(filters.q)
-  // Follow the URL (back button, "clear all") and push typing to it after a short pause.
-  const [seenQ, setSeenQ] = useState(filters.q)
-  if (filters.q !== seenQ) {
-    setSeenQ(filters.q)
-    setSearch(filters.q)
-  }
-  useEffect(() => {
-    if (search === filters.q) return
-    const timer = setTimeout(() => onChange({ q: search }), 250)
-    return () => clearTimeout(timer)
-  }, [search, filters.q, onChange])
-
   const chips = filterChips(filters, reference, terms, stageLabel)
 
   return (
@@ -63,14 +49,6 @@ export function FilterBar({ reference, rows, filters, stageLabel, bookmarks, onC
           {filters.bookmarked ? '★' : '☆'} Bookmarked
         </button>
         <PresetsMenu filters={filters} onApply={onChange} />
-        <input
-          type="search"
-          aria-label="Search material or batch"
-          placeholder="Search material or batch…"
-          className="ml-auto w-64 rounded-chip border border-slate-300 bg-white px-3 py-1.5 text-sm"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-        />
       </div>
       {panel.open && <FilterPanel reference={reference} rows={rows} filters={filters} onChange={onChange} />}
       {!panel.open && <FilterChips chips={chips} onRemove={onChange} onClear={onClear} />}

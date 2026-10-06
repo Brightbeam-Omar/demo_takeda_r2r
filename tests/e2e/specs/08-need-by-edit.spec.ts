@@ -14,11 +14,11 @@ test('F11-AC-01: Pat pulls B2077 forward; the preview shows 6/37/6 and 14 Oct am
   await page.goto('/overview?q=B2077')
   const row = page.locator(`[data-testid=batch-row][data-row-key^="${B2077}"]`)
   await expect(row).toBeVisible()
-  await expect(row.getByTestId('rag-cell')).toContainText('15 Oct')
+  await expect(row.getByTestId('expected-cell')).toContainText('15 Oct')
 
   await row.click()
   await expect(page.getByTestId('batch-drawer')).toBeVisible()
-  await page.getByRole('button', { name: /Edit need-by/ }).click()
+  await page.getByTestId('batch-drawer').getByRole('button', { name: /Edit need-by/ }).click()
 
   const modal = page.getByTestId('need-by-modal')
   await expect(modal.getByTestId('system-date-box')).toHaveText('3 Dec 2026')
@@ -36,11 +36,11 @@ test('F11-AC-01: Pat pulls B2077 forward; the preview shows 6/37/6 and 14 Oct am
   await expect(page.getByRole('status').filter({ hasText: 'Need-by updated' })).toBeVisible()
   await page.keyboard.press('Escape') // close the drawer
   await expect(row).toHaveClass(/row-changed/)
-  await expect(row.getByTestId('adjusted-need-by')).toHaveText('26 Nov')
+  await expect(row.getByTestId('adjusted-need-by')).toContainText('26 Nov 2026')
   await expect(row.getByTestId('adjusted-need-by')).toHaveClass(/italic/)
   await expect(row.getByTestId('system-need-by')).toHaveClass(/line-through/)
-  await expect(row.getByTestId('rag-cell')).toContainText('14 Oct')
-  await expect(row.getByTestId('rag-cell')).toHaveAttribute('data-rag', 'amber')
+  await expect(row.getByTestId('expected-cell')).toContainText('14 Oct')
+  await expect(row.getByTestId('status-cell')).toHaveAttribute('data-status', 'due')
 
   // The audit log has the entry with its old and new values.
   await page.getByRole('link', { name: 'Audit Log' }).click()

@@ -73,7 +73,7 @@ export function toApiParams(filters: Filters): URLSearchParams {
   filters.flags.forEach((value) => params.append('flags[]', value))
   filters.stages.forEach((value) => params.append('stage', value))
   if (filters.bookmarked) params.set('bookmarked', 'true')
-  if (filters.q) params.set('q', filters.q)
+  // `q` is not sent: the table's search runs in the browser over the displayed text (F18-FR-05).
   if (filters.period === 'custom') {
     if (filters.from && filters.to) {
       params.set('period', 'custom')

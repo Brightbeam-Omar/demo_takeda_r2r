@@ -100,9 +100,18 @@ class World:
         qty: int = 100,
         matnr: str = "RM1",
         hold: bool = False,
+        qnext: date | None = None,
     ) -> str:
         """Goods receipt as F04 writes it: batch, 101, QI stock, lot 01 and an open inbound check."""
-        self.add("stg_mcha", matnr=matnr, charg=charg, lifnr="SUP1", licha=charg, zstat="H" if hold else "")
+        self.add(
+            "stg_mcha",
+            matnr=matnr,
+            charg=charg,
+            lifnr="SUP1",
+            licha=charg,
+            zstat="H" if hold else "",
+            qnext=qnext,
+        )
         self.move("101", charg, lgort, day, qty, matnr)
         self.stock(charg, lgort, insme=qty, matnr=matnr)
         self.add("stg_qals", prueflos=lot, art="01", matnr=matnr, charg=charg, pastrterm=day)
