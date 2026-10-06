@@ -17,6 +17,7 @@ from typing import Any
 import httpx
 import pytest
 from deltalake import DeltaTable
+from r2r_pipeline.schemas import STAGING_SCHEMAS
 
 pytestmark = pytest.mark.stack
 
@@ -108,7 +109,7 @@ def test_f21_ac01_the_second_run_on_unchanged_data_inserts_nothing(two_runs: dic
     second = runs[two_runs["second"]]
     assert second["inserted"] == 0 and second["skipped"] == second["total"] > 600
     assert second["status"] == "ok" and second["failed_step"] is None
-    assert second["files"] == 18 and second["duration_ms"] > 0
+    assert second["files"] == len(STAGING_SCHEMAS) and second["duration_ms"] > 0
 
 
 def test_f21_ac01_a_changed_lot_is_inserted_by_the_next_run(two_runs: dict[str, str]) -> None:
@@ -143,6 +144,8 @@ def test_f21_fr02_the_app_serves_the_history_newest_first_with_per_step_detail(
 def test_f21_ac03_cards_at_rest_then_a_stopped_worker_lets_pending_rise_and_last_drain_age(
     two_runs: dict[str, str],
 ) -> None:
+    # At rest means the queue has caught up with the runs the earlier tests started.
+    _wait_for(lambda: _get("/api/sync/health")["pending"] == 0, 30, "the queue to be idle")
     health = _get("/api/sync/health")
     assert (health["pending"], health["error"], health["abandoned"]) == (0, 0, 0)
     assert health["last_drain_age_seconds"] is not None and health["last_drain_age_seconds"] < 30

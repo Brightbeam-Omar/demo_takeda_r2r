@@ -80,14 +80,14 @@ export function SlaConfig() {
               </thead>
               <tbody>
                 {metrics.map((metric) => (
-                  <tr key={metric.metric_id} data-testid="sla-metric" className="border-t border-hairline align-top">
+                  <tr key={metric.metric_id} data-testid="sla-metric" className="border-t border-hairline">
                     <td className="px-3 py-2 font-medium">
                       {metric.metric_id} · {metric.label}
                     </td>
-                    <td className="px-3 whitespace-normal">{dash(metric.entry_event)}</td>
-                    <td className="px-3 whitespace-normal">{dash(metric.exit_event)}</td>
-                    <td className="px-3">{dash(metric.sla_days)}</td>
-                    <td className="px-3">{metric.window}</td>
+                    <td className="px-3 py-2 whitespace-normal">{dash(metric.entry_event)}</td>
+                    <td className="px-3 py-2 whitespace-normal">{dash(metric.exit_event)}</td>
+                    <td className="px-3 py-2">{dash(metric.sla_days)}</td>
+                    <td className="px-3 py-2">{metric.window}</td>
                   </tr>
                 ))}
               </tbody>

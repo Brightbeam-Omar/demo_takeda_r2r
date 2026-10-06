@@ -25,7 +25,7 @@ export function HealthCard({ label, value, note, tag, tone, testId, title }: Pro
       <div className="p-3">
         <div className="flex items-center gap-2 text-[11px] font-semibold tracking-wider text-ink-2 uppercase">
           {label}
-          {tag ? <span className="rounded-pill bg-panel px-1.5 py-0.5 text-[10px] text-ink-2">{tag}</span> : null}
+          {tag ? <span className="rounded-pill bg-panel px-1.5 py-0.5 text-[10px] whitespace-nowrap text-ink-2">{tag}</span> : null}
         </div>
         <div className="mt-1 text-2xl font-semibold text-ink" data-testid={`${testId}-value`}>
           {value}
