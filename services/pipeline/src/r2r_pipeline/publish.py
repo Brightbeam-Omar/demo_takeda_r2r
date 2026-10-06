@@ -39,9 +39,16 @@ PUBLISH_ORDER = (
     "metric_reference_v",
     "reason_codes_v",
     "deviations_v",
+    "expected_deliveries_v",
     "pipeline_status_v",
 )
-OBJECTS_WITH_RUN_ID = ("batch_pipeline_v", "weekly_metrics_v", "weekly_metric_rows_v", "pipeline_status_v")
+OBJECTS_WITH_RUN_ID = (
+    "batch_pipeline_v",
+    "weekly_metrics_v",
+    "weekly_metric_rows_v",
+    "expected_deliveries_v",
+    "pipeline_status_v",
+)
 
 
 def published_name(name: str) -> str:
@@ -79,6 +86,7 @@ def build_stage_reference(profile: SiteProfile) -> pa.Table:
                 "team": stage.team,
                 "action": stage.action,
                 "terminal": stage.terminal,
+                "show_card": stage.show_card,
             }
             for number, stage in enumerate(profile.stages, start=1)
         ],
@@ -92,6 +100,7 @@ def build_stage_reference(profile: SiteProfile) -> pa.Table:
                 ("team", pa.string()),
                 ("action", pa.string()),
                 ("terminal", pa.bool_()),
+                ("show_card", pa.bool_()),
             ]
         ),
     )
@@ -170,6 +179,12 @@ def build_deviations(ctx: RunContext) -> pa.Table:
     )
 
 
+def build_expected_deliveries(ctx: RunContext) -> pa.Table:
+    """The open PO lines of this run's transform, stamped with the run id (F17-FR-03)."""
+    lines = read_delta(ctx.lake_root, "staging.expected_deliveries")
+    return lines.append_column("run_id", pa.array([ctx.run_id] * lines.num_rows, pa.string()))
+
+
 def build_status(ctx: RunContext, published_at: datetime, row_count: int) -> pa.Table:
     """The one-row status: written last, so its run id means every other object is complete."""
     freshness = step_detail(ctx, "extract").get("freshness", {})
@@ -193,7 +208,7 @@ def build_status(ctx: RunContext, published_at: datetime, row_count: int) -> pa.
 
 
 def publish(ctx: RunContext) -> StepResult:
-    """Overwrite the eight published objects, ``pipeline_status_v`` last."""
+    """Overwrite the nine published objects, ``pipeline_status_v`` last."""
     for step in ("transform", "snapshot_aggregate"):
         step_row(ctx, step)  # raises LookupError unless this run completed it
     published_at = clock.now()
@@ -207,6 +222,7 @@ def publish(ctx: RunContext) -> StepResult:
         "metric_reference_v": build_metric_reference(ctx.profile),
         "reason_codes_v": build_reason_codes(ctx.profile),
         "deviations_v": build_deviations(ctx),
+        "expected_deliveries_v": build_expected_deliveries(ctx),
         "pipeline_status_v": build_status(ctx, published_at, batch.num_rows),
     }
     for name in PUBLISH_ORDER:

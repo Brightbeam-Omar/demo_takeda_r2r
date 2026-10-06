@@ -76,6 +76,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/expected-deliveries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Expected Deliveries */
+        get: operations["expected_deliveries_api_expected_deliveries_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/explain": {
         parameters: {
             query?: never;
@@ -651,6 +668,51 @@ export interface components {
             /** System Need By */
             system_need_by: string | null;
         };
+        /** DeliveriesOut */
+        DeliveriesOut: {
+            /** Count */
+            count: number;
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "snapshot" | "due_in_period";
+            /** Overdue Count */
+            overdue_count: number;
+            /** Rows */
+            rows: components["schemas"]["DeliveryOut"][];
+        };
+        /** DeliveryOut */
+        DeliveryOut: {
+            /** Campaign */
+            campaign: string | null;
+            /** Ebeln */
+            ebeln: string;
+            /** Ebelp */
+            ebelp: string;
+            /** Material Class */
+            material_class: string | null;
+            /** Material Desc */
+            material_desc: string | null;
+            /** Material No */
+            material_no: string | null;
+            /** Molecule Type */
+            molecule_type: string | null;
+            /** Overdue */
+            overdue: boolean | null;
+            /** Planned Location */
+            planned_location: string | null;
+            /** Planned Location Type */
+            planned_location_type: string | null;
+            /** Quantity */
+            quantity: number | null;
+            /** Scheduled Date */
+            scheduled_date: string | null;
+            /** Supplier Id */
+            supplier_id: string | null;
+            /** Supplier Name */
+            supplier_name: string | null;
+        };
         /** DeviationOut */
         DeviationOut: {
             /** Closed On */
@@ -726,6 +788,8 @@ export interface components {
             label: string;
             /** Late Count */
             late_count: number;
+            /** Skip Count */
+            skip_count?: number | null;
             /** Stage Key */
             stage_key: string;
         };
@@ -921,6 +985,8 @@ export interface components {
             adjusted_count: number;
             /** Alerts */
             alerts: components["schemas"]["AlertOut"][];
+            /** Batch Count */
+            batch_count: number;
             /** Bookmarks */
             bookmarks: string[];
             /** Flow Strip */
@@ -1530,6 +1596,49 @@ export interface operations {
             };
         };
     };
+    expected_deliveries_api_expected_deliveries_get: {
+        parameters: {
+            query?: {
+                "type[]"?: string[] | null;
+                "class[]"?: string[] | null;
+                "campaign[]"?: string[] | null;
+                "flags[]"?: string[] | null;
+                stage?: string[] | null;
+                include_released?: boolean;
+                period?: string;
+                from?: string | null;
+                to?: string | null;
+                q?: string | null;
+                bookmarked?: boolean;
+            };
+            header?: {
+                "x-demo-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveriesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     explain_figure_api_explain_get: {
         parameters: {
             query: {
@@ -1539,7 +1648,8 @@ export interface operations {
                 "class[]"?: string[] | null;
                 "campaign[]"?: string[] | null;
                 "flags[]"?: string[] | null;
-                stage?: string | null;
+                stage?: string[] | null;
+                include_released?: boolean;
                 period?: string;
                 from?: string | null;
                 to?: string | null;
@@ -1581,7 +1691,8 @@ export interface operations {
                 "class[]"?: string[] | null;
                 "campaign[]"?: string[] | null;
                 "flags[]"?: string[] | null;
-                stage?: string | null;
+                stage?: string[] | null;
+                include_released?: boolean;
                 period?: string;
                 from?: string | null;
                 to?: string | null;
@@ -1773,7 +1884,8 @@ export interface operations {
                 "class[]"?: string[] | null;
                 "campaign[]"?: string[] | null;
                 "flags[]"?: string[] | null;
-                stage?: string | null;
+                stage?: string[] | null;
+                include_released?: boolean;
                 period?: string;
                 from?: string | null;
                 to?: string | null;
@@ -1815,7 +1927,8 @@ export interface operations {
                 "class[]"?: string[] | null;
                 "campaign[]"?: string[] | null;
                 "flags[]"?: string[] | null;
-                stage?: string | null;
+                stage?: string[] | null;
+                include_released?: boolean;
                 period?: string;
                 from?: string | null;
                 to?: string | null;
@@ -1857,7 +1970,8 @@ export interface operations {
                 "class[]"?: string[] | null;
                 "campaign[]"?: string[] | null;
                 "flags[]"?: string[] | null;
-                stage?: string | null;
+                stage?: string[] | null;
+                include_released?: boolean;
                 period?: string;
                 from?: string | null;
                 to?: string | null;

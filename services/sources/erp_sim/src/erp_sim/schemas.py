@@ -27,6 +27,8 @@ class GoodsReceiptIn(Body):
     pastrterm: date | None = None  # lot start (default: posting date)
     mblnr: str | None = None  # explicit document number
     prueflos: str | None = None  # explicit inspection lot number
+    ebeln: str | None = None  # purchase order line this receipt closes (give both or neither)
+    ebelp: str | None = None
 
 
 class ReversalIn(Body):
@@ -94,3 +96,18 @@ class DemandIn(Body):
     requirement_date: date
     quantity: Decimal = Quantity
     is_open: bool = True
+
+
+class PoLineCreatedIn(Body):
+    matnr: str
+    lifnr: str
+    lgort: str  # planned receiving location
+    scheduled_date: date
+    menge: Decimal = Quantity
+    ebeln: str | None = None  # omit to open a new purchase order; give it to add a line to one
+    ebelp: str | None = None
+
+
+class PoLineClosedIn(Body):
+    ebeln: str
+    ebelp: str

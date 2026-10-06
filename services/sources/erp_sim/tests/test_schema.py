@@ -9,7 +9,7 @@ from sqlalchemy.engine.reflection import Inspector
 
 pytestmark = pytest.mark.integration
 
-TABLES = {"mara", "lfa1", "t001l", "mcha", "mchb", "mseg", "qals", "zinbchk", "mdez", "counter"}
+TABLES = {"mara", "lfa1", "t001l", "mcha", "mchb", "mseg", "qals", "zinbchk", "mdez", "ekpo", "counter"}
 
 
 @pytest.fixture(scope="module")
@@ -47,6 +47,7 @@ def test_f04_fr01_keys_match_the_data_contract(inspector: Inspector) -> None:
     assert keys["qals"] == ["prueflos"]
     assert keys["zinbchk"] == ["prueflos"]
     assert keys["mdez"] == ["id"]
+    assert keys["ekpo"] == ["ebeln", "ebelp"]
 
 
 def test_f04_fr01_mseg_has_a_quantity_column(inspector: Inspector) -> None:
@@ -68,6 +69,7 @@ def test_f04_fr01_foreign_keys_follow_the_contract(inspector: Inspector) -> None
     assert targets("qals") == {("mcha", ("matnr", "charg"))}
     assert targets("zinbchk") == {("qals", ("prueflos",))}
     assert targets("mdez") == {("mara", ("matnr",))}
+    assert targets("ekpo") == {("mara", ("matnr",)), ("lfa1", ("lifnr",)), ("t001l", ("lgort",))}
 
 
 def test_f04_fr01_batch_columns_are_indexed_where_present(inspector: Inspector) -> None:

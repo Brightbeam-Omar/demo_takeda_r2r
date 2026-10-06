@@ -2,8 +2,9 @@ import { expect, test } from '@playwright/test'
 
 test('F11-AC-03: the B4410 drawer timeline lists the initial lot, three earlier re-evals and the current one', async ({ page }) => {
   await page.goto('/overview?q=B4410')
-  // Five lots of the same batch are in the table; open the open re-evaluation (the one still in sampling).
-  await expect(page.getByTestId('batch-row')).toHaveCount(5)
+  // The table shows in-flight lots only (F17-FR-10): the open re-evaluation, the one still in sampling. The four
+  // released lots of the batch appear in the drawer timeline.
+  await expect(page.getByTestId('batch-row')).toHaveCount(1)
   await page.getByTestId('batch-row').filter({ hasText: 'Sampling' }).click()
 
   const drawer = page.getByTestId('batch-drawer')

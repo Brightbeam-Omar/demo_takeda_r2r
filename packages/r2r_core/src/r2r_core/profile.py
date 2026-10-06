@@ -75,6 +75,7 @@ class Stage(_Model):
     action: str
     applies_if: str | None = None
     terminal: bool = False
+    show_card: bool = True  # F17: a card on the Overview stage strip (still counted in the total)
 
     @field_validator("applies_if")
     @classmethod

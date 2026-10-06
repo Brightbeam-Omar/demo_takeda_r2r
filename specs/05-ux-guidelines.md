@@ -72,7 +72,7 @@ Exceptions first. Show the provenance (every number explains itself). Screen-sha
 5. **Showing line:** `Showing: All in-flight batches` (or `3 stages selected`, `2 tags`, …).
 6. **Tag row:** `ALL  LATE  ON HOLD  REJECTED  RE-EVAL  EXPEDITE  FULL SPEC  OFFSITE TEST  RELEASE ON COA  <ERP> BLOCKED  AIR GAP  RELEASED  [Clear tags]`.
 7. **Table toolbar** (repeated at the bottom):
-   - `[↓ Export ▾] [↓ Export Sampling Plan] [↓ Export QC Testing Queue] [▥ Columns] [⌕ Search all columns…]  1–50 of 803 lots  [↺ Reset Table]`
+   - `[↓ Export ▾] [↓ Export Sampling Plan] [↓ Export QC Testing Queue] [▥ Columns] [⌕ Search all columns…]  1–50 of 482 lots (n batches)  [↺ Reset Table]`
    - pagination `« ‹ Prev  Page 1 of 17  Next › »  Rows per page [50]`
 8. **Table.** The title reads "Pipeline — Exceptions First". Headers are uppercase, with sort arrows and a filter box under each. Columns are in F18.
 

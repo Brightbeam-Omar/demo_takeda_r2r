@@ -19,11 +19,13 @@ The REST API behind the UI. It composes the mirror with current overrides and ap
 | `PUT /api/rows/{row_key}/status` | qc_lead, qa_release, admin | `{rag:'red'|'amber'|'green', reason, team}` |
 | `POST /api/rows/{row_key}/comments` | all except viewer | `{body}` |
 | `GET /api/audit` | any | Paginated audit events, filter by row_key/actor/action and a demo-date range (`from`, `to`, inclusive, site timezone; F11, OQ-068) |
-| `GET /api/export.csv` | any | Current overview rows (filters applied) |
+| `GET /api/export.csv` | any | Current overview rows (filters applied; same in-flight default as the overview, F17-FR-10) |
+| `GET /api/expected-deliveries` | any | Open PO lines (F17): `period` filters and `type[]`/`class[]`/`campaign[]`; stage, tags and bookmarks never apply |
 | `GET /api/bookmarks` | any | The current user's bookmarked `row_key`s (F16) |
 | `POST /api/bookmarks/{row_key}` · `DELETE /api/bookmarks/{row_key}` | any (incl. viewer) | Set / remove a personal bookmark. Idempotent. Not audited (OQ-091) |
 | `GET /api/presets` · `POST /api/presets` | any (incl. viewer) | The user's saved filter presets · `{name, query}` → 201, or 409 when the user already has that name (F16, OQ-089) |
 | `PUT /api/presets/{id}` · `DELETE /api/presets/{id}` | owner | Overwrite a preset's query (`{query}`, name unchanged) · delete it. Another user's id is 404 |
+| `GET /api/overview` additions (F17) | any | `stage` repeats (OR); `include_released` (default false) — released rows appear only with `include_released=true`, a `released` stage or the `released` flag; `flags[]` also accepts `released` and `release_on_coa` (zero rows until F18); the response gains `batch_count` and `skip_count` per flow entry whose stage has `applies_if` |
 | `GET /api/overview/adjusted` | any | Non-released rows with a current adjusted need-by, honouring every overview filter except `stage`; newest override first (F16-FR-07, OQ-090) |
 | `GET /api/overview/insights` | any | Every air-gap row honouring every filter except `stage`, worst-first, with `days_gap` (F16-FR-09) |
 | `POST /api/feedback` | any (incl. viewer) | `{page, message}` → stores a `feedback` row (F15). Not audited |

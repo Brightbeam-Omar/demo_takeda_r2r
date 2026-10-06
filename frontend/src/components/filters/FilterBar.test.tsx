@@ -145,14 +145,20 @@ test('F16-FR-02: the Dropdown view turns the campaign pills into one multi-selec
   expect(screen.getByRole('button', { name: /All campaigns/ })).toBeInTheDocument()
 })
 
-test('F10-FR-04 (kept, OQ-085): the tag chips still write to the URL and appear as filter chips when closed', async () => {
-  renderAt()
-  await userEvent.click(screen.getByRole('button', { name: 'HOLD' }))
-  await userEvent.click(screen.getByRole('button', { name: 'REJECTED' }))
-  expect(screen.getByTestId('url')).toHaveTextContent(/flag=on_hold&flag=ud_rejected&flag=lims_rejected/)
-  expect(screen.getByText('Tag: HOLD')).toBeInTheDocument()
-  await userEvent.click(screen.getByRole('button', { name: 'Remove Tag: HOLD' }))
+test('F17-FR-08: tags in the URL appear as filter chips when the panel is closed, and removing one updates the URL', async () => {
+  renderAt('/overview?flag=on_hold&flag=ud_rejected&flag=lims_rejected')
+  expect(screen.getByText('Tag: ON HOLD')).toBeInTheDocument()
+  expect(screen.getByText('Tag: REJECTED')).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: 'Remove Tag: ON HOLD' }))
   expect(screen.getByTestId('url')).not.toHaveTextContent('on_hold')
+})
+
+test('F17-AC-02: each selected stage is its own chip, and removing one keeps the others in the URL', async () => {
+  renderAt('/overview?stage=sampling&stage=qc_ship&stage=qc_testing')
+  for (const key of ['sampling', 'qc_ship', 'qc_testing']) expect(screen.getByText(`Stage: ${key}`)).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: 'Remove Stage: qc_ship' }))
+  expect(screen.getByTestId('url')).toHaveTextContent('stage=sampling&stage=qc_testing')
+  expect(screen.getByTestId('url')).not.toHaveTextContent('qc_ship')
 })
 
 test('F15-FR-05: Type options show the labels from the reference, not the keys', async () => {

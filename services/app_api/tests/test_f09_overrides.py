@@ -180,7 +180,9 @@ def test_f09_fr04_manual_status_is_versioned_and_display_only(
     assert response["manual_status"] == {"rag": "red", "team": "QC Lab"}
     assert response["plan"]["rag"] == "green" and response["late"] is False  # OQ-057
     overview = client.get("/api/overview").json()
-    assert [r["batch_no"] for r in overview["rows"]] == ["B2077", "B9"]  # order unchanged
+    assert [r["batch_no"] for r in overview["rows"]] == [
+        "B2077"
+    ]  # the released B9 is out of the in-flight default (F17-FR-10)
     assert next(e for e in overview["flow_strip"] if e["stage_key"] == "sampling")["breached"] is False
     assert {a["kind"]: a["count"] for a in overview["alerts"]} == {
         "air_gap": 0,

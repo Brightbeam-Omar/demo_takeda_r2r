@@ -1,7 +1,7 @@
 """Replace the ``mirror_*`` tables from the published contract (F08-FR-05, FR-05b, FR-10).
 
 ``sync_mirror`` runs inside the caller's transaction: it reads every published object, refuses a mixed state,
-and then replaces all eight mirrors and their watermark rows. The caller commits (or rolls everything back).
+and then replaces all nine mirrors and their watermark rows. The caller commits (or rolls everything back).
 """
 
 import json

@@ -7,7 +7,7 @@ export interface Filters {
   classes: string[]
   campaigns: string[]
   flags: string[]
-  stage: string | null
+  stages: string[]
   bookmarked: boolean
   q: string
   period: string
@@ -20,7 +20,7 @@ export const EMPTY_FILTERS: Filters = {
   classes: [],
   campaigns: [],
   flags: [],
-  stage: null,
+  stages: [],
   bookmarked: false,
   q: '',
   period: 'all',
@@ -39,7 +39,7 @@ export function parseFilters(search: URLSearchParams): Filters {
     classes: search.getAll(LIST_KEYS.classes),
     campaigns: search.getAll(LIST_KEYS.campaigns),
     flags: search.getAll(LIST_KEYS.flags),
-    stage: search.get('stage'),
+    stages: search.getAll('stage'),
     bookmarked: search.get('bookmarked') === '1',
     q: search.get('q') ?? '',
     period: search.get('period') ?? 'all',
@@ -53,7 +53,7 @@ export function serializeFilters(filters: Filters): URLSearchParams {
   for (const [field, key] of Object.entries(LIST_KEYS)) {
     for (const value of filters[field as keyof typeof LIST_KEYS]) search.append(key, value)
   }
-  if (filters.stage) search.set('stage', filters.stage)
+  for (const stage of filters.stages) search.append('stage', stage)
   if (filters.bookmarked) search.set('bookmarked', '1')
   if (filters.q) search.set('q', filters.q)
   if (filters.period !== 'all') search.set('period', filters.period)
@@ -71,7 +71,7 @@ export function toApiParams(filters: Filters): URLSearchParams {
   filters.classes.forEach((value) => params.append('class[]', value))
   filters.campaigns.forEach((value) => params.append('campaign[]', value))
   filters.flags.forEach((value) => params.append('flags[]', value))
-  if (filters.stage) params.set('stage', filters.stage)
+  filters.stages.forEach((value) => params.append('stage', value))
   if (filters.bookmarked) params.set('bookmarked', 'true')
   if (filters.q) params.set('q', filters.q)
   if (filters.period === 'custom') {
@@ -93,7 +93,7 @@ export function activeFilterCount(filters: Filters): number {
     filters.classes.length +
     filters.campaigns.length +
     filters.flags.length +
-    (filters.stage ? 1 : 0) +
+    filters.stages.length +
     (filters.bookmarked ? 1 : 0) +
     (filters.q ? 1 : 0)
   )
@@ -120,7 +120,7 @@ export function useUrlFilters() {
     [setSearch],
   )
   const clearAll = useCallback(
-    () => update({ types: [], classes: [], campaigns: [], flags: [], stage: null, bookmarked: false, q: '' }),
+    () => update({ types: [], classes: [], campaigns: [], flags: [], stages: [], bookmarked: false, q: '' }),
     [update],
   )
   return { filters, update, clearAll }

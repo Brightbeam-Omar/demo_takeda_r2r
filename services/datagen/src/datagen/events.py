@@ -33,6 +33,10 @@ def sample_ref(lot: LotPlan, index: int) -> str:
     return f"@sample:{lot.ref}#{index}"
 
 
+def po_ref(batch: BatchPlan) -> str:
+    return f"@po:{batch.po_ref}"
+
+
 def _lot_events(batch: BatchPlan, lot: LotPlan) -> list[Event]:
     out: list[Event] = []
     key = {"matnr": batch.matnr, "charg": batch.charg}
@@ -51,6 +55,8 @@ def _lot_events(batch: BatchPlan, lot: LotPlan) -> list[Event]:
                     "hsdat": lot.start - timedelta(days=21),
                     "vfdat": lot.start + timedelta(days=730),
                     "pastrterm": lot.start,
+                    "ebeln": po_ref(batch),
+                    "ebelp": "00010",
                 },
                 capture=lot_ref(lot),
             )
@@ -139,6 +145,15 @@ def plan_events(plan: Plan) -> list[Event]:
         events.append(Event(demand.created_on, "erp", "demand", body, capture=name))
         if demand.closed_on is not None:
             events.append(Event(demand.closed_on, "erp", "demand", {**body, "id": name, "is_open": False}))
+    for line in plan.po_lines:
+        body = {
+            "matnr": line.matnr,
+            "lifnr": line.lifnr,
+            "lgort": line.lgort,
+            "scheduled_date": line.scheduled,
+            "menge": line.quantity,
+        }
+        events.append(Event(line.created_on, "erp", "po_line_created", body, capture=f"@po:{line.ref}"))
     for batch in plan.batches:
         events.extend(batch_events(batch))
     for number, deviation in enumerate(plan.deviations):

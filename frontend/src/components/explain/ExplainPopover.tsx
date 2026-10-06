@@ -13,12 +13,12 @@ interface Props {
   params?: URLSearchParams
   /** Extra classes for the trigger (position, hover-only visibility). */
   className?: string
-  /** Stops a click from reaching a clickable parent (a table row or a flow card). */
+  /** What the trigger shows instead of ⓘ (a metric card's big percentage). */
   children?: ReactNode
 }
 
 /** F11-FR-04. The ⓘ button and its popover; the explanation loads when it opens and can be copied. */
-export function ExplainPopover({ what, path, params, className = '' }: Props) {
+export function ExplainPopover({ what, path, params, className = '', children }: Props) {
   const [open, setOpen] = useState(false)
   const persona = usePersona()
   const { notify } = useToast()
@@ -48,7 +48,7 @@ export function ExplainPopover({ what, path, params, className = '' }: Props) {
           onClick={(event) => event.stopPropagation()}
           onKeyDown={(event) => event.stopPropagation()}
         >
-          ⓘ
+          {children ?? 'ⓘ'}
         </button>
       </Popover.Trigger>
       <Popover.Portal>

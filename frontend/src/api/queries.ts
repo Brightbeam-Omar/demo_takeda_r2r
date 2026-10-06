@@ -15,6 +15,7 @@ export type RowDetail = Schemas['RowDetail']
 export type Preset = Schemas['PresetOut']
 export type Adjusted = Schemas['AdjustedOut']
 export type Insights = Schemas['InsightsOut']
+export type Deliveries = Schemas['DeliveriesOut']
 
 /** Query keys carry the persona so a switch refetches everything (F10-FR-02). */
 function useKey(...parts: unknown[]) {
@@ -130,6 +131,17 @@ export function useInsights(params: URLSearchParams, enabled: boolean) {
   return useQuery({
     queryKey: useKey('overview-insights', params.toString()),
     queryFn: () => apiGet<Insights>('/overview/insights', params),
+    enabled,
+  })
+}
+
+/** Open PO lines for Stage 0 and its window: the type, class, campaign and period filters only (F17-FR-04, OQ-094). */
+export function useExpectedDeliveries(params: URLSearchParams, enabled = true) {
+  return useQuery({
+    queryKey: useKey('expected-deliveries', params.toString()),
+    queryFn: () => apiGet<Deliveries>('/expected-deliveries', params),
+    refetchInterval: POLL_MS,
+    placeholderData: keepPreviousData,
     enabled,
   })
 }

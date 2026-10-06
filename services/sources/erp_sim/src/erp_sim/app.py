@@ -76,6 +76,8 @@ add_event_routes(
         ("/stock-unblock", schemas.StockMoveIn, events.stock_unblock),
         ("/hold", schemas.HoldIn, events.hold),
         ("/demand", schemas.DemandIn, events.demand),
+        ("/po-line-created", schemas.PoLineCreatedIn, events.po_line_created),
+        ("/po-line-closed", schemas.PoLineClosedIn, events.po_line_closed),
     ],
     get_session,
 )

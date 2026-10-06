@@ -1,6 +1,6 @@
 import type { Reference } from '../../api/queries'
 import type { Terms } from '../../hooks/useTerms'
-import { flagChips } from '../../lib/flags'
+import { selectedTags } from '../../lib/tags'
 import type { Filters } from '../../state/url-filters'
 
 export interface Chip {
@@ -33,11 +33,11 @@ export function filterChips(
   list('types', 'Type', 'type', (key) => labelled(reference?.molecule_types, key))
   list('classes', 'Class', 'class', (key) => labelled(reference?.classes, key))
   list('campaigns', 'Campaign', 'campaign', (key) => key)
-  if (filters.stage) chips.push({ id: 'stage', text: `Stage: ${stageLabel(filters.stage)}`, remove: { stage: null } })
-  for (const tag of flagChips(terms)) {
-    if (tag.keys.every((key) => filters.flags.includes(key))) {
-      chips.push({ id: `tag-${tag.label}`, text: `Tag: ${tag.label}`, remove: { flags: filters.flags.filter((flag) => !tag.keys.includes(flag)) } })
-    }
+  for (const stage of filters.stages) {
+    chips.push({ id: `stage-${stage}`, text: `Stage: ${stageLabel(stage)}`, remove: { stages: filters.stages.filter((s) => s !== stage) } })
+  }
+  for (const tag of selectedTags(terms, filters.flags)) {
+    chips.push({ id: `tag-${tag.id}`, text: `Tag: ${tag.label}`, remove: { flags: filters.flags.filter((flag) => !tag.keys.includes(flag)) } })
   }
   if (filters.bookmarked) chips.push({ id: 'bookmarked', text: 'Bookmarked', remove: { bookmarked: false } })
   if (filters.q) chips.push({ id: 'q', text: `Search: “${filters.q}”`, remove: { q: '' } })

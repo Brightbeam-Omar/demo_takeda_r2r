@@ -53,12 +53,21 @@ def keys(client: TestClient, **params: Any) -> list[str]:
 def test_f09_ac04_default_order_is_late_rejected_on_hold_air_gap_then_the_rest(
     client: TestClient, mirror: list[dict[str, Any]]
 ) -> None:
-    assert keys(client) == ["B2", "B3", "B4", "B5", "B6", "B1", "B7", "B8"]
+    assert keys(client) == [
+        "B2",
+        "B3",
+        "B4",
+        "B5",
+        "B6",
+        "B1",
+        "B7",
+    ]  # B8 is released: not in flight (F17-FR-10)
+    assert keys(client, include_released="true") == ["B2", "B3", "B4", "B5", "B6", "B1", "B7", "B8"]
 
 
 def test_f09_fr02_the_response_shape_and_freshness(client: TestClient, mirror: list[dict[str, Any]]) -> None:
     body = client.get("/api/overview").json()
-    assert body["total"] == 8 and body["mode"] == "snapshot" and body["on_hold_count"] == 1
+    assert body["total"] == 7 and body["mode"] == "snapshot" and body["on_hold_count"] == 1
     assert body["freshness"]["contract_run_id"] == "run-1" and body["freshness"]["freshness_minutes"] == 0
     assert body["flow_strip"][0]["stage_key"] == "pending"
     first = body["rows"][0]
@@ -90,7 +99,7 @@ def test_f09_fr02_filters_are_ored_within_and_anded_across(
     client: TestClient, mirror: list[dict[str, Any]]
 ) -> None:
     assert keys(client, **{"type[]": "peptide"}) == ["B7"]
-    assert set(keys(client, **{"campaign[]": ["CMP-ALPHA", "CMP-BRAVO"]})) == {f"B{n}" for n in range(1, 9)}
+    assert set(keys(client, **{"campaign[]": ["CMP-ALPHA", "CMP-BRAVO"]})) == {f"B{n}" for n in range(1, 8)}
     assert keys(client, **{"type[]": "peptide", "campaign[]": "CMP-BRAVO"}) == []
     assert set(keys(client, **{"flags[]": ["on_hold", "ud_rejected"]})) == {"B3", "B4"}
     assert keys(client, q="b7") == ["B7"] and keys(client, q="RM10046") == ["B7"]
