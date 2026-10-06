@@ -4,6 +4,8 @@ import { Sparkline } from './Sparkline'
 
 type Metric = Metrics['metrics'][number]
 
+const TEXT: Record<string, string> = { green: 'text-green-700', amber: 'text-amber-700', red: 'text-red-700' }
+
 const BAR: Record<string, string> = { green: 'bg-rag-green', amber: 'bg-rag-amber', red: 'bg-rag-red' }
 
 const pct = (value: string | number | null | undefined): number | null =>
@@ -64,9 +66,9 @@ export function MetricCard({ metric, stageLabel }: Props) {
           what={metric.metric_id}
           path="/explain"
           params={new URLSearchParams({ field: `metric:${metric.metric_id}`, ...(headline ? { week: headline.week_start } : {}) })}
-          className="text-2xl font-semibold text-ink hover:text-accent"
+          className="hover:underline"
         >
-          <span data-testid="metric-headline">{headline && headline.pct !== null ? `${Number(headline.pct).toFixed(0)}%` : '–'}</span>
+          <span data-testid="metric-headline" className={`text-2xl leading-none font-semibold ${TEXT[rag] ?? 'text-ink'}`}>{headline && headline.pct !== null ? `${Number(headline.pct).toFixed(0)}%` : '–'}</span>
         </ExplainPopover>
       </div>
       <div className="text-xs text-ink-2">

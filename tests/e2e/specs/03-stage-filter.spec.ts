@@ -29,6 +29,8 @@ test('F17-AC-02: Sampling + QCL Ship + QCL Testing filter the table, the card co
   await expect(page).toHaveURL(/stage=sampling&stage=qc_ship&stage=qc_testing/)
   await expect(page.getByTestId('flow-total')).toHaveAttribute('aria-pressed', 'false')
   await expect(page.getByRole('button', { name: '✕ Clear 3 stages' })).toBeVisible()
+  await expect(page.getByTestId('flow-sampling')).toHaveCSS('background-color', 'rgb(238, 240, 255)') // lavender #EEF0FF
+  await expect(page.getByTestId('flow-sampling')).toHaveCSS('outline-style', /none|auto/)
   await expect(page.getByTestId('filter-chips').getByText(/^Stage: /)).toHaveCount(3)
   await expect(page.getByTestId('showing-line')).toContainText('3 stages selected')
   const after = await page.locator('button[data-testid^="flow-"]').evaluateAll((nodes) => nodes.map((node) => node.textContent))

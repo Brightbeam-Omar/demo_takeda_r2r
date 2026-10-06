@@ -79,3 +79,11 @@ test('F17-FR-06: the ribbon renders one card per metric (seven)', () => {
   renderWithProviders(<MetricsRibbon metrics={metrics} />)
   expect(screen.getAllByTestId(/^metric-M\d$/)).toHaveLength(7)
 })
+
+test('F17-FR-06: the headline % is as large as N/A and coloured by band (green, amber, red)', () => {
+  for (const [rag, cls] of [['green', 'text-green-700'], ['amber', 'text-amber-700'], ['red', 'text-red-700']] as const) {
+    const { unmount } = renderWithProviders(<MetricCard metric={active('M3', '90', rag)} />)
+    expect(screen.getByTestId('metric-headline')).toHaveClass('text-2xl', cls)
+    unmount()
+  }
+})
