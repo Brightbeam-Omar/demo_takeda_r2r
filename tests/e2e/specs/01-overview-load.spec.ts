@@ -11,7 +11,8 @@ test('F10-AC-01: the Overview loads with seeded data in under 2 s and renders ev
   expect(elapsed, `Overview took ${elapsed} ms`).toBeLessThan(2000)
 
   await expect(page.getByRole('region', { name: 'Filters' })).toBeVisible()
-  await expect(page.getByRole('region', { name: 'Alerts' })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Alerts' })).toHaveCount(0) // F17-FR-09: the alert band is gone
+  await expect(page.getByTestId('tag-row')).toBeVisible()
   await expect(page.getByRole('region', { name: 'Pipeline by Stage' })).toBeVisible()
   await expect(page.getByTestId('metrics-ribbon')).toBeVisible()
   await expect(page.getByRole('table', { name: 'Batches' })).toBeVisible()
@@ -20,7 +21,7 @@ test('F10-AC-01: the Overview loads with seeded data in under 2 s and renders ev
   expect(errors, 'console errors').toEqual([])
 })
 
-test('F10 review: all flow cards are the same height and the "SLA · late" line never wraps at 1440 px', async ({ page }) => {
+test('F10 review: all flow cards are the same height and the footer lines never wrap at 1440 px', async ({ page }) => {
   await page.goto('/overview')
   const cards = page.locator('button[data-testid^="flow-"]')
   await expect(cards.first()).toBeVisible()

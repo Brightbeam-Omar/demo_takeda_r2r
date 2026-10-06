@@ -33,9 +33,8 @@ export function filterChips(
   list('types', 'Type', 'type', (key) => labelled(reference?.molecule_types, key))
   list('classes', 'Class', 'class', (key) => labelled(reference?.classes, key))
   list('campaigns', 'Campaign', 'campaign', (key) => key)
-  if (filters.stages.length > 0) {
-    const text = filters.stages.length === 1 ? stageLabel(filters.stages[0]!) : plural(filters.stages.length, 'stage')
-    chips.push({ id: 'stage', text: `Stage: ${text}`, remove: { stages: [] } })
+  for (const stage of filters.stages) {
+    chips.push({ id: `stage-${stage}`, text: `Stage: ${stageLabel(stage)}`, remove: { stages: filters.stages.filter((s) => s !== stage) } })
   }
   for (const tag of selectedTags(terms, filters.flags)) {
     chips.push({ id: `tag-${tag.id}`, text: `Tag: ${tag.label}`, remove: { flags: filters.flags.filter((flag) => !tag.keys.includes(flag)) } })

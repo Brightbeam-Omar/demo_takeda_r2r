@@ -73,7 +73,7 @@ test('F17-FR-04: a stage card shows its SLA, a red late count and the green skip
   expect(screen.getByTestId('flow-call_off')).toHaveTextContent('SLA 5 d')
   expect(screen.getByTestId('late-call_off')).toHaveTextContent('2 late')
   expect(screen.getByTestId('skip-call_off')).toHaveTextContent('31 skip call-off')
-  expect(screen.getByTestId('skip-call_off')).toHaveClass('text-rag-green')
+  expect(screen.getByTestId('skip-call_off')).toHaveClass('text-green-700')
   expect(screen.queryByTestId('skip-receipt')).not.toBeInTheDocument()
   expect(screen.queryByTestId('late-released')).not.toBeInTheDocument()
 })

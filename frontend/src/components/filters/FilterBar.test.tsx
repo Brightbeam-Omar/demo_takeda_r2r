@@ -153,11 +153,12 @@ test('F17-FR-08: tags in the URL appear as filter chips when the panel is closed
   expect(screen.getByTestId('url')).not.toHaveTextContent('on_hold')
 })
 
-test('F17-FR-05: several stages collapse to one chip that removes them all', async () => {
-  renderAt('/overview?stage=sampling&stage=qc_testing')
-  expect(screen.getByText('Stage: 2 stages')).toBeInTheDocument()
-  await userEvent.click(screen.getByRole('button', { name: 'Remove Stage: 2 stages' }))
-  expect(screen.getByTestId('url')).not.toHaveTextContent('stage')
+test('F17-AC-02: each selected stage is its own chip, and removing one keeps the others in the URL', async () => {
+  renderAt('/overview?stage=sampling&stage=qc_ship&stage=qc_testing')
+  for (const key of ['sampling', 'qc_ship', 'qc_testing']) expect(screen.getByText(`Stage: ${key}`)).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: 'Remove Stage: qc_ship' }))
+  expect(screen.getByTestId('url')).toHaveTextContent('stage=sampling&stage=qc_testing')
+  expect(screen.getByTestId('url')).not.toHaveTextContent('qc_ship')
 })
 
 test('F15-FR-05: Type options show the labels from the reference, not the keys', async () => {

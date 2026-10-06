@@ -24,7 +24,7 @@ export function MetricCard({ metric, stageLabel }: Props) {
   const number = metric.metric_id.replace(/^\D+/, '')
   const heading = (
     <>
-      <div className="text-[11px] font-semibold tracking-wider text-ink-3 uppercase">Metric {number}</div>
+      <div className="text-[11px] font-semibold tracking-wider text-ink-2 uppercase">Metric {number}</div>
       <div className="truncate text-sm font-medium text-ink" title={metric.label}>
         {metric.label}
       </div>
@@ -35,7 +35,7 @@ export function MetricCard({ metric, stageLabel }: Props) {
     return (
       <div data-testid={`metric-${metric.metric_id}`} className="relative overflow-hidden rounded-card border border-hairline bg-white px-3 pt-3.5 pb-2">
         {heading}
-        <div className="mt-1 text-2xl font-semibold text-ink-3" data-testid="metric-headline">
+        <div className="mt-1 text-2xl font-semibold text-ink-2" data-testid="metric-headline">
           N/A
         </div>
         <div className="text-xs text-ink-2">
@@ -79,7 +79,7 @@ export function MetricCard({ metric, stageLabel }: Props) {
       </div>
       <div className="mt-1 flex items-center justify-between">
         <Sparkline values={complete.map((week) => pct(week.pct))} width={64} height={20} />
-        <span className="text-xs text-ink-3" data-testid="metric-wtd">
+        <span className="text-xs text-ink-2" data-testid="metric-wtd">
           WTD {toDate && toDate.pct !== null ? `${Number(toDate.pct).toFixed(0)}%` : '–'}
         </span>
       </div>

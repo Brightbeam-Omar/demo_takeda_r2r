@@ -28,25 +28,23 @@ export function StageCard({ testId, eyebrow, title, count, selected, onClick, de
         aria-pressed={selected}
         onClick={onClick}
         style={barColor ? { borderTopColor: barColor } : undefined}
-        className={`w-full rounded-card border border-t-4 px-2.5 py-2 text-left hover:shadow ${
+        className={`flex h-full w-full flex-col justify-start rounded-card border border-t-4 px-2.5 py-2 text-left hover:shadow ${
           selected ? 'border-accent bg-accent-tint ring-2 ring-accent' : 'border-hairline bg-panel'
         }`}
       >
-        <div className="text-[11px] font-semibold tracking-wider text-ink-2 uppercase">{eyebrow}</div>
-        <div className="truncate text-sm font-semibold text-ink" title={title}>
+        <div className="text-[11px] font-semibold tracking-wider text-slate-600 uppercase">{eyebrow}</div>
+        <div className="text-sm leading-tight font-semibold text-ink">
           {title}
         </div>
         <div className="text-2xl font-semibold tabular-nums">{count}</div>
-        <div className="flex min-h-4 items-center justify-between gap-1.5 text-xs whitespace-nowrap">
-          <span className="text-ink-2">{detail}</span>
-          {late > 0 && (
-            <span className="font-semibold text-rag-red" data-testid={`late-${testId.replace('flow-', '')}`}>
-              {late} late
-            </span>
-          )}
-        </div>
+        {detail && <div className="text-xs leading-tight text-slate-600">{detail}</div>}
+        {late > 0 && (
+          <div className="text-xs font-semibold whitespace-nowrap text-rag-red" data-testid={`late-${testId.replace('flow-', '')}`}>
+            {late} late
+          </div>
+        )}
         {skip && (
-          <div className="text-xs font-medium text-rag-green" data-testid={`skip-${testId.replace('flow-', '')}`}>
+          <div className="text-xs leading-tight font-medium text-green-700" data-testid={`skip-${testId.replace('flow-', '')}`}>
             {skip}
           </div>
         )}

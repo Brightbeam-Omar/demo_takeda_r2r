@@ -41,7 +41,7 @@ test('F15-AC-02: Last Month applies, and a custom range needs two clicks before 
   await page.getByRole('button', { name: 'Last Month' }).click()
   await expect(page).toHaveURL(/period=last_month/)
   await expect(page.getByTestId('period-button')).toContainText('Last Month')
-  await expect(page.getByTestId('flow-caption')).toContainText('due in period')
+  await expect(page.getByTestId('flow-caption')).toContainText(/due in period/i)
   await expect(page.getByTestId('row-count')).not.toHaveText(allCount)
 
   await page.getByTestId('period-button').click()
