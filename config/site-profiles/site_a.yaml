@@ -45,6 +45,8 @@ terms:   # UI vocabulary (F15, OQ-075), site_a values. All keys optional; generi
   insights_banner: "LIMS–SAP Insights"
   erp_blocked_tag: "SAP BLOCKED"
   planner_overrides: "planner overrides"
+release_on_coa: {sla_days: 14}   # F18: single release deadline from cycle_start_date
+exports: {sampling_plan: [sampling], qc_queue: [qc_ship, qc_testing]}   # F18: stage sets of the two queue exports
 reason_codes: [CAMPAIGN_PULLED_FORWARD, CAMPAIGN_PUSHED_OUT, CONSOLIDATED_TESTING, EXPEDITE_PRODUCTION,
                EXPEDITE_SHIPPING, SUPPLIER_DELAY, LAB_CAPACITY, DOCUMENTATION_ISSUE, OTHER]
 adapters: {erp: ecc_like}       # Tier 2 adds s4_like and spreadsheet

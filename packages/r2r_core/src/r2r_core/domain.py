@@ -63,3 +63,4 @@ class RowFacts:
     ud_effective: bool
     ud_code: str | None
     lims_approved_at: datetime | None
+    cycle_start_date: date | None = None  # F18: the Release on COA deadline counts from here

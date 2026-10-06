@@ -427,3 +427,95 @@ def test_f03_story_b2077_pull_forward(profile: SiteProfile, facts: FactsFactory)
     assert pulled.expected_completion == d("2026-10-14")
     assert (pulled.days_remaining, pulled.rag, pulled.late) == (2, Rag.AMBER, False)
     assert pulled.late_reason_auto is None  # not late, so the pull-forward is not offered as an excuse
+
+
+# --- Release on COA (F18-FR-10, OQ-101) --------------------------------------------------------
+
+
+def test_f18_ac04_coa_release_uses_cycle_start_plus_profile_days(
+    profile: SiteProfile, facts: FactsFactory
+) -> None:
+    """F18-AC-04: sampling row with cycle start 2026-10-05 gives expected 2026-10-19 (14 days)."""
+    row = facts(cycle_start_date=d("2026-10-05"))
+    result = plan(row, profile, TODAY, coa_release=True)
+    assert profile.release_on_coa.sla_days == 14
+    assert result.expected_completion == d("2026-10-19")
+    assert result.days_remaining == 7
+    assert result.rag == Rag.GREEN
+    assert result.late is False
+    assert result.compressed is False
+    assert result.compression_ratio is None
+
+
+def test_f18_ac04_coa_release_one_deadline_for_every_remaining_stage(
+    profile: SiteProfile, facts: FactsFactory
+) -> None:
+    result = plan(facts(cycle_start_date=d("2026-10-05")), profile, TODAY, coa_release=True)
+    assert list(result.must_complete_by) == sk("sampling", "qc_testing", "qa_release")
+    assert set(result.must_complete_by.values()) == {d("2026-10-19")}
+    assert list(result.effective_slas) == sk("sampling", "qc_testing", "qa_release")
+
+
+def test_f18_ac04_coa_release_amber_when_two_days_left(profile: SiteProfile, facts: FactsFactory) -> None:
+    result = plan(facts(cycle_start_date=d("2026-09-30")), profile, TODAY, coa_release=True)
+    assert result.expected_completion == d("2026-10-14")
+    assert result.days_remaining == 2
+    assert result.rag == Rag.AMBER
+
+
+def test_f18_ac04_coa_release_late(profile: SiteProfile, facts: FactsFactory) -> None:
+    result = plan(facts(cycle_start_date=d("2026-09-20")), profile, TODAY, coa_release=True)
+    assert result.expected_completion == d("2026-10-04")
+    assert result.days_remaining == -8
+    assert result.rag == Rag.RED
+    assert result.late is True
+
+
+def test_f18_ac04_coa_release_ignores_a_need_by_that_would_compress(
+    profile: SiteProfile, facts: FactsFactory
+) -> None:
+    """A tight need-by would compress the normal plan; the COA plan ignores it and clears compression."""
+    row = facts(cycle_start_date=d("2026-10-05"), system_need_by_locked=d("2026-10-20"))
+    normal = plan(row, profile, TODAY)
+    coa = plan(row, profile, TODAY, coa_release=True)
+    assert normal.compressed is True
+    assert coa.expected_completion == d("2026-10-19")
+    assert coa.compressed is False
+    assert coa.compression_ratio is None
+
+
+def test_f18_ac04_coa_release_with_an_adjusted_need_by_keeps_the_auto_late_reason(
+    profile: SiteProfile, facts: FactsFactory
+) -> None:
+    row = facts(cycle_start_date=d("2026-09-20"), system_need_by_locked=d("2026-12-01"))
+    adjusted = AdjustedNeedBy(d("2026-11-01"), "CAMPAIGN_PULLED_FORWARD")
+    result = plan(row, profile, TODAY, adjusted, coa_release=True)
+    assert result.expected_completion == d("2026-10-04")
+    assert result.late_reason_auto == "CAMPAIGN_PULLED_FORWARD"
+
+
+def test_f18_ac04_coa_release_reeval_row_uses_its_cycle_start(
+    profile: SiteProfile, facts: FactsFactory
+) -> None:
+    row = facts(lot_type=LotType.REEVAL, cycle_start_date=d("2026-10-01"))
+    assert plan(row, profile, TODAY, coa_release=True).expected_completion == d("2026-10-15")
+
+
+def test_f18_ac04_coa_release_without_a_cycle_start_raises(profile: SiteProfile, facts: FactsFactory) -> None:
+    with pytest.raises(ValueError, match="cycle start"):
+        plan(facts(), profile, TODAY, coa_release=True)
+
+
+def test_f18_ac04_coa_release_off_is_the_unchanged_plan(profile: SiteProfile, facts: FactsFactory) -> None:
+    row = facts(cycle_start_date=d("2026-10-05"))
+    assert plan(row, profile, TODAY) == plan(row, profile, TODAY, coa_release=False)
+    assert plan(row, profile, TODAY).expected_completion == d("2026-10-15")
+
+
+def test_f18_coa_release_on_a_stage_without_a_plan_stays_empty(
+    profile: SiteProfile, facts: FactsFactory
+) -> None:
+    row = facts(
+        stage_key=StageKey("released"), current_stage_entry_date=None, cycle_start_date=d("2026-10-05")
+    )
+    assert plan(row, profile, TODAY, coa_release=True).expected_completion is None

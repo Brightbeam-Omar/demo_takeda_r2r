@@ -1,6 +1,6 @@
 # F18 · Tasks
 - [x] T1 `docs(specs)`: contract changes + decisions
-- [ ] T2 [TDD] r2r_core `plan(coa_release)` + profile model (FR-10, AC-04)
+- [x] T2 [TDD] r2r_core `plan(coa_release)` + profile model (FR-10, AC-04)
 - [ ] T3 `next_inspection_date` end to end: erp_sim → datagen → pipeline → mirror (FR-03g)
 - [ ] T4 [TDD] Hold / COA endpoints, versioning, audit, roles, on_hold display (FR-08, FR-09, AC-03)
 - [ ] T5 Shared DataTable: sort, header filters, pagination, toolbar, Reset Table, Columns panel (FR-01, FR-02, AC-01)

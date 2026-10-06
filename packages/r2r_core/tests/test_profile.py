@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 import yaml
-from r2r_core.profile import ProfileError, SiteProfile, load_profile, profiles_dir
+from r2r_core.profile import ProfileError, SiteProfile, load_profile, parse_profile, profiles_dir
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 SITE_A = REPO_ROOT / "config" / "site-profiles" / "site_a.yaml"
@@ -239,3 +239,16 @@ def test_f17_fr04_stages_show_a_card_unless_the_profile_says_otherwise() -> None
     """F17-FR-04: `show_card` defaults to true; site_a hides only the pending card."""
     profile = load_profile("site_a")
     assert {stage.key for stage in profile.stages if not stage.show_card} == {"pending"}
+
+
+def test_f18_profile_has_release_on_coa_and_export_stage_sets(profile: SiteProfile) -> None:
+    assert profile.release_on_coa.sla_days == 14
+    assert profile.exports.sampling_plan == ["sampling"]
+    assert profile.exports.qc_queue == ["qc_ship", "qc_testing"]
+
+
+def test_f18_profile_rejects_an_export_stage_that_does_not_exist() -> None:
+    data = _raw()
+    data["exports"]["qc_queue"] = ["qc_ship", "no_such_stage"]
+    with pytest.raises(ProfileError, match="no_such_stage"):
+        parse_profile(data)
