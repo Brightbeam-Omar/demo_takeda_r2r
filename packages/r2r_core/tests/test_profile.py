@@ -272,3 +272,28 @@ def test_f18_profile_rejects_an_export_stage_that_does_not_exist() -> None:
     data["exports"]["qc_queue"] = ["qc_ship", "no_such_stage"]
     with pytest.raises(ProfileError, match="no_such_stage"):
         parse_profile(data)
+
+
+def test_f20_fr01_site_a_targets(profile: SiteProfile) -> None:
+    """F20-FR-01: the four report targets of site_a."""
+    t = profile.targets
+    assert (t.release_annual, t.release_weekly) == (700, 13)
+    assert (t.needs_by_adherence_pct, t.expedite_on_time_pct) == (90, 90)
+
+
+@pytest.mark.parametrize(
+    "field", ["release_annual", "release_weekly", "needs_by_adherence_pct", "expedite_on_time_pct"]
+)
+@pytest.mark.parametrize("value", [0, -1])
+def test_f20_fr01_targets_must_be_positive(field: str, value: int) -> None:
+    data = _raw()
+    data["targets"][field] = value
+    with pytest.raises(ProfileError, match=field):
+        parse_profile(data)
+
+
+def test_f20_fr01_targets_are_required() -> None:
+    data = _raw()
+    del data["targets"]
+    with pytest.raises(ProfileError, match="targets"):
+        parse_profile(data)

@@ -136,6 +136,15 @@ class ReleaseOnCoa(_Model):
     sla_days: PositiveInt
 
 
+class Targets(_Model):
+    """F20-FR-01: the figures the Reports & Metrics page measures against."""
+
+    release_annual: PositiveInt
+    release_weekly: PositiveInt
+    needs_by_adherence_pct: PositiveInt = Field(le=100)
+    expedite_on_time_pct: PositiveInt = Field(le=100)
+
+
 class Exports(_Model):
     """F18-FR-07: the stage sets of the two queue exports."""
 
@@ -218,6 +227,7 @@ class SiteProfile(_Model):
     material_classes: Annotated[list[Labelled], BeforeValidator(_labelled)]
     full_spec_pairs: list[FullSpecPair]
     release_on_coa: ReleaseOnCoa
+    targets: Targets
     exports: Exports
     reason_codes: list[ReasonCode] = Field(min_length=1)
     status_options: list[StatusOption] = Field(min_length=1)

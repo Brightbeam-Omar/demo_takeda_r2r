@@ -72,4 +72,5 @@ status_reasons:   # F19: optional reason of a status entry
   - {key: equipment_issue,      label: "Equipment issue"}
   - {key: awaiting_info,        label: "Awaiting info"}
   - {key: other,                label: "Other"}
+targets: {release_annual: 700, release_weekly: 13, needs_by_adherence_pct: 90, expedite_on_time_pct: 90}   # F20: positive values, shown on Reports & Metrics
 adapters: {erp: ecc_like}       # Tier 2 adds s4_like and spreadsheet
