@@ -21,7 +21,7 @@ This brings the batch table to parity with the as-built "Pipeline — Exceptions
 
 ## Contract changes
 - **03 §2 profile:** `release_on_coa: {sla_days: 14}`. **03 §5:** a COA-release plan rule and display-only manual hold (§6 flags: `on_hold` becomes `erp_hold OR manual_hold` at read time; rename the published flag to `erp_hold`, or keep `on_hold` as the ERP flag and add `on_hold_display` in the API, whichever is the smaller change; record it). **Decided:** keep the published `on_hold` (= ERP hold). The API adds `manual_hold` and `on_hold_display = on_hold OR manual_hold`, and `Flags(on_hold=on_hold_display)` drives sorting, the On Hold card and the ON HOLD filter.
-- **04 §1.1:** `mcha.qnext` date (next inspection; datagen fills it for released drug substances with release + 12–24 months, and for re-eval stories). **04 §3/§4.1:** `next_inspection_date`.
+- **04 §1.1:** `mcha.qnext` date (next inspection; OQ-100: datagen fills every drug-substance batch, in-flight and released, with `hsdat` + 12–36 months on a new `rng.stream`; re-eval story batches keep their story dates; consumables stay NULL). **04 §3/§4.1:** `next_inspection_date`.
 - **04 §5:** override fields `manual_hold` (`{"on": bool, "reason": str}`) and `release_on_coa` (`{"on": bool, "reason": str}`).
 - **F09:** `POST /api/rows/{row_key}/hold`, `/coa-release` (body `{on, reason}`), and the export endpoints.
 

@@ -69,6 +69,8 @@ terms:   # UI vocabulary (F15, OQ-075), site_a values. All keys optional; generi
   insights_banner: "LIMS–SAP Insights"
   erp_blocked_tag: "SAP BLOCKED"
   planner_overrides: "planner overrides"
+release_on_coa: {sla_days: 14}   # F18: single release deadline from cycle_start_date
+exports: {sampling_plan: [sampling], qc_queue: [qc_ship, qc_testing]}   # F18: stage sets of the two queue exports
 reason_codes: [CAMPAIGN_PULLED_FORWARD, CAMPAIGN_PUSHED_OUT, CONSOLIDATED_TESTING, EXPEDITE_PRODUCTION,
                EXPEDITE_SHIPPING, SUPPLIER_DELAY, LAB_CAPACITY, DOCUMENTATION_ISSUE, OTHER]
 adapters: {erp: ecc_like}       # Tier 2 adds s4_like and spreadsheet
@@ -134,6 +136,9 @@ Let `S` = applicable stages from the current stage (inclusive) to `qa_release`, 
   - If `A ≤ 0`: `expected_completion = N − Σ compressed-to-1 later stages`. The row is already late.
 - `pending` and `released` rows have no expected completion.
 
+### 5.2b Release on COA (F18, OQ-101)
+When the app override `release_on_coa` is on, the plan uses a single deadline: `expected_completion = cycle_start_date + release_on_coa.sla_days`, and `must_complete_by` of every remaining applicable stage equals that date. The need-by is ignored by the plan (still displayed, still used by §5.4), `compressed = false` and `compression_ratio = None`. `plan(..., coa_release=True)` raises `ValueError` without a `cycle_start_date`. `pending` and `released` rows cannot be set (409).
+
 ### 5.3 RAG (system, not the human status)
 `days_remaining = expected_completion − today`. `red` if `days_remaining < 0`, `amber` if `0 ≤ days_remaining < profile.rag.amber_days_remaining_lt`, otherwise `green`. `late = (red)`.
 
@@ -153,7 +158,7 @@ Forward with no need-by. Backward with ample budget. Compression ratio 0.5 with 
 ## 6. Flags (overlays, not stages)
 | Flag | Source | Rule |
 |---|---|---|
-| `on_hold` | ERP batch status | `batch_status_code = 'H'` |
+| `on_hold` | ERP batch status | `batch_status_code = 'H'`. The published flag stays the ERP fact. F18 adds `manual_hold` (app override) and the read-time `on_hold_display = on_hold OR manual_hold`, which drives the tag, the On Hold card, the ON HOLD filter and the sort (OQ-102). The plan maths ignores holds |
 | `erp_blocked` | ERP stock | `stock_category = 'BLOCKED'` |
 | `re_eval` | lot | `lot_type = '09'` |
 | `offsite` | LIMS | `offsite_test` |
