@@ -84,7 +84,9 @@ def has_flag(row: ComposedRow, name: str) -> bool:
     if name == "released":
         return row.stage_terminal
     if name == "release_on_coa":
-        return False  # arrives with F18 (F17-OQ097)
+        return row.coa_release is not None
+    if name == "on_hold":
+        return row.on_hold_display
     return bool(row.facts[name])
 
 
@@ -192,7 +194,7 @@ def build_overview(
     gaps = air_gap_rows(unstaged)
     ud_rejected = sum(1 for row in unstaged if row.facts["ud_rejected"])
     lims_rejected = sum(1 for row in unstaged if row.facts["lims_rejected"])
-    on_hold = sum(1 for row in unstaged if row.facts["on_hold"])
+    on_hold = sum(1 for row in unstaged if row.on_hold_display)
     alerts = [
         AlertOut(kind="air_gap", count=len(gaps), rows=[RowOut.of(r, labels) for r in gaps[:TOP_AIR_GAPS]]),
         AlertOut(kind="late", count=sum(1 for row in unstaged if row.plan.late)),

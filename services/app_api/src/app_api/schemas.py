@@ -47,7 +47,10 @@ class PlanOut(BaseModel):
 
 
 class FlagsOut(BaseModel):
-    on_hold: bool
+    on_hold: bool  # displayed: the ERP hold or a manual hold (F18-FR-09)
+    erp_hold: bool
+    manual_hold: bool
+    release_on_coa: bool
     erp_blocked: bool
     re_eval: bool
     offsite: bool
@@ -68,6 +71,7 @@ class RowOut(BaseModel):
     material_class: str | None
     molecule_type: str | None
     supplier_name: str | None
+    supplier_batch: str | None
     batch_no: str
     inspection_lot_no: str
     lot_type: str
@@ -78,6 +82,11 @@ class RowOut(BaseModel):
     stage_label: str
     stage_rule_id: str | None
     current_stage_entry_date: dt.date | None
+    gr_date: dt.date | None
+    qc_testing_entry: dt.date | None
+    lims_approved_date: dt.date | None
+    ud_date: dt.date | None
+    next_inspection_date: dt.date | None
     lims_status: str | None
     ud_code: str | None
     system_need_by_locked: dt.date | None
@@ -95,6 +104,8 @@ class RowOut(BaseModel):
     inbound_light: str | None
     flags: FlagsOut
     comment_count: int
+    manual_hold_reason: str | None
+    coa_release_reason: str | None
 
     @classmethod
     def of(cls, row: ComposedRow, stage_labels: dict[str, str]) -> "RowOut":
@@ -106,6 +117,7 @@ class RowOut(BaseModel):
             material_class=facts["material_class"],
             molecule_type=facts["molecule_type"],
             supplier_name=facts["supplier_name"],
+            supplier_batch=facts["supplier_batch"],
             batch_no=facts["batch_no"],
             inspection_lot_no=facts["inspection_lot_no"],
             lot_type=facts["lot_type"],
@@ -116,6 +128,11 @@ class RowOut(BaseModel):
             stage_label=stage_labels.get(facts["stage_key"], facts["stage_key"]),
             stage_rule_id=facts["stage_rule_id"],
             current_stage_entry_date=facts["current_stage_entry_date"],
+            gr_date=facts["gr_date"],
+            qc_testing_entry=facts["qc_testing_entry"],
+            lims_approved_date=facts["lims_approved_date"],
+            ud_date=facts["ud_date"],
+            next_inspection_date=facts["next_inspection_date"],
             lims_status=facts["lims_status"],
             ud_code=facts["ud_code"],
             system_need_by_locked=facts["system_need_by_locked"],
@@ -132,7 +149,10 @@ class RowOut(BaseModel):
             deviation_light=facts["deviation_light"],
             inbound_light=facts["inbound_light"],
             flags=FlagsOut(
-                on_hold=bool(facts["on_hold"]),
+                on_hold=row.on_hold_display,
+                erp_hold=bool(facts["on_hold"]),
+                manual_hold=row.manual_hold is not None,
+                release_on_coa=row.coa_release is not None,
                 erp_blocked=bool(facts["erp_blocked"]),
                 re_eval=bool(facts["re_eval"]),
                 offsite=bool(facts["offsite"]),
@@ -144,6 +164,8 @@ class RowOut(BaseModel):
                 late=row.plan.late,
             ),
             comment_count=row.comment_count,
+            manual_hold_reason=row.manual_hold["reason"] if row.manual_hold else None,
+            coa_release_reason=row.coa_release["reason"] if row.coa_release else None,
         )
 
 

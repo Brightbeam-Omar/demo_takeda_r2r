@@ -110,7 +110,7 @@ class OverrideValue(Base):
     __table_args__ = (
         CheckConstraint(
             "field IN ('adjusted_need_by_date','expedite','manual_status','delivery_date',"
-            "'delivery_location')",
+            "'delivery_location','manual_hold','release_on_coa')",
             name="ck_override_value_field",
         ),
         Index(

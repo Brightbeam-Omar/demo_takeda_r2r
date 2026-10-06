@@ -323,6 +323,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/rows/{row_key}/coa-release": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Coa Release */
+        post: operations["post_coa_release_api_rows__row_key__coa_release_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/rows/{row_key}/comments": {
         parameters: {
             query?: never;
@@ -351,6 +368,23 @@ export interface paths {
         get: operations["explain_row_api_rows__row_key__explain_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/rows/{row_key}/hold": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Hold */
+        post: operations["post_hold_api_rows__row_key__hold_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -761,6 +795,8 @@ export interface components {
             air_gap: boolean;
             /** Erp Blocked */
             erp_blocked: boolean;
+            /** Erp Hold */
+            erp_hold: boolean;
             /** Expedite */
             expedite: boolean;
             /** Full Spec */
@@ -769,12 +805,16 @@ export interface components {
             late: boolean;
             /** Lims Rejected */
             lims_rejected: boolean;
+            /** Manual Hold */
+            manual_hold: boolean;
             /** Offsite */
             offsite: boolean;
             /** On Hold */
             on_hold: boolean;
             /** Re Eval */
             re_eval: boolean;
+            /** Release On Coa */
+            release_on_coa: boolean;
             /** Ud Rejected */
             ud_rejected: boolean;
         };
@@ -1152,6 +1192,8 @@ export interface components {
             batch_no: string;
             /** Campaign */
             campaign: string | null;
+            /** Coa Release Reason */
+            coa_release_reason: string | null;
             /** Comment Count */
             comment_count: number;
             /** Comments */
@@ -1176,18 +1218,24 @@ export interface components {
             };
             flags: components["schemas"]["FlagsOut"];
             freshness: components["schemas"]["Freshness"];
+            /** Gr Date */
+            gr_date: string | null;
             /** Inbound Light */
             inbound_light: string | null;
             /** Inspection Lot No */
             inspection_lot_no: string;
             /** Late */
             late: boolean;
+            /** Lims Approved Date */
+            lims_approved_date: string | null;
             /** Lims Status */
             lims_status: string | null;
             /** Location Type */
             location_type: string | null;
             /** Lot Type */
             lot_type: string;
+            /** Manual Hold Reason */
+            manual_hold_reason: string | null;
             /** Manual Status */
             manual_status: {
                 [key: string]: unknown;
@@ -1200,11 +1248,15 @@ export interface components {
             material_no: string;
             /** Molecule Type */
             molecule_type: string | null;
+            /** Next Inspection Date */
+            next_inspection_date: string | null;
             /** Operative Need By */
             operative_need_by: string | null;
             /** Override History */
             override_history: components["schemas"]["OverrideOut"][];
             plan: components["schemas"]["PlanOut"];
+            /** Qc Testing Entry */
+            qc_testing_entry: string | null;
             /** Row Key */
             row_key: string;
             /** Siblings */
@@ -1217,12 +1269,16 @@ export interface components {
             stage_rule_id: string | null;
             /** Storage Location */
             storage_location: string | null;
+            /** Supplier Batch */
+            supplier_batch: string | null;
             /** Supplier Name */
             supplier_name: string | null;
             /** System Need By Locked */
             system_need_by_locked: string | null;
             /** Ud Code */
             ud_code: string | null;
+            /** Ud Date */
+            ud_date: string | null;
         };
         /**
          * RowOut
@@ -1241,6 +1297,8 @@ export interface components {
             batch_no: string;
             /** Campaign */
             campaign: string | null;
+            /** Coa Release Reason */
+            coa_release_reason: string | null;
             /** Comment Count */
             comment_count: number;
             /** Current Stage Entry Date */
@@ -1252,18 +1310,24 @@ export interface components {
             /** Expedite */
             expedite: boolean;
             flags: components["schemas"]["FlagsOut"];
+            /** Gr Date */
+            gr_date: string | null;
             /** Inbound Light */
             inbound_light: string | null;
             /** Inspection Lot No */
             inspection_lot_no: string;
             /** Late */
             late: boolean;
+            /** Lims Approved Date */
+            lims_approved_date: string | null;
             /** Lims Status */
             lims_status: string | null;
             /** Location Type */
             location_type: string | null;
             /** Lot Type */
             lot_type: string;
+            /** Manual Hold Reason */
+            manual_hold_reason: string | null;
             /** Manual Status */
             manual_status: {
                 [key: string]: unknown;
@@ -1276,9 +1340,13 @@ export interface components {
             material_no: string;
             /** Molecule Type */
             molecule_type: string | null;
+            /** Next Inspection Date */
+            next_inspection_date: string | null;
             /** Operative Need By */
             operative_need_by: string | null;
             plan: components["schemas"]["PlanOut"];
+            /** Qc Testing Entry */
+            qc_testing_entry: string | null;
             /** Row Key */
             row_key: string;
             /** Stage Key */
@@ -1289,12 +1357,16 @@ export interface components {
             stage_rule_id: string | null;
             /** Storage Location */
             storage_location: string | null;
+            /** Supplier Batch */
+            supplier_batch: string | null;
             /** Supplier Name */
             supplier_name: string | null;
             /** System Need By Locked */
             system_need_by_locked: string | null;
             /** Ud Code */
             ud_code: string | null;
+            /** Ud Date */
+            ud_date: string | null;
         };
         /** RuleOut */
         RuleOut: {
@@ -1378,6 +1450,16 @@ export interface components {
             pipeline_status: components["schemas"]["PipelineStatusOut"] | null;
             /** Watermarks */
             watermarks: components["schemas"]["WatermarkOut"][];
+        };
+        /**
+         * ToggleIn
+         * @description Body of Place/Release Hold and Release on COA/Undo: the reason is required either way (OQ-103).
+         */
+        ToggleIn: {
+            /** On */
+            on: boolean;
+            /** Reason */
+            reason: string;
         };
         /** UserOut */
         UserOut: {
@@ -2204,6 +2286,43 @@ export interface operations {
             };
         };
     };
+    post_coa_release_api_rows__row_key__coa_release_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-demo-user"?: string | null;
+            };
+            path: {
+                row_key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ToggleIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RowOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     post_comment_api_rows__row_key__comments_post: {
         parameters: {
             query?: never;
@@ -2263,6 +2382,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StageExplain"] | components["schemas"]["CompletionExplain"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_hold_api_rows__row_key__hold_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-demo-user"?: string | null;
+            };
+            path: {
+                row_key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ToggleIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RowOut"];
                 };
             };
             /** @description Validation Error */

@@ -44,6 +44,8 @@ class OverrideField(StrEnum):
     MANUAL_STATUS = "manual_status"
     DELIVERY_DATE = "delivery_date"
     DELIVERY_LOCATION = "delivery_location"
+    MANUAL_HOLD = "manual_hold"
+    RELEASE_ON_COA = "release_on_coa"
 
 
 @dataclass(frozen=True, kw_only=True)
