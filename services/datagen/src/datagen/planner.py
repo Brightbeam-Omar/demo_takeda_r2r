@@ -25,6 +25,7 @@ from datagen.model import (
 from datagen.next_inspection import plan_next_inspection
 from datagen.params import Params
 from datagen.po_lines import plan_po_lines
+from datagen.quality_data import plan_quality_data
 from datagen.quirks import apply_quirks
 from datagen.stories import StoryResult, build_stories
 from datagen.supplier_batches import plan_supplier_batches
@@ -63,6 +64,7 @@ def build_plan(profile: SiteProfile, params: Params, seed: int, world: World | N
     plan_next_inspection(plan)
     plan_supplier_batches(plan)
     plan_inbound_items(plan)
+    plan_quality_data(plan)
     return plan
 
 

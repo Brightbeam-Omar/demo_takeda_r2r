@@ -206,19 +206,45 @@ class World:
             is_open=is_open,
         )
 
-    def deviation(self, number: str, status: str, links: list[tuple[str, str]]) -> None:
+    def deviation(
+        self,
+        number: str,
+        status: str,
+        links: list[tuple[str, str]],
+        severity: str = "minor",
+        causal_factor: str | None = None,
+        investigation_summary: str | None = None,
+    ) -> None:
         self.add(
             "stg_deviation",
             deviation_no=number,
             title="t",
             description="d",
-            severity="minor",
+            severity=severity,
             status=status,
             opened_on=date(2026, 10, 1),
             owner="QA",
+            causal_factor=causal_factor,
+            investigation_summary=investigation_summary,
         )
         for material, batch in links:
             self.add("stg_deviation_link", deviation_no=number, material_no=material, batch_no=batch)
+
+    def change_control(
+        self, number: str, status: str, links: list[tuple[str, str]], effective_on: date | None = None
+    ) -> None:
+        self.add(
+            "stg_change_control",
+            cc_no=number,
+            title="Update the storage specification",
+            status=status,
+            current_state="Store at 2-8 C",
+            proposed_state="Store at 2-25 C",
+            opened_on=date(2026, 10, 2),
+            effective_on=effective_on,
+        )
+        for material, batch in links:
+            self.add("stg_change_control_link", cc_no=number, material_no=material, batch_no=batch)
 
     def write(self, lake_root: Path) -> None:
         for name, schema in STAGING_SCHEMAS.items():

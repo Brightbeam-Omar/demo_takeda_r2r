@@ -67,7 +67,7 @@ demand:
   stale_open_share: 0.03     # open demand lines with a past requirement date
 
 deviations:
-  severity: {minor: 0.60, major: 0.30, critical: 0.10}
+  severity: {minor: 0.60, moderate: 0.30, major: 0.10}   # F19-FR-03
   links: {1: 0.65, 2: 0.35}
   open_on_qa_release: 6      # open deviations on lots waiting in QA release (B3150 is one)
 

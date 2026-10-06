@@ -98,6 +98,7 @@ def build_stories(builder: Builder) -> StoryResult:
             root_cause_category="Not yet determined",
             owner="QA",
             links=[("RM10045", "B3150")],
+            causal_factor="Analytical method",
             story_id="B3150",
         )
     )

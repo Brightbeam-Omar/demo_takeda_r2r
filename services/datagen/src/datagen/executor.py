@@ -58,6 +58,8 @@ HANDLERS: dict[tuple[str, str], tuple[type[BaseModel], EventFunction]] = {
     ("lims", "test_result_recorded"): (lims_schemas.TestResultIn, lims_events.test_result_recorded),
     ("qms", "deviation_opened"): (qms_schemas.DeviationOpenedIn, qms_events.deviation_opened),
     ("qms", "deviation_closed"): (qms_schemas.DeviationClosedIn, qms_events.deviation_closed),
+    ("qms", "change_control_opened"): (qms_schemas.ChangeControlOpenedIn, qms_events.change_control_opened),
+    ("qms", "change_control_status"): (qms_schemas.ChangeControlStatusIn, qms_events.change_control_status),
 }
 
 # Where the key of a created row sits in an event function's result.
@@ -68,6 +70,7 @@ CAPTURES: dict[tuple[str, str], tuple[str, str]] = {
     ("erp", "po_line_created"): ("ekpo", "ebeln"),
     ("lims", "sample_collected"): ("sample", "sample_id"),
     ("qms", "deviation_opened"): ("deviation", "deviation_no"),
+    ("qms", "change_control_opened"): ("change_control", "cc_no"),
 }
 
 

@@ -162,6 +162,22 @@ class DeviationPlan:
     owner: str
     links: list[tuple[str, str]]  # (material, batch)
     story_id: str | None = None
+    causal_factor: str | None = None  # F19-FR-03
+    investigation_summary: str | None = None  # F19-FR-03
+
+
+@dataclass
+class ChangeControlPlan:
+    """One change control (F19-FR-03), opened on one day and moved to its status on a later one."""
+
+    title: str
+    current_state: str
+    proposed_state: str
+    opened_on: date
+    status: str  # open | approved | closed | cancelled
+    status_on: date | None  # the day it reached its status (None while open)
+    effective_on: date | None  # approved and closed ones only
+    links: list[tuple[str, str]]  # (material, batch)
 
 
 @dataclass
@@ -172,6 +188,7 @@ class Plan:
     batches: list[BatchPlan] = field(default_factory=list)
     demands: list[DemandPlan] = field(default_factory=list)
     deviations: list[DeviationPlan] = field(default_factory=list)
+    change_controls: list[ChangeControlPlan] = field(default_factory=list)
     po_lines: list[PoLinePlan] = field(default_factory=list)
     need_by: dict[str, date | None] = field(
         default_factory=dict

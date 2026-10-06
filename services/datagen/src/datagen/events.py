@@ -179,12 +179,33 @@ def plan_events(plan: Plan) -> list[Event]:
             "severity": deviation.severity,
             "opened_on": deviation.opened_on,
             "root_cause_category": deviation.root_cause_category,
+            "causal_factor": deviation.causal_factor,
             "owner": deviation.owner,
             "links": [{"material_no": m, "batch_no": b} for m, b in deviation.links],
         }
+        if deviation.closed_on is None:
+            body["investigation_summary"] = deviation.investigation_summary
         events.append(Event(deviation.opened_on, "qms", "deviation_opened", body, capture=name))
         if deviation.closed_on is not None:
-            body = {"deviation_no": name, "closed_on": deviation.closed_on}
+            body = {
+                "deviation_no": name,
+                "closed_on": deviation.closed_on,
+                "investigation_summary": deviation.investigation_summary,
+            }
             events.append(Event(deviation.closed_on, "qms", "deviation_closed", body))
+    for number, change in enumerate(plan.change_controls):
+        name = f"@cc:{number}"
+        body = {
+            "title": change.title,
+            "current_state": change.current_state,
+            "proposed_state": change.proposed_state,
+            "status": "open",
+            "opened_on": change.opened_on,
+            "links": [{"material_no": m, "batch_no": b} for m, b in change.links],
+        }
+        events.append(Event(change.opened_on, "qms", "change_control_opened", body, capture=name))
+        if change.status != "open" and change.status_on is not None:
+            body = {"cc_no": name, "status": change.status, "effective_on": change.effective_on}
+            events.append(Event(change.status_on, "qms", "change_control_status", body))
     events.sort(key=lambda event: event.day)  # stable: planning order breaks ties within a day
     return events

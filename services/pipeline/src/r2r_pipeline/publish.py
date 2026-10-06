@@ -41,14 +41,17 @@ PUBLISH_ORDER = (
     "deviations_v",
     "expected_deliveries_v",
     "inbound_checks_v",
+    "change_controls_v",
     "pipeline_status_v",
 )
 OBJECTS_WITH_RUN_ID = (
     "batch_pipeline_v",
     "weekly_metrics_v",
     "weekly_metric_rows_v",
+    "deviations_v",
     "expected_deliveries_v",
     "inbound_checks_v",
+    "change_controls_v",
     "pipeline_status_v",
 )
 
@@ -162,6 +165,9 @@ def build_deviations(ctx: RunContext) -> pa.Table:
                 "opened_on",
                 "closed_on",
                 "root_cause_category",
+                "causal_factor",
+                "investigation_summary",
+                "description",
                 "owner",
             ]
         ),
@@ -170,11 +176,33 @@ def build_deviations(ctx: RunContext) -> pa.Table:
     )
     columns = [
         "deviation_no", "material_no", "batch_no", "title", "severity", "status", "opened_on", "closed_on",
-        "root_cause_category", "owner",
+        "root_cause_category", "causal_factor", "investigation_summary", "description", "owner",
     ]  # fmt: skip
-    return joined.select(columns).sort_by(
+    ordered = joined.select(columns).sort_by(
         [("deviation_no", "ascending"), ("material_no", "ascending"), ("batch_no", "ascending")]
     )
+    return ordered.append_column("run_id", pa.array([ctx.run_id] * ordered.num_rows, pa.string()))
+
+
+def build_change_controls(ctx: RunContext) -> pa.Table:
+    """One row per change-control-to-batch link (F19-FR-03), batch level like the deviations."""
+    changes = read_delta(ctx.lake_root, "staging.stg_change_control")
+    links = read_delta(ctx.lake_root, "staging.stg_change_control_link")
+    joined = links.select(["cc_no", "material_no", "batch_no"]).join(
+        changes.select(
+            ["cc_no", "title", "status", "current_state", "proposed_state", "opened_on", "effective_on"]
+        ),
+        keys="cc_no",
+        join_type="inner",
+    )
+    columns = [
+        "cc_no", "material_no", "batch_no", "title", "status", "current_state", "proposed_state", "opened_on",
+        "effective_on",
+    ]  # fmt: skip
+    ordered = joined.select(columns).sort_by(
+        [("cc_no", "ascending"), ("material_no", "ascending"), ("batch_no", "ascending")]
+    )
+    return ordered.append_column("run_id", pa.array([ctx.run_id] * ordered.num_rows, pa.string()))
 
 
 def build_expected_deliveries(ctx: RunContext) -> pa.Table:
@@ -278,6 +306,7 @@ def publish(ctx: RunContext) -> StepResult:
         "deviations_v": build_deviations(ctx),
         "expected_deliveries_v": build_expected_deliveries(ctx),
         "inbound_checks_v": build_inbound_checks(ctx, batch),
+        "change_controls_v": build_change_controls(ctx),
         "pipeline_status_v": build_status(ctx, published_at, batch.num_rows),
     }
     for name in PUBLISH_ORDER:

@@ -54,8 +54,8 @@ def test_f05_fr02_deviation_volume_and_open_share(plan: Plan, params: Params) ->
     assert abs(total - params.volumes.deviations) <= 0.1 * params.volumes.deviations
     assert abs(open_count / total - params.volumes.deviation_open_share) <= 0.05
     severities = Counter(d.severity for d in plan.deviations)
-    assert set(severities) == {"minor", "major", "critical"}
-    assert severities["minor"] > severities["major"] > severities["critical"]
+    assert set(severities) == {"minor", "moderate", "major"}  # F19-FR-03
+    assert severities["minor"] > severities["moderate"] > severities["major"]
 
 
 def test_f05_fr01_deviations_link_to_real_batches_and_make_sense(plan: Plan) -> None:

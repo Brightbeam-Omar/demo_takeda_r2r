@@ -55,7 +55,7 @@ def test_f07_ac01_all_published_objects_exist_and_the_status_has_one_row(
     assert PUBLISH_ORDER == (
         "batch_pipeline_v", "weekly_metrics_v", "weekly_metric_rows_v", "stage_reference_v",
         "metric_reference_v", "reason_codes_v", "deviations_v", "expected_deliveries_v", "inbound_checks_v",
-        "pipeline_status_v",
+        "change_controls_v", "pipeline_status_v",
     )  # fmt: skip
     assert all(delta_exists(tmp_path, f"published.{name}") for name in PUBLISH_ORDER)
     [status] = table(tmp_path, "pipeline_status_v")
@@ -164,6 +164,56 @@ def test_f07_fr03_deviations_has_one_row_per_linked_batch(
 
 
 @pytest.mark.usefixtures("demo_clock")
+def test_f19_fr03_deviations_carry_the_new_fields_and_the_run_id(
+    tmp_path: Path, profile: SiteProfile
+) -> None:
+    world = World()
+    world.receive("B1", "10000001", D(2026, 10, 1))
+    world.demand(1, D(2026, 11, 20))
+    world.deviation(
+        "DEV-000001",
+        "closed",
+        [("RM1", "B1")],
+        severity="moderate",
+        causal_factor="Carrier handling",
+        investigation_summary="Handled with the carrier.",
+    )
+    run_all(world, tmp_path, profile)
+    [row] = table(tmp_path, "deviations_v")
+    assert (row["severity"], row["causal_factor"], row["investigation_summary"]) == (
+        "moderate",
+        "Carrier handling",
+        "Handled with the carrier.",
+    )
+    assert (row["description"], row["run_id"]) == ("d", "run-1")
+    assert read_delta(tmp_path, "published.deviations_v").schema.names == [
+        "deviation_no", "material_no", "batch_no", "title", "severity", "status", "opened_on", "closed_on",
+        "root_cause_category", "causal_factor", "investigation_summary", "description", "owner", "run_id",
+    ]  # fmt: skip
+
+
+@pytest.mark.usefixtures("demo_clock")
+def test_f19_fr03_change_controls_has_one_row_per_linked_batch(tmp_path: Path, profile: SiteProfile) -> None:
+    world = World()
+    world.receive("B1", "10000001", D(2026, 10, 1))
+    world.receive("B2", "10000002", D(2026, 10, 1))
+    world.demand(1, D(2026, 11, 20))
+    world.change_control("CC-000002", "approved", [("RM1", "B1"), ("RM1", "B2")], D(2026, 11, 1))
+    world.change_control("CC-000001", "open", [("RM1", "B1")])
+    run_all(world, tmp_path, profile)
+    rows = table(tmp_path, "change_controls_v")
+    assert [(r["cc_no"], r["batch_no"], r["status"], r["effective_on"], r["run_id"]) for r in rows] == [
+        ("CC-000001", "B1", "open", None, "run-1"),
+        ("CC-000002", "B1", "approved", D(2026, 11, 1), "run-1"),
+        ("CC-000002", "B2", "approved", D(2026, 11, 1), "run-1"),
+    ]
+    assert read_delta(tmp_path, "published.change_controls_v").schema.names == [
+        "cc_no", "material_no", "batch_no", "title", "status", "current_state", "proposed_state", "opened_on",
+        "effective_on", "run_id",
+    ]  # fmt: skip
+
+
+@pytest.mark.usefixtures("demo_clock")
 def test_f07_fr03_publish_refuses_a_run_that_did_not_build_its_snapshot(
     world: World, tmp_path: Path, profile: SiteProfile
 ) -> None:
@@ -192,7 +242,7 @@ def test_f07_fr03_published_column_types_follow_the_contract(
 
     run_all(world, tmp_path, profile)
     assert read_delta(tmp_path, "published.weekly_metrics_v").schema.field("pct").type == pa.decimal128(5, 1)
-    for name in ("stage_reference_v", "metric_reference_v", "reason_codes_v", "deviations_v"):
+    for name in ("stage_reference_v", "metric_reference_v", "reason_codes_v"):
         assert "run_id" not in read_delta(tmp_path, f"published.{name}").schema.names, name
 
 
