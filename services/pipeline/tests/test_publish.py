@@ -55,7 +55,7 @@ def test_f07_ac01_all_published_objects_exist_and_the_status_has_one_row(
     assert PUBLISH_ORDER == (
         "batch_pipeline_v", "weekly_metrics_v", "weekly_metric_rows_v", "stage_reference_v",
         "metric_reference_v", "reason_codes_v", "deviations_v", "expected_deliveries_v", "inbound_checks_v",
-        "change_controls_v", "pipeline_status_v",
+        "change_controls_v", "samples_v", "pipeline_status_v",
     )  # fmt: skip
     assert all(delta_exists(tmp_path, f"published.{name}") for name in PUBLISH_ORDER)
     [status] = table(tmp_path, "pipeline_status_v")
@@ -328,3 +328,50 @@ def test_f19_fr02_a_re_evaluation_deadline_uses_its_own_cycle_start(
     run_all(world, tmp_path, profile)
     rows = {r["prueflos"]: r for r in table(tmp_path, "inbound_checks_v")}
     assert rows["10000002"]["deadline"] == D(2026, 10, 18)
+
+
+@pytest.mark.usefixtures("demo_clock")
+def test_f19_fr04_samples_has_every_sample_of_every_lot_not_only_the_latest(
+    tmp_path: Path, profile: SiteProfile
+) -> None:
+    from datetime import datetime
+
+    world = World()
+    world.receive("B1", "10000001", D(2026, 10, 1))
+    world.receive("B2", "10000002", D(2026, 10, 1))
+    first = world.sample("10000001", D(2026, 10, 3), status="rejected")
+    retest = world.sample(
+        "10000001", D(2026, 10, 8), status="approved", approved_at=datetime(2026, 10, 10, 9, tzinfo=UTC)
+    )
+    world.sample("10000002", D(2026, 10, 4), status="in_progress", charg="B2")
+    world.demand(1, D(2026, 11, 20))
+    run_all(world, tmp_path, profile)
+    rows = table(tmp_path, "samples_v")
+    assert [(r["row_key"], r["sample_id"], r["status"]) for r in rows] == [
+        ("RM1|B1|10000001", first, "rejected"),
+        ("RM1|B1|10000001", retest, "approved"),
+        ("RM1|B2|10000002", "S-0000003", "in_progress"),
+    ]
+    assert rows[1]["approved_at"] == datetime(2026, 10, 10, 9, tzinfo=UTC)
+    assert (rows[0]["collected_date"], rows[0]["approved_at"], rows[0]["run_id"]) == (
+        D(2026, 10, 3),
+        None,
+        "run-1",
+    )
+    assert read_delta(tmp_path, "published.samples_v").schema.names == [
+        "row_key", "sample_id", "status", "collected_date", "approved_at", "run_id",
+    ]  # fmt: skip
+
+
+@pytest.mark.usefixtures("demo_clock")
+def test_f19_fr04_a_lot_without_a_sample_has_no_rows_and_cancelled_lots_stay_out(
+    tmp_path: Path, profile: SiteProfile
+) -> None:
+    world = World()
+    world.receive("B1", "10000001", D(2026, 10, 1))
+    world.receive("B2", "10000002", D(2026, 10, 1))
+    world.lot_field("10000002", vcode="X", vdatum=D(2026, 10, 5))  # cancelled: never enters the pipeline
+    world.sample("10000002", D(2026, 10, 3), charg="B2")
+    world.demand(1, D(2026, 11, 20))
+    run_all(world, tmp_path, profile)
+    assert table(tmp_path, "samples_v") == []

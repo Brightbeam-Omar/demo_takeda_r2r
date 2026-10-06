@@ -42,6 +42,7 @@ PUBLISH_ORDER = (
     "expected_deliveries_v",
     "inbound_checks_v",
     "change_controls_v",
+    "samples_v",
     "pipeline_status_v",
 )
 OBJECTS_WITH_RUN_ID = (
@@ -52,6 +53,7 @@ OBJECTS_WITH_RUN_ID = (
     "expected_deliveries_v",
     "inbound_checks_v",
     "change_controls_v",
+    "samples_v",
     "pipeline_status_v",
 )
 
@@ -205,6 +207,43 @@ def build_change_controls(ctx: RunContext) -> pa.Table:
     return ordered.append_column("run_id", pa.array([ctx.run_id] * ordered.num_rows, pa.string()))
 
 
+SAMPLES_SCHEMA = pa.schema(
+    [
+        ("row_key", pa.string()),
+        ("sample_id", pa.string()),
+        ("status", pa.string()),
+        ("collected_date", pa.date32()),
+        ("approved_at", STAMP),
+        ("run_id", pa.string()),
+    ]
+)
+
+
+def build_samples(ctx: RunContext, batch: pa.Table) -> pa.Table:
+    """Every LIMS sample of every published lot, not only the latest one (F19-FR-04)."""
+    row_keys = {
+        (r["material_no"], r["batch_no"], r["inspection_lot_no"]): r["row_key"]
+        for r in batch.select(["row_key", "material_no", "batch_no", "inspection_lot_no"]).to_pylist()
+    }
+    rows = []
+    for sample in read_delta(ctx.lake_root, "staging.stg_sample").to_pylist():
+        key = row_keys.get((sample["material_no"], sample["batch_no"], sample["inspection_lot_no"]))
+        if key is None:
+            continue
+        rows.append(
+            {
+                "row_key": key,
+                "sample_id": sample["sample_id"],
+                "status": sample["status"],
+                "collected_date": sample["collected_date"],
+                "approved_at": sample["approved_at"],
+                "run_id": ctx.run_id,
+            }
+        )
+    rows.sort(key=lambda r: (str(r["row_key"]), str(r["sample_id"])))
+    return pa.Table.from_pylist(rows, schema=SAMPLES_SCHEMA)
+
+
 def build_expected_deliveries(ctx: RunContext) -> pa.Table:
     """The open PO lines of this run's transform, stamped with the run id (F17-FR-03)."""
     lines = read_delta(ctx.lake_root, "staging.expected_deliveries")
@@ -307,6 +346,7 @@ def publish(ctx: RunContext) -> StepResult:
         "expected_deliveries_v": build_expected_deliveries(ctx),
         "inbound_checks_v": build_inbound_checks(ctx, batch),
         "change_controls_v": build_change_controls(ctx),
+        "samples_v": build_samples(ctx, batch),
         "pipeline_status_v": build_status(ctx, published_at, batch.num_rows),
     }
     for name in PUBLISH_ORDER:

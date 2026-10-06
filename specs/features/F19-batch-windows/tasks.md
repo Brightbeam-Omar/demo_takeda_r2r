@@ -2,7 +2,7 @@
 - [x] T1 `docs(specs)`: contract changes + decisions
 - [x] T2 [TDD] Inbound sub-checks + `resolved` end to end (sources → datagen → pipeline → stage engine tests) (FR-02, AC-07)
 - [x] T3 [TDD] Quality data: deviation fields, severity migration, change controls end to end (FR-03)
-- [ ] T4 [TDD] `samples_v` + `sample_count` (FR-04)
+- [x] T4 [TDD] `samples_v` + `sample_count` (FR-04) (the published `samples_v` here; the `sample_count` read-time count comes with the mirror in T7)
 - [ ] T5 [TDD] Status log table, migration from manual status/comments, endpoints, profile options (FR-05)
 - [ ] T6 [TDD] Labelled reason codes + migration + OTHER-needs-note (FR-06)
 - [ ] T7 Mirror tables + F08 consistency (FR-08)
