@@ -8,17 +8,23 @@ interface Props {
   /** A line under the title (the window's explanation). */
   description?: ReactNode
   children: ReactNode
+  /** `list` (default) is the wide window of the list pages; `window` is the 880 px batch window (05 v2 section 5). */
+  size?: 'list' | 'window'
+  testId?: string
 }
 
-/** A centred window over the page (F16 plan). The drawer stays a side sheet; this is for lists. */
-export function Modal({ open, onClose, title, description, children }: Props) {
+const WIDTH = { list: 'w-[min(64rem,calc(100vw-2rem))]', window: 'w-[min(55rem,calc(100vw-2rem))]' }
+
+/** A centred window over the page (F16 plan). The drawer is a non-modal side panel; this is for lists and forms. */
+export function Modal({ open, onClose, title, description, children, size = 'list', testId }: Props) {
   return (
     <Dialog.Root open={open} onOpenChange={(next) => !next && onClose()}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-slate-900/30" />
         <Dialog.Content
           aria-describedby={description ? 'modal-description' : undefined}
-          className="fixed top-1/2 left-1/2 z-50 flex max-h-[85vh] w-[min(64rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 flex-col rounded-modal bg-white shadow-2xl"
+          data-testid={testId}
+          className={`fixed top-1/2 left-1/2 z-50 flex max-h-[85vh] ${WIDTH[size]} -translate-x-1/2 -translate-y-1/2 flex-col rounded-modal bg-white shadow-2xl`}
         >
           <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4">
             <div className="min-w-0">

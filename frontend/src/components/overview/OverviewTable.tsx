@@ -1,7 +1,7 @@
 import { useMemo, type ReactNode } from 'react'
 import type { Row } from '../../api/queries'
 import { useTerms } from '../../hooks/useTerms'
-import { DataTable } from '../datatable/DataTable'
+import { DataTable, type ColumnFilterRequest } from '../datatable/DataTable'
 import { overviewColumns, type OverviewColumnDeps } from './columns'
 
 interface Props extends Omit<OverviewColumnDeps, 'terms'> {
@@ -12,6 +12,8 @@ interface Props extends Omit<OverviewColumnDeps, 'terms'> {
   columnsKey: string
   toolbarExtra?: ReactNode
   onRowKey?: (key: string, row: Row) => void
+  /** Fills a header filter box from outside, e.g. the batch number when the drawer closes (F19-FR-01). */
+  filterRequest?: ColumnFilterRequest | null
 }
 
 const RED = '#DC2626'
@@ -20,15 +22,15 @@ const TINT = '#FEF2F2'
 /** Late, rejected, on hold or air gap: the exception groups of 03 section 5.5 (F18-FR-04). ERP-blocked is a tag only. */
 export const isException = (row: Row) => row.plan.late || row.flags.ud_rejected || row.flags.on_hold || row.flags.air_gap
 
-const HINT = 'Keyboard: Tab to focus the table · ↑ ↓ move between rows · Enter opens the batch history · B bookmarks the row'
+const HINT = 'Keyboard: Tab to focus the table · ↑ ↓ move between rows · Enter opens the batch drawer · B bookmarks the row'
 
 /** The Overview's "Pipeline — Exceptions First" table (F18). */
-export function OverviewTable({ rows, changedKeys, search, columnsKey, toolbarExtra, onRowKey, ...deps }: Props) {
+export function OverviewTable({ rows, changedKeys, search, columnsKey, toolbarExtra, onRowKey, filterRequest, ...deps }: Props) {
   const terms = useTerms()
-  const { stageIndex, canEdit, bookmarks, onToggleBookmark, onOpenRow, onEditRow, actions } = deps
+  const { stageIndex, canEdit, bookmarks, onToggleBookmark, onOpenRow, onOpenWindow, actions } = deps
   const columns = useMemo(
-    () => overviewColumns({ terms, stageIndex, canEdit, bookmarks, onToggleBookmark, onOpenRow, onEditRow, actions }),
-    [terms, stageIndex, canEdit, bookmarks, onToggleBookmark, onOpenRow, onEditRow, actions],
+    () => overviewColumns({ terms, stageIndex, canEdit, bookmarks, onToggleBookmark, onOpenRow, onOpenWindow, actions }),
+    [terms, stageIndex, canEdit, bookmarks, onToggleBookmark, onOpenRow, onOpenWindow, actions],
   )
   // A batch with a re-evaluation lot appears twice, so distinct batches are counted on material + batch (03 section 3).
   const countSuffix = (shown: Row[]) => {
@@ -52,6 +54,7 @@ export function OverviewTable({ rows, changedKeys, search, columnsKey, toolbarEx
       rowAccent={(row) => (isException(row) ? RED : undefined)}
       onRowOpen={(row) => onOpenRow?.(row.row_key)}
       onRowKey={onRowKey}
+      filterRequest={filterRequest}
       keyboardHint={HINT}
       ariaLabel="Pipeline — Exceptions First"
     />

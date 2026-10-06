@@ -126,26 +126,6 @@ export function useUrlFilters() {
   return { filters, update, clearAll }
 }
 
-/** The batch whose drawer is open (`?row=<row_key>`, F11-FR-07). Closing removes only this parameter. */
-export function useDrawerRow() {
-  const [search, setSearch] = useSearchParams()
-  const row = search.get('row')
-  const open = useCallback(
-    (rowKey: string | null) =>
-      setSearch(
-        (current) => {
-          const next = new URLSearchParams(current)
-          if (rowKey) next.set('row', rowKey)
-          else next.delete('row')
-          return next
-        },
-        { replace: true },
-      ),
-    [setSearch],
-  )
-  return { row, open }
-}
-
 /** The filter panel is open or closed (`?filters=open|closed`, F16-FR-01). Closed unless the URL says open. */
 export function useFilterPanel() {
   const [search, setSearch] = useSearchParams()

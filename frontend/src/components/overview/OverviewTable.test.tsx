@@ -1,8 +1,10 @@
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { useState } from 'react'
 import { beforeEach, expect, test, vi } from 'vitest'
 import type { Row } from '../../api/queries'
 import { renderWithProviders } from '../../test-utils'
+import type { ColumnFilterRequest } from '../datatable/DataTable'
 import { OverviewTable } from './OverviewTable'
 
 const flags = { on_hold: false, erp_hold: false, manual_hold: false, release_on_coa: false, released: false, erp_blocked: false, re_eval: false, offsite: false, full_spec: false, expedite: false, ud_rejected: false, lims_rejected: false, air_gap: false, late: false }
@@ -31,7 +33,9 @@ function makeRow(n: number, over: Partial<Row> = {}): Row {
     lims_approved_date: null,
     ud_date: null,
     days_in_stage: n,
-    manual_status: null,
+    latest_status: null,
+    status_log_count: 0,
+    sample_count: 0,
     flags,
     plan: { expected_completion: '2026-10-20', must_complete_by: { sampling: '2026-10-18' }, rag: 'green', days_remaining: 8, late: false },
     ...over,
@@ -124,14 +128,14 @@ test('F18-FR-03: SLA deadline is the current stage must_complete_by with a RAG d
   expect(within(row).getByText('3 Nov 2027')).toBeInTheDocument() // Next Inspection
 })
 
-test('F18-FR-03: Adjusted Date shows the value with a pencil, or + set date ✎, and opens the need-by modal', async () => {
-  const edit = vi.fn()
-  show([amber, makeRow(1)], { onEditRow: edit })
+test('F19-FR-07: Adjusted Date shows the value with a pencil, or + set date ✎, and opens the Adjust Needs-by window', async () => {
+  const open = vi.fn()
+  show([amber, makeRow(1)], { onOpenWindow: open })
   const buttons = screen.getAllByRole('button', { name: 'Edit need-by' })
   expect(buttons[0]).toHaveTextContent('26 Nov 2026 ✎')
   expect(buttons[1]).toHaveTextContent('+ set date ✎')
   await userEvent.click(buttons[1]!)
-  expect(edit).toHaveBeenCalledWith('RM1|B201|10001')
+  expect(open).toHaveBeenCalledWith('needby', 'RM1|B201|10001')
 })
 
 test('F18-FR-03: the pencil is disabled for a read-only role', () => {
@@ -146,12 +150,66 @@ test('F18-FR-03: the batch is a link that opens the batch window', async () => {
   expect(open).toHaveBeenCalledWith('RM1|B201|10001')
 })
 
-test('F18-FR-03: the sample-count badge and the status-log line appear only when published (F19)', () => {
-  const { unmount } = show([makeRow(1)])
-  expect(screen.getByTestId('batch-row')).not.toHaveTextContent('Customer reply')
+test('F19-FR-07: the sample badge, the status comment and the speech bubble show what the status log and the samples hold', () => {
+  const { unmount } = show([makeRow(1)], { onOpenWindow: () => undefined })
+  const row = screen.getByTestId('batch-row')
+  expect(within(row).queryByTestId('sample-badge')).not.toBeInTheDocument() // no samples: no badge
+  expect(within(row).queryByTestId('status-comment')).not.toBeInTheDocument()
+  expect(within(row).getByTestId('status-log-button')).toHaveAccessibleName('Status log (0)')
   unmount()
-  show([makeRow(1, { sample_count: 3, latest_status: 'Customer reply awaited' } as unknown as Partial<Row>)])
-  expect(screen.getByTestId('batch-row')).toHaveTextContent('Customer reply awaited')
+  const latest = { status: 'at_risk', label: 'At Risk', colour: 'amber', team: 'QC Lab', reason_code: null, reason_label: null, comment: 'Waiting for a free analyst', author_user_key: 'quinn', at: '2026-10-12T07:00:00Z' }
+  show([makeRow(1, { sample_count: 3, latest_status: latest, status_log_count: 2 } as unknown as Partial<Row>)], { onOpenWindow: () => undefined })
+  const second = screen.getByTestId('batch-row')
+  expect(within(second).getByTestId('status-comment')).toHaveTextContent('Waiting for a free analyst')
+  expect(within(second).getByRole('img', { name: 'Status At Risk: amber' })).toBeInTheDocument()
+  expect(within(second).getByTestId('sample-badge')).toHaveTextContent('3')
+  expect(within(second).getByTestId('status-log-button')).toHaveAccessibleName('Status log (2)')
+})
+
+test('F19-FR-07: the inbound dot, the deviation dot, the sample badge and the status bubble each open their window, not the drawer', async () => {
+  const win = vi.fn()
+  const row = vi.fn()
+  show([makeRow(1, { sample_count: 2 } as unknown as Partial<Row>)], { onOpenWindow: win, onOpenRow: row })
+  await userEvent.click(screen.getByRole('img', { name: 'Inbound check: green' }))
+  await userEvent.click(screen.getByRole('img', { name: 'Deviations: amber' }))
+  await userEvent.click(screen.getByTestId('sample-badge'))
+  await userEvent.click(screen.getByTestId('status-log-button'))
+  expect(win.mock.calls).toEqual([
+    ['inbound', 'RM1|B201|10001'],
+    ['quality', 'RM1|B201|10001'],
+    ['samples', 'RM1|B201|10001'],
+    ['status', 'RM1|B201|10001'],
+  ])
+  expect(row).not.toHaveBeenCalled() // a cell button never opens the drawer behind it
+})
+
+test('F19-FR-01: a filter request fills the Batch header filter box and narrows the table', async () => {
+  const rows = [makeRow(1), makeRow(2)]
+  function Harness() {
+    const [request, setRequest] = useState<ColumnFilterRequest | null>(null)
+    return (
+      <>
+        <button type="button" onClick={() => setRequest({ column: 'batch', value: 'B202', token: 1 })}>
+          close the drawer
+        </button>
+        <OverviewTable
+          rows={rows}
+          stageIndex={new Map([['sampling', 3]])}
+          canEdit
+          changedKeys={new Set()}
+          bookmarks={new Set()}
+          search={{ value: '', onChange: () => undefined }}
+          columnsKey="test"
+          filterRequest={request}
+        />
+      </>
+    )
+  }
+  renderWithProviders(<Harness />)
+  expect(screen.getAllByTestId('batch-row')).toHaveLength(2)
+  await userEvent.click(screen.getByRole('button', { name: 'close the drawer' }))
+  expect(screen.getByLabelText('Filter Batch')).toHaveValue('B202')
+  expect(screen.getAllByTestId('batch-row')).toHaveLength(1)
 })
 
 test('F18-FR-04: late, rejected, on-hold and air-gap rows get the tint and the red bar; ERP-blocked and plain rows do not', () => {

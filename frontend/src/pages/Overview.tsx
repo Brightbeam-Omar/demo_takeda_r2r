@@ -3,7 +3,7 @@ import type { Row } from '../api/queries'
 import { useExpectedDeliveries, useMe, useMetrics, useOverview, useReference, useToggleBookmark } from '../api/queries'
 import { EmptyState, ErrorState, Skeleton } from '../components/common/States'
 import { BatchDrawer } from '../components/drawer/BatchDrawer'
-import { NeedByModal } from '../components/edit/NeedByModal'
+import { BatchWindows } from '../components/windows/BatchWindows'
 import { Section } from '../components/common/Section'
 import { AdjustedBanner } from '../components/banners/AdjustedBanner'
 import { InsightsBanner } from '../components/banners/InsightsBanner'
@@ -21,12 +21,14 @@ import { ShowingLine, TagRow } from '../components/tags/TagRow'
 import { MetricsRibbon, metricsTitle } from '../components/metrics/MetricsRibbon'
 import { useJustSaved } from '../state/just-saved'
 import { useRowChanges } from '../state/row-changes'
-import { EMPTY_FILTERS, activeFilterCount, toApiParams, useDrawerRow, useUrlFilters } from '../state/url-filters'
+import { useBatchView } from '../state/batch-view'
+import { EMPTY_FILTERS, activeFilterCount, toApiParams, useUrlFilters } from '../state/url-filters'
+import type { ColumnFilterRequest } from '../components/datatable/DataTable'
 
 export function Overview() {
   const { filters, update, clearAll } = useUrlFilters()
-  const drawer = useDrawerRow()
-  const [editRow, setEditRow] = useState<string | null>(null)
+  const view = useBatchView()
+  const [batchFilter, setBatchFilter] = useState<ColumnFilterRequest | null>(null)
   const [openWindow, setOpenWindow] = useState<'adjusted' | 'insights' | 'deliveries' | null>(null)
   const justSaved = useJustSaved()
   const reference = useReference()
@@ -58,6 +60,12 @@ export function Overview() {
   const airGapCount = data?.alerts.find((alert) => alert.kind === 'air_gap')?.count ?? 0
   const bookmarks = useMemo(() => data?.bookmarks ?? [], [data])
   const bookmarkSet = useMemo(() => new Set(bookmarks), [bookmarks])
+  // Closing the drawer puts the batch number into the table's Batch filter box (parity, F19-FR-01).
+  const closeDrawer = useCallback(() => {
+    const batch = view.drawerRow?.split('|')[1]
+    if (batch) setBatchFilter({ column: 'batch', value: batch, token: (batchFilter?.token ?? 0) + 1 })
+    view.openDrawer(null)
+  }, [view, batchFilter])
   const toggleBookmark = useToggleBookmark()
   const { notify } = useToast()
   // Only planners and admins may adjust a need-by (F09); everyone else sees the pencil disabled (OQ-063).
@@ -82,8 +90,8 @@ export function Overview() {
   )
 
   return (
-    <>
-      <main className="flex-1 space-y-5 overflow-auto p-6 pb-20">
+    <div className="flex min-h-0 flex-1">
+      <main className="min-w-0 flex-1 space-y-5 overflow-auto p-6 pb-20">
         <FilterBar
           reference={reference.data}
           rows={data?.rows ?? []}
@@ -171,8 +179,9 @@ export function Overview() {
                 stageIndex={stageIndex}
                 canEdit={canEdit}
                 changedKeys={changedKeys}
-                onEditRow={setEditRow}
-                onOpenRow={drawer.open}
+                onOpenWindow={view.openWindow}
+                onOpenRow={view.openDrawer}
+                filterRequest={batchFilter}
                 bookmarks={bookmarkSet}
                 onToggleBookmark={onToggleBookmark}
                 onRowKey={onRowKey}
@@ -187,11 +196,13 @@ export function Overview() {
           )}
         </Section>
       </main>
-      <BatchDrawer rowKey={drawer.row} onOpenRow={drawer.open} canEdit={canEdit} onEdit={setEditRow} />
+      {view.drawerRow ? (
+        <BatchDrawer rowKey={view.drawerRow} onOpenRow={view.openDrawer} onClose={closeDrawer} onOpenWindow={view.openWindow} />
+      ) : null}
+      <BatchWindows />
       <AdjustedNeedByWindow open={openWindow === 'adjusted'} onClose={() => setOpenWindow(null)} params={bannerParams} />
       <ExpectedDeliveriesWindow open={openWindow === 'deliveries'} onClose={() => setOpenWindow(null)} params={deliveryParams} />
       <InsightsWindow open={openWindow === 'insights'} onClose={() => setOpenWindow(null)} params={bannerParams} />
-      {editRow ? <NeedByModal rowKey={editRow} onClose={() => setEditRow(null)} /> : null}
-    </>
+    </div>
   )
 }

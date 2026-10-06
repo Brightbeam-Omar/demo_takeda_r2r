@@ -66,10 +66,29 @@ export function Dot({ colour, what }: { colour: string | null; what: string }) {
   )
 }
 
-/** A pill in the stage's colour: light tint, strong text (05 v2 section 2). */
-export function StageBadge({ row, index }: { row: Row; index: number }) {
+/** A status dot that opens its window (F19-FR-07): the cell click is stopped so the row's drawer does not open too. */
+export function DotButton({ colour, what, label, onOpen }: { colour: string | null; what: string; label: string; onOpen?: () => void }) {
+  if (!onOpen) return <Dot colour={colour} what={what} />
+  return (
+    <button
+      type="button"
+      tabIndex={-1}
+      title={`Open the ${label} window`}
+      className="rounded-chip p-1 hover:bg-slate-200"
+      onClick={(event) => {
+        event.stopPropagation()
+        onOpen()
+      }}
+    >
+      <Dot colour={colour} what={what} />
+    </button>
+  )
+}
+
+/** A pill in the stage's colour: light tint, strong text (05 v2 section 2), with the sample-count badge (F19-FR-07). */
+export function StageBadge({ row, index, onOpenSamples }: { row: Row; index: number; onOpenSamples?: () => void }) {
   const colour = `var(--color-stage-${(index % 8) + 1})`
-  const samples = (row as unknown as { sample_count?: number }).sample_count
+  const samples = row.sample_count
   return (
     <span className="inline-flex items-center gap-1">
       <span
@@ -78,7 +97,22 @@ export function StageBadge({ row, index }: { row: Row; index: number }) {
       >
         {row.stage_label}
       </span>
-      {samples !== undefined && <span className="rounded-full bg-slate-200 px-1.5 text-[10px] font-semibold text-slate-700">{samples}</span>}
+      {samples > 0 && (
+        <button
+          type="button"
+          tabIndex={-1}
+          title="Open the sample data window"
+          aria-label={`${samples} ${samples === 1 ? 'sample' : 'samples'}`}
+          data-testid="sample-badge"
+          className="rounded-full bg-slate-200 px-1.5 text-[10px] font-semibold text-slate-700 hover:bg-slate-300"
+          onClick={(event) => {
+            event.stopPropagation()
+            onOpenSamples?.()
+          }}
+        >
+          {samples}
+        </button>
+      )}
       <ExplainPopover
         what="stage"
         path={`/rows/${encodeURIComponent(row.row_key)}/explain`}
@@ -104,7 +138,7 @@ interface AdjustedProps {
   onEdit?: (rowKey: string) => void
 }
 
-/** The adjusted date with a pencil, or `+ set date ✎` when there is none; both open the need-by modal (F18-FR-03e). */
+/** The adjusted date with a pencil, or `+ set date ✎` when there is none; both open the Adjust Needs-by window (F19). */
 export function AdjustedDate({ row, canEdit, onEdit }: AdjustedProps) {
   const overridden = row.adjusted_need_by_date !== null
   return (
@@ -116,7 +150,7 @@ export function AdjustedDate({ row, canEdit, onEdit }: AdjustedProps) {
       tabIndex={-1}
       className={`rounded-chip px-1 text-left enabled:hover:bg-slate-100 enabled:hover:text-accent disabled:cursor-not-allowed ${overridden ? 'italic' : 'text-slate-500'}`}
       onClick={(event) => {
-        event.stopPropagation() // the row click opens the drawer; this opens the editor
+        event.stopPropagation() // the row click opens the drawer; this opens the window
         onEdit?.(row.row_key)
       }}
     >
@@ -153,16 +187,42 @@ const STATUS = {
   none: 'text-slate-400',
 }
 
-/** `LATE +12d` / `DUE IN 2d` / `ON TRACK` / `—` (F18-FR-03h), with the F19 status-log comment once it is published. */
-export function StatusCell({ row, hl }: { row: Row; hl: Hl }) {
+/**
+ * `LATE +12d` / `DUE IN 2d` / `ON TRACK` / `—` (F18-FR-03h), the latest status-log comment beneath it and the
+ * speech-bubble button that opens the Status Log window (F19-FR-05, FR-07).
+ */
+export function StatusCell({ row, hl, onOpenStatus }: { row: Row; hl: Hl; onOpenStatus?: () => void }) {
   const status = statusOf(row)
-  const latest = (row as unknown as { latest_status?: string | null }).latest_status
+  const latest = row.latest_status
   return (
-    <span className="flex flex-col leading-tight">
-      <span className={STATUS[status.kind]} data-testid="status-cell" data-status={status.kind}>
-        {hl(status.text)}
+    <span className="flex items-start gap-1">
+      <span className="flex flex-col leading-tight">
+        <span className={STATUS[status.kind]} data-testid="status-cell" data-status={status.kind}>
+          {hl(status.text)}
+        </span>
+        {latest ? (
+          <span className="flex max-w-[16rem] items-start gap-1 text-xs whitespace-normal text-slate-500" data-testid="status-comment">
+            <Dot colour={latest.colour} what={`Status ${latest.label}`} />
+            <span className="italic">{latest.comment}</span>
+          </span>
+        ) : null}
       </span>
-      {latest ? <span className="text-xs text-slate-500">{latest}</span> : null}
+      {onOpenStatus ? (
+        <button
+          type="button"
+          tabIndex={-1}
+          aria-label={`Status log (${row.status_log_count})`}
+          title="Open the status log"
+          data-testid="status-log-button"
+          className="rounded-chip px-1 text-slate-400 hover:bg-slate-200 hover:text-slate-900"
+          onClick={(event) => {
+            event.stopPropagation()
+            onOpenStatus()
+          }}
+        >
+          💬
+        </button>
+      ) : null}
     </span>
   )
 }
