@@ -25,7 +25,10 @@ test('F17-AC-02: Sampling + QCL Ship + QCL Testing filter the table, the card co
   await expect(page.getByTestId('batch-row').first()).toBeVisible()
   const before = await page.locator('button[data-testid^="flow-"]').evaluateAll((nodes) => nodes.map((node) => node.textContent))
   await expect(page.getByTestId('flow-total')).toHaveAttribute('aria-pressed', 'true')
-  for (const stage of ['sampling', 'qc_ship', 'qc_testing']) await page.getByTestId(`flow-${stage}`).click()
+  for (const stage of ['sampling', 'qc_ship', 'qc_testing']) {
+    await page.getByTestId(`flow-${stage}`).click()
+    await expect(page.getByTestId(`flow-${stage}`)).toHaveAttribute('aria-pressed', 'true') // one click at a time: the URL updates between clicks
+  }
   await expect(page).toHaveURL(/stage=sampling&stage=qc_ship&stage=qc_testing/)
   await expect(page.getByTestId('flow-total')).toHaveAttribute('aria-pressed', 'false')
   await expect(page.getByRole('button', { name: '✕ Clear 3 stages' })).toBeVisible()

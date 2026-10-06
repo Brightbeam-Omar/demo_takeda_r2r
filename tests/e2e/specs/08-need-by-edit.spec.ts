@@ -52,6 +52,7 @@ test('F19-AC-06 (act 5): Pat pulls B2077 forward in the Adjust Needs-by window; 
   await expect(row).toHaveClass(/row-changed/)
   await expect(row.getByTestId('adjusted-need-by')).toContainText('26 Nov 2026')
   await expect(row.getByTestId('adjusted-need-by')).toHaveClass(/italic/)
+  await expect(row.getByTestId('adjusted-need-by')).toContainText('✎') // the pencil
   await expect(row.getByTestId('system-need-by')).toHaveClass(/line-through/)
   await expect(row.getByTestId('expected-cell')).toContainText('14 Oct')
   await expect(row.getByTestId('status-cell')).toHaveAttribute('data-status', 'due')

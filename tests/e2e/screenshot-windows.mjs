@@ -68,7 +68,12 @@ await open(`win=samples&row=${encodeURIComponent(keyOf('B1042'))}`)
 await page.getByTestId('window-row').first().waitFor()
 await shot(page, 'win-samples-b1042.png')
 
-// Act 5: the date and the reason are filled in, nothing is saved.
+// Act 5: start from no override (as the e2e spec does), then fill in the date and the reason without saving.
+await fetch(`${base}/api/rows/${encodeURIComponent(keyOf('B2077'))}/need-by`, {
+  method: 'PUT',
+  headers: { 'X-Demo-User': 'pat', 'Content-Type': 'application/json' },
+  body: JSON.stringify({ adjusted_date: null, expedite: false }),
+})
 await open(`win=needby&row=${encodeURIComponent(keyOf('B2077'))}`)
 const win = page.getByTestId('needby-window')
 await win.getByLabel('New Adjusted Date').fill('2026-11-26')

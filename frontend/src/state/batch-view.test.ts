@@ -35,3 +35,10 @@ test('F19-FR-01: opening or closing the drawer drops any window and keeps the ot
   expect(withDrawer(params('q=B1&win=inbound&row=R1'), 'R2').toString()).toBe('q=B1&row=R2')
   expect(withDrawer(params('q=B1&row=R2'), null).toString()).toBe('q=B1')
 })
+
+test('F19-FR-01: only one window is open at a time: opening another replaces the first', () => {
+  const first = withWindow(params('q=B1'), 'inbound', 'R1')
+  const second = withWindow(first, 'quality', 'R1')
+  expect(second.getAll('win')).toEqual(['quality'])
+  expect(readBatchView(second).win).toBe('quality')
+})

@@ -106,3 +106,21 @@ def test_f19_fr02_the_database_holds_the_items(
         1 for _, lot in generated.plan.lots() if lot.reversed_same_day
     )
     assert failed_without_fail == 0
+
+
+def test_f19_ac07_week_41_percentages_are_94_4_83_7_69_2_and_the_new_draws_are_deterministic(
+    plan: Plan, profile: SiteProfile, params: Params
+) -> None:
+    last = {m: weeks[-1] for m, weeks in compute_stats(plan, profile).weekly.items()}
+    assert {m: round(100 * w.on_time / w.completed, 1) for m, w in last.items()} == {
+        "M3": 94.4,
+        "M6": 83.7,
+        "M7": 69.2,
+    }
+    again = build_plan(profile, params, 4242)
+    assert [lot.check_items for _, lot in again.lots()] == [lot.check_items for _, lot in plan.lots()]
+    assert [lot.check for _, lot in again.lots()] == [lot.check for _, lot in plan.lots()]
+    assert again.change_controls == plan.change_controls
+    assert [(d.causal_factor, d.investigation_summary) for d in again.deviations] == [
+        (d.causal_factor, d.investigation_summary) for d in plan.deviations
+    ]

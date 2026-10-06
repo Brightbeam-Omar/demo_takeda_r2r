@@ -1,5 +1,5 @@
 import * as Dialog from '@radix-ui/react-dialog'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 
 interface Props {
   open: boolean
@@ -17,6 +17,8 @@ const WIDTH = { list: 'w-[min(64rem,calc(100vw-2rem))]', window: 'w-[min(55rem,c
 
 /** A centred window over the page (F16 plan). The drawer is a non-modal side panel; this is for lists and forms. */
 export function Modal({ open, onClose, title, description, children, size = 'list', testId }: Props) {
+  // Radix only returns focus to a Dialog.Trigger; these windows have none, so remember what had focus (F19-FR-01).
+  const [opener] = useState(() => (document.activeElement instanceof HTMLElement ? document.activeElement : null))
   return (
     <Dialog.Root open={open} onOpenChange={(next) => !next && onClose()}>
       <Dialog.Portal>
@@ -24,6 +26,10 @@ export function Modal({ open, onClose, title, description, children, size = 'lis
         <Dialog.Content
           aria-describedby={description ? 'modal-description' : undefined}
           data-testid={testId}
+          onCloseAutoFocus={(event) => {
+            event.preventDefault()
+            if (opener?.isConnected) opener.focus()
+          }}
           className={`fixed top-1/2 left-1/2 z-50 flex max-h-[85vh] ${WIDTH[size]} -translate-x-1/2 -translate-y-1/2 flex-col rounded-modal bg-white shadow-2xl`}
         >
           <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4">

@@ -1,6 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
+import { useState } from 'react'
 import { afterEach, expect, test, vi } from 'vitest'
 import { renderWithProviders } from '../../test-utils'
 import { AdjustNeedsByWindow } from './AdjustNeedsByWindow'
@@ -364,4 +365,31 @@ test('F19-FR-01: Escape closes a window and a missing batch says so', async () =
   expect(await screen.findByText(/Batch not found: NOPE\|B0\|0/)).toBeInTheDocument()
   await userEvent.keyboard('{Escape}')
   expect(onClose).toHaveBeenCalled()
+})
+
+
+test('F19-FR-01: focus moves into the window and returns to the trigger when it closes', async () => {
+  stub(base)
+  function Harness() {
+    const [open, setOpen] = useState(false)
+    return (
+      <>
+        <button type="button" onClick={() => setOpen(true)}>
+          trigger
+        </button>
+        {open && <QualityWindow rowKey="RM1|B3150|1" onClose={() => setOpen(false)} />}
+      </>
+    )
+  }
+  show(<Harness />)
+  const trigger = screen.getByRole('button', { name: 'trigger' })
+  await userEvent.click(trigger)
+  const dialog = await screen.findByRole('dialog')
+  expect(dialog.contains(document.activeElement)).toBe(true) // focus is inside the window
+  await userEvent.tab()
+  await userEvent.tab()
+  await userEvent.tab()
+  expect(dialog.contains(document.activeElement)).toBe(true) // and trapped there
+  await userEvent.keyboard('{Escape}')
+  await waitFor(() => expect(trigger).toHaveFocus())
 })
