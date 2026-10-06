@@ -59,7 +59,7 @@ stack-test: ## Start an isolated copy of the stack, run the acceptance tests aga
 
 # F03-FR-09: 100% branch coverage on the SLA maths and the air-gap check, independent of what else runs.
 coverage-core:
-	uv run pytest packages/r2r_core --cov=r2r_core.sla --cov=r2r_core.airgap --cov-branch --cov-report=term-missing --cov-fail-under=100
+	uv run pytest packages/r2r_core --cov=r2r_core.sla --cov=r2r_core.airgap --cov=r2r_core.reports --cov-branch --cov-report=term-missing --cov-fail-under=100
 
 check-frontend:
 	cd frontend && npm run lint
