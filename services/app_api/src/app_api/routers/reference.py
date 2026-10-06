@@ -25,6 +25,8 @@ class ReferenceOut(BaseModel):
     stages: list[dict[str, Any]]
     metrics: list[dict[str, Any]]
     reason_codes: list[dict[str, Any]]
+    status_options: list[dict[str, str]]
+    status_reasons: list[dict[str, str]]
     molecule_types: list[dict[str, str]]
     classes: list[dict[str, str]]
     campaigns: list[str]
@@ -54,6 +56,8 @@ def reference(
         stages=_rows(session, "SELECT * FROM mirror_stage_reference ORDER BY sort"),
         metrics=_rows(session, "SELECT * FROM mirror_metric_reference ORDER BY metric_id"),
         reason_codes=_rows(session, "SELECT code, label FROM mirror_reason_codes ORDER BY code"),
+        status_options=[option.model_dump() for option in profile.status_options],
+        status_reasons=[reason.model_dump() for reason in profile.status_reasons],
         molecule_types=[item.model_dump() for item in profile.molecule_types],
         classes=[item.model_dump() for item in profile.material_classes],
         campaigns=list(campaigns),

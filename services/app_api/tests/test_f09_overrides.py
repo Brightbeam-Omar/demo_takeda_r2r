@@ -154,7 +154,7 @@ def test_f09_ac01_a_viewer_cannot_set_a_need_by(
         ("PUT", f"/api/rows/{ROW}/status", "quinn", True),
         ("PUT", f"/api/rows/{ROW}/status", "alex", True),
         ("PUT", f"/api/rows/{ROW}/status", "admin", True),
-        ("PUT", f"/api/rows/{ROW}/status", "pat", False),
+        ("PUT", f"/api/rows/{ROW}/status", "pat", True),  # F19: every role except viewer
         ("PUT", f"/api/rows/{ROW}/status", "sam", False),
         ("POST", f"/api/rows/{ROW}/comments", "sam", False),
         ("POST", f"/api/rows/{ROW}/comments", "pat", True),
@@ -171,13 +171,10 @@ def test_f09_fr05_the_role_matrix(client: TestClient, method: str, path: str, us
     assert ok or response.status_code == 403
 
 
-def test_f09_fr04_manual_status_is_versioned_and_display_only(
-    client: TestClient, app_factory: sessionmaker[Session]
-) -> None:
-    quinn = {"X-Demo-User": "quinn"}
+def test_f09_fr04_a_status_never_changes_the_plan_or_the_flow_strip(client: TestClient) -> None:
     body = {"rag": "red", "reason": "Instrument down", "team": "QC Lab"}
-    response = client.put(f"/api/rows/{ROW}/status", json=body, headers=quinn).json()
-    assert response["manual_status"] == {"rag": "red", "team": "QC Lab"}
+    response = client.put(f"/api/rows/{ROW}/status", json=body, headers={"X-Demo-User": "quinn"}).json()
+    assert response["latest_status"]["status"] == "blocked"
     assert response["plan"]["rag"] == "green" and response["late"] is False  # OQ-057
     overview = client.get("/api/overview").json()
     assert [r["batch_no"] for r in overview["rows"]] == [
@@ -190,21 +187,12 @@ def test_f09_fr04_manual_status_is_versioned_and_display_only(
         "on_hold": 0,
         "rejected": 0,
     }
-    assert versions(app_factory, "manual_status") == [
-        (1, {"rag": "red", "team": "QC Lab"}, None, True, "quinn")
-    ]
-    assert query(app_factory, "SELECT note FROM override_value WHERE field = 'manual_status'") == [
-        ("Instrument down",)
-    ]
-    assert client.put(f"/api/rows/{ROW}/status", json=body, headers=quinn).status_code == 200
-    assert len(versions(app_factory, "manual_status")) == 1  # unchanged: no new version
-    assert client.put(f"/api/rows/{ROW}/status", json={"rag": "red"}, headers=quinn).status_code == 422
-    cleared = client.put(f"/api/rows/{ROW}/status", json={"rag": None}, headers=quinn).json()
-    assert cleared["manual_status"] is None
-    assert [a[0] for a in query(app_factory, "SELECT action FROM audit_event ORDER BY id")] == [
-        "status_set",
-        "status_cleared",
-    ]
+    assert (
+        client.put(
+            f"/api/rows/{ROW}/status", json={"rag": "red"}, headers={"X-Demo-User": "quinn"}
+        ).status_code
+        == 422
+    )
 
 
 def test_f09_fr04_comments_are_stored_counted_and_audited(
@@ -212,8 +200,8 @@ def test_f09_fr04_comments_are_stored_counted_and_audited(
 ) -> None:
     created = client.post(f"/api/rows/{ROW}/comments", json={"body": "  Called the supplier  "})
     assert created.status_code == 201 and created.json()["body"] == "Called the supplier"
-    assert row(client)["comment_count"] == 1
-    assert query(app_factory, "SELECT action, actor_user_key FROM audit_event") == [("comment_added", "pat")]
+    assert row(client)["status_log_count"] == 1
+    assert query(app_factory, "SELECT action, actor_user_key FROM audit_event") == [("status_logged", "pat")]
     assert client.post(f"/api/rows/{ROW}/comments", json={"body": "   "}).status_code == 422
     assert client.post("/api/rows/NOPE%7CX%7C1/comments", json={"body": "x"}).status_code == 404
 

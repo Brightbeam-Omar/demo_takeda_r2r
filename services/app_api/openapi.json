@@ -272,6 +272,7 @@
         "type": "object"
       },
       "CommentIn": {
+        "description": "Deprecated body of ``POST /rows/{row_key}/comments`` (F19-FR-05): a wrapper over the status log.",
         "properties": {
           "body": {
             "title": "Body",
@@ -1193,6 +1194,82 @@
         "title": "InsightsOut",
         "type": "object"
       },
+      "LatestStatusOut": {
+        "description": "The newest status-log entry that has a status, with its profile label and colour (F19-FR-05).",
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "author_user_key": {
+            "title": "Author User Key",
+            "type": "string"
+          },
+          "colour": {
+            "title": "Colour",
+            "type": "string"
+          },
+          "comment": {
+            "title": "Comment",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "reason_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Code"
+          },
+          "reason_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Label"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "team": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Team"
+          }
+        },
+        "required": [
+          "status",
+          "label",
+          "colour",
+          "team",
+          "reason_code",
+          "reason_label",
+          "comment",
+          "author_user_key",
+          "at"
+        ],
+        "title": "LatestStatusOut",
+        "type": "object"
+      },
       "MetricExplain": {
         "properties": {
           "completed": {
@@ -2016,6 +2093,26 @@
             "title": "Stages",
             "type": "array"
           },
+          "status_options": {
+            "items": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "title": "Status Options",
+            "type": "array"
+          },
+          "status_reasons": {
+            "items": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "title": "Status Reasons",
+            "type": "array"
+          },
           "terms": {
             "additionalProperties": {
               "type": "string"
@@ -2030,6 +2127,8 @@
           "stages",
           "metrics",
           "reason_codes",
+          "status_options",
+          "status_reasons",
           "molecule_types",
           "classes",
           "campaigns",
@@ -2044,7 +2143,7 @@
         "type": "object"
       },
       "RowDetail": {
-        "description": "``GET /api/rows/{row_key}``: the row with every mirror column, its overrides, comments and siblings.",
+        "description": "``GET /api/rows/{row_key}``: the row with every mirror column, overrides, status log and siblings.",
         "properties": {
           "adjusted_need_by_date": {
             "anyOf": [
@@ -2102,17 +2201,6 @@
               }
             ],
             "title": "Coa Release Reason"
-          },
-          "comment_count": {
-            "title": "Comment Count",
-            "type": "integer"
-          },
-          "comments": {
-            "items": {
-              "$ref": "#/components/schemas/CommentOut"
-            },
-            "title": "Comments",
-            "type": "array"
           },
           "current_overrides": {
             "additionalProperties": {
@@ -2208,6 +2296,16 @@
             "title": "Late",
             "type": "boolean"
           },
+          "latest_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LatestStatusOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "lims_approved_date": {
             "anyOf": [
               {
@@ -2256,18 +2354,6 @@
               }
             ],
             "title": "Manual Hold Reason"
-          },
-          "manual_status": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Manual Status"
           },
           "material_class": {
             "anyOf": [
@@ -2382,6 +2468,17 @@
             ],
             "title": "Stage Rule Id"
           },
+          "status_log": {
+            "items": {
+              "$ref": "#/components/schemas/StatusLogOut"
+            },
+            "title": "Status Log",
+            "type": "array"
+          },
+          "status_log_count": {
+            "title": "Status Log Count",
+            "type": "integer"
+          },
           "storage_location": {
             "anyOf": [
               {
@@ -2481,7 +2578,7 @@
           "adjusted_reason_code",
           "operative_need_by",
           "expedite",
-          "manual_status",
+          "latest_status",
           "plan",
           "air_gap",
           "air_gap_hours",
@@ -2490,14 +2587,14 @@
           "deviation_light",
           "inbound_light",
           "flags",
-          "comment_count",
+          "status_log_count",
           "manual_hold_reason",
           "coa_release_reason",
           "freshness",
           "facts",
           "current_overrides",
           "override_history",
-          "comments",
+          "status_log",
           "deviations",
           "siblings"
         ],
@@ -2563,10 +2660,6 @@
               }
             ],
             "title": "Coa Release Reason"
-          },
-          "comment_count": {
-            "title": "Comment Count",
-            "type": "integer"
           },
           "current_stage_entry_date": {
             "anyOf": [
@@ -2640,6 +2733,16 @@
             "title": "Late",
             "type": "boolean"
           },
+          "latest_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LatestStatusOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "lims_approved_date": {
             "anyOf": [
               {
@@ -2688,18 +2791,6 @@
               }
             ],
             "title": "Manual Hold Reason"
-          },
-          "manual_status": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Manual Status"
           },
           "material_class": {
             "anyOf": [
@@ -2800,6 +2891,10 @@
             ],
             "title": "Stage Rule Id"
           },
+          "status_log_count": {
+            "title": "Status Log Count",
+            "type": "integer"
+          },
           "storage_location": {
             "anyOf": [
               {
@@ -2899,7 +2994,7 @@
           "adjusted_reason_code",
           "operative_need_by",
           "expedite",
-          "manual_status",
+          "latest_status",
           "plan",
           "air_gap",
           "air_gap_hours",
@@ -2908,7 +3003,7 @@
           "deviation_light",
           "inbound_light",
           "flags",
-          "comment_count",
+          "status_log_count",
           "manual_hold_reason",
           "coa_release_reason"
         ],
@@ -2999,6 +3094,7 @@
         "type": "object"
       },
       "StatusIn": {
+        "description": "Deprecated body of ``PUT /rows/{row_key}/status`` (F19-FR-05): a wrapper over the status log.",
         "properties": {
           "rag": {
             "anyOf": [
@@ -3040,6 +3136,148 @@
           }
         },
         "title": "StatusIn",
+        "type": "object"
+      },
+      "StatusLogIn": {
+        "properties": {
+          "comment": {
+            "title": "Comment",
+            "type": "string"
+          },
+          "reason_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Code"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "team": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Team"
+          }
+        },
+        "required": [
+          "status",
+          "comment"
+        ],
+        "title": "StatusLogIn",
+        "type": "object"
+      },
+      "StatusLogOut": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "author_user_key": {
+            "title": "Author User Key",
+            "type": "string"
+          },
+          "comment": {
+            "title": "Comment",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "reason_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Code"
+          },
+          "row_key": {
+            "title": "Row Key",
+            "type": "string"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "team": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Team"
+          }
+        },
+        "required": [
+          "id",
+          "row_key",
+          "status",
+          "team",
+          "reason_code",
+          "comment",
+          "author_user_key",
+          "at"
+        ],
+        "title": "StatusLogOut",
+        "type": "object"
+      },
+      "StatusLogPage": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/StatusLogOut"
+            },
+            "title": "Entries",
+            "type": "array"
+          },
+          "latest": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StatusLogOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "count",
+          "latest",
+          "entries"
+        ],
+        "title": "StatusLogPage",
         "type": "object"
       },
       "SyncEventOut": {
@@ -6309,6 +6547,8 @@
     },
     "/api/rows/{row_key}/comments": {
       "post": {
+        "deprecated": true,
+        "description": "Deprecated: appends a status-log entry without a status.",
         "operationId": "post_comment_api_rows__row_key__comments_post",
         "parameters": [
           {
@@ -6643,6 +6883,8 @@
     },
     "/api/rows/{row_key}/status": {
       "put": {
+        "deprecated": true,
+        "description": "Deprecated: appends a status-log entry (green/amber/red map to on_track/at_risk/blocked).",
         "operationId": "put_status_api_rows__row_key__status_put",
         "parameters": [
           {
@@ -6704,6 +6946,124 @@
           }
         },
         "summary": "Put Status"
+      }
+    },
+    "/api/rows/{row_key}/status-log": {
+      "get": {
+        "operationId": "get_status_log_api_rows__row_key__status_log_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "row_key",
+            "required": true,
+            "schema": {
+              "title": "Row Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusLogPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Status Log"
+      },
+      "post": {
+        "operationId": "post_status_log_api_rows__row_key__status_log_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "row_key",
+            "required": true,
+            "schema": {
+              "title": "Row Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusLogIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusLogOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Status Log"
       }
     },
     "/api/sync/status": {

@@ -1,4 +1,4 @@
-"""Human input: need-by overrides, manual status and comments (F09-FR-04, OQ-056, OQ-057).
+"""Human input: need-by, hold and COA overrides (F09-FR-04, OQ-056; F18). Status and comments: status log.
 
 Overrides are insert-only. A change inserts the next version and clears ``is_current`` on the previous one in
 the same transaction, with one ``audit_event`` per changed field. Clearing is a new version with a null value.
@@ -13,8 +13,8 @@ from r2r_core import clock
 from sqlalchemy import select, text, update
 from sqlalchemy.orm import Session
 
-from app_api.models import AppUser, AuditEvent, Comment, OverrideValue
-from app_api.services.compose import ADJUSTED, EXPEDITE, MANUAL_HOLD, MANUAL_STATUS, RELEASE_ON_COA
+from app_api.models import AppUser, AuditEvent, OverrideValue
+from app_api.services.compose import ADJUSTED, EXPEDITE, MANUAL_HOLD, RELEASE_ON_COA
 
 
 def require_open_row(session: Session, row_key: str) -> str:
@@ -136,25 +136,6 @@ def set_need_by(
         )  # fmt: skip
 
 
-def set_status(
-    session: Session, user: AppUser, row_key: str, rag: str | None, reason: str | None, team: str | None
-) -> None:
-    """Set or clear (``rag`` null) the manual status. It is display only (OQ-057)."""
-    require_open_row(session, row_key)
-    if rag is not None and not (reason and reason.strip()):
-        raise HTTPException(status_code=422, detail="reason is required when a status is set")
-    previous = current(session, row_key, MANUAL_STATUS)
-    old = previous.value_json if previous is not None else None
-    new = {"rag": rag, "team": team} if rag is not None else None
-    if old == new and (new is None or (previous is not None and previous.note == reason)):
-        return
-    _version(session, user, row_key, MANUAL_STATUS, new, None, reason if new else None, previous)
-    _audit(
-        session, user, "status_set" if new else "status_cleared", row_key,
-        {"field": MANUAL_STATUS, "old": old, "new": new, "reason_code": None, "note": reason},
-    )  # fmt: skip
-
-
 REASON_LENGTH = (3, 200)
 
 
@@ -209,22 +190,3 @@ def set_coa_release(session: Session, user: AppUser, row_key: str, on: bool, rea
     require_open_row(session, row_key)
     _require_cycle_start(session, row_key)
     _toggle(session, user, row_key, RELEASE_ON_COA, on, reason, ("coa_release_set", "coa_release_cleared"))
-
-
-def add_comment(session: Session, user: AppUser, row_key: str, body: str) -> Comment:
-    if (
-        session.execute(
-            text("SELECT 1 FROM mirror_batch_pipeline WHERE row_key = :k"), {"k": row_key}
-        ).first()
-        is None
-    ):
-        raise HTTPException(status_code=404, detail=f"unknown row {row_key}")
-    if not body.strip():
-        raise HTTPException(status_code=422, detail="a comment cannot be empty")
-    comment = Comment(
-        row_key=row_key, body=body.strip(), author_user_key=user.user_key, created_at=clock.now()
-    )
-    session.add(comment)
-    session.flush()
-    _audit(session, user, "comment_added", row_key, {"comment_id": comment.id})
-    return comment

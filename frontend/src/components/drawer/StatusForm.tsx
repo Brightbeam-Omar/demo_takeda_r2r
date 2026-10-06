@@ -6,7 +6,7 @@ import { READ_ONLY_HINT, canSetStatus } from '../../lib/roles'
 import { markSaved } from '../../state/just-saved'
 import { useToast } from '../common/Toasts'
 
-const RAG_TEXT: Record<string, string> = { red: 'text-red-700', amber: 'text-amber-700', green: 'text-emerald-700' }
+const COLOUR_TEXT: Record<string, string> = { red: 'text-red-700', amber: 'text-amber-700', green: 'text-emerald-700' }
 
 /**
  * F11-FR-03: the human RAG status with a reason and an owning team. It is display-only: it never changes the
@@ -18,7 +18,7 @@ export function StatusForm({ detail }: { detail: RowDetail }) {
   const queryClient = useQueryClient()
   const { notify } = useToast()
   const allowed = canSetStatus(me.data?.role)
-  const current = detail.manual_status as { rag?: string; team?: string } | null
+  const current = detail.latest_status
   const [rag, setRag] = useState('')
   const [reason, setReason] = useState('')
   const [team, setTeam] = useState('')
@@ -41,9 +41,9 @@ export function StatusForm({ detail }: { detail: RowDetail }) {
     <div className="space-y-2 text-[13px]" data-testid="status-form">
       <p data-testid="current-status">
         Current status:{' '}
-        {current?.rag ? (
-          <span className={`font-medium italic ${RAG_TEXT[current.rag] ?? ''}`}>
-            ✎ {current.rag.toUpperCase()}
+        {current ? (
+          <span className={`font-medium italic ${COLOUR_TEXT[current.colour] ?? ''}`}>
+            ✎ {current.label.toUpperCase()}
             {current.team ? ` · ${current.team}` : ''}
           </span>
         ) : (
@@ -105,7 +105,7 @@ export function StatusForm({ detail }: { detail: RowDetail }) {
         <button
           type="button"
           title={hint}
-          disabled={!allowed || !current?.rag || save.isPending}
+          disabled={!allowed || !current || save.isPending}
           className="rounded-chip border border-slate-300 px-3 py-1.5 enabled:hover:bg-slate-50 disabled:opacity-40"
           onClick={() => save.mutate({ rag: null, reason: null, team: null })}
         >

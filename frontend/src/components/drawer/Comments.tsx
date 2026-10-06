@@ -24,13 +24,13 @@ export function Comments({ detail }: { detail: RowDetail }) {
   return (
     <div className="space-y-3 text-[13px]">
       <ul className="space-y-2" data-testid="comment-list">
-        {detail.comments.length === 0 ? <li className="text-slate-500">No comments yet.</li> : null}
-        {detail.comments.map((comment) => (
+        {detail.status_log.length === 0 ? <li className="text-slate-500">No comments yet.</li> : null}
+        {detail.status_log.map((comment) => (
           <li key={comment.id} className="rounded-chip border border-slate-200 px-3 py-2">
             <div className="text-xs text-slate-500">
-              {comment.author_user_key} · {formatShortDate(comment.created_at)}
+              {comment.author_user_key} · {formatShortDate(comment.at)}
             </div>
-            <div className="whitespace-pre-wrap">{comment.body}</div>
+            <div className="whitespace-pre-wrap">{comment.comment}</div>
           </li>
         ))}
       </ul>

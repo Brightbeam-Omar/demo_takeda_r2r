@@ -28,7 +28,7 @@ router = APIRouter(dependencies=[Depends(current_user)])
 COLUMNS = (
     "row_key", "material_no", "material_desc", "batch_no", "inspection_lot_no", "lot_type", "campaign",
     "stage", "system_need_by_date", "adjusted_need_by_date", "adjusted_reason_code", "operative_need_by",
-    "expected_completion", "rag", "days_in_stage", "manual_status", "flags",
+    "expected_completion", "rag", "days_in_stage", "status", "flags",
 )  # fmt: skip
 SAMPLING_COLUMNS = (
     "material_no", "material_desc", "batch_no", "lot", "location", "operative_need_by",
@@ -104,7 +104,7 @@ def _table(filters: Filters, session: Session, profile: SiteProfile) -> Response
                 row.operative_need_by, row.plan.expected_completion,
                 row.plan.rag.value if row.plan.rag else "",
                 row.plan.days_in_stage,
-                row.manual_status["rag"] if row.manual_status else "",
+                row.latest_status.label if row.latest_status else "",
                 " ".join(name for name in FLAG_NAMES if has_flag(row, name)),
             ]
         )  # fmt: skip

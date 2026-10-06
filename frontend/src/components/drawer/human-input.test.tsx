@@ -9,7 +9,7 @@ import { StatusForm } from './StatusForm'
 
 afterEach(() => vi.unstubAllGlobals())
 
-const detail = { row_key: 'RM1|B1|1', manual_status: null, comments: [] } as unknown as RowDetail
+const detail = { row_key: 'RM1|B1|1', latest_status: null, status_log: [] } as unknown as RowDetail
 
 function setup(role: string) {
   const calls: { method: string; url: string; body: unknown }[] = []
@@ -43,10 +43,10 @@ test('F11-AC-02: as a viewer every edit control is disabled with the read-only t
   expect(screen.getByRole('button', { name: 'Comment' })).toBeDisabled()
 })
 
-test('F11-FR-03: a planner may comment but not set a status', async () => {
+test('F19-FR-05: a planner may comment and set a status (every role except the viewer)', async () => {
   const calls = setup('planner')
   await waitFor(() => expect(screen.getByLabelText('Add a comment')).toBeEnabled())
-  expect(screen.getByLabelText('Status RAG')).toBeDisabled()
+  expect(screen.getByLabelText('Status RAG')).toBeEnabled()
   await userEvent.type(screen.getByLabelText('Add a comment'), 'Chased the lab')
   await userEvent.click(screen.getByRole('button', { name: 'Comment' }))
   await waitFor(() => expect(calls.some((call) => call.method === 'POST')).toBe(true))

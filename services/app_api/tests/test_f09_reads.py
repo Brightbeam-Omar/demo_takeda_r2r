@@ -58,7 +58,7 @@ def test_f09_fr01_row_detail_has_facts_overrides_comments_deviations_and_sibling
     assert detail["freshness"]["contract_run_id"] == RUN
     assert detail["current_overrides"]["adjusted_need_by_date"]["version"] == 2
     assert [o["version"] for o in detail["override_history"]] == [2, 1]
-    assert [c["body"] for c in detail["comments"]] == ["first"] and detail["comment_count"] == 1
+    assert [c["comment"] for c in detail["status_log"]] == ["first"] and detail["status_log_count"] == 1
     assert [d["deviation_no"] for d in detail["deviations"]] == ["DEV-1"]
     assert [s["row_key"] for s in detail["siblings"]] == ["RM10031|B2077|9002"]  # the batch's other lot
     assert detail["plan"]["compressed"] is True and detail["operative_need_by"] == "2026-11-20"
@@ -98,11 +98,11 @@ def test_f09_endpoint_audit_is_paginated_newest_first_and_filterable(
         f"/api/rows/{ROW}/status", json={"rag": "red", "reason": "x"}, headers={"X-Demo-User": "quinn"}
     )
     page = client.get("/api/audit", params={"limit": 2}).json()
-    assert page["total"] == 4 and [i["action"] for i in page["items"]] == ["status_set", "comment_added"]
+    assert page["total"] == 4 and [i["action"] for i in page["items"]] == ["status_logged", "status_logged"]
     rest = client.get("/api/audit", params={"limit": 2, "offset": 2}).json()["items"]
     assert [i["id"] for i in rest] == [2, 1]
     assert client.get("/api/audit", params={"actor": "quinn"}).json()["total"] == 1
-    assert client.get("/api/audit", params={"action": "comment_added"}).json()["total"] == 3
+    assert client.get("/api/audit", params={"action": "status_logged"}).json()["total"] == 4
     assert client.get("/api/audit", params={"row_key": "other"}).json()["total"] == 0
     assert client.get("/api/audit", params={"limit": 500}).status_code == 422
 

@@ -1,8 +1,8 @@
 """Loads the composed rows: the mirror, the current overrides and the comment counts, through ``compose``.
 
 The mirror is small (about 800 rows), so the composed rows are cached for ``CACHE_SECONDS`` per
-``(contract run, newest override, newest comment, demo clock to the second)`` (OQ-061): a new run, a human
-edit or a clock advance is visible at once, and a burst of reads shares one composition.
+``(contract run, newest override, newest status-log entry, demo clock to the second)`` (OQ-061): a new run,
+a human edit or a clock advance is visible at once, and a burst of reads shares one composition.
 """
 
 import datetime as dt
@@ -62,11 +62,11 @@ def load_composed(session: Session, profile: SiteProfile) -> Composed:
     newest = session.execute(
         text(
             "SELECT (SELECT max(id) FROM override_value) AS override_id, "
-            "(SELECT max(id) FROM comment) AS comment_id"
+            "(SELECT max(id) FROM status_log) AS log_id"
         )
     ).one()
     run_id = status.last_run_id if status else None
-    key = (run_id, newest.override_id, newest.comment_id, now.replace(microsecond=0))
+    key = (run_id, newest.override_id, newest.log_id, now.replace(microsecond=0))
     with _lock:
         if _cache["key"] == key and time.monotonic() - _cache["at"] < CACHE_SECONDS:
             cached: Composed = _cache["value"]
@@ -91,7 +91,16 @@ def _compose(
         overrides.setdefault(r.row_key, {})[r.field] = CurrentOverride(
             r.value_json, r.reason_code, r.note, r.version, r.author_user_key, r.created_at
         )
-    counted = session.execute(text("SELECT row_key, count(*) FROM comment GROUP BY row_key"))
+    counted = session.execute(text("SELECT row_key, count(*) FROM status_log GROUP BY row_key"))
     counts = {row_key: total for row_key, total in counted.tuples()}
-    rows = compose_rows(mirror, overrides, counts, profile, now)
+    latest = {
+        r["row_key"]: dict(r)
+        for r in session.execute(
+            text(
+                "SELECT DISTINCT ON (row_key) row_key, status, team, reason_code, comment, "
+                "author_user_key, at FROM status_log WHERE status IS NOT NULL ORDER BY row_key, id DESC"
+            )
+        ).mappings()
+    }
+    rows = compose_rows(mirror, overrides, latest, counts, profile, now)
     return Composed(rows=rows, freshness=fresh, today=today, now=now)

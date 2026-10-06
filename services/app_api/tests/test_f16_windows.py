@@ -90,7 +90,7 @@ def test_f16_ac04_a_pull_forward_lists_delta_reason_label_and_who_set_it(client:
     )  # fmt: skip
     assert (entry["reason_code"], entry["reason_label"]) == (
         "CAMPAIGN_PULLED_FORWARD",
-        "Campaign Pulled Forward",
+        "Campaign pulled forward",
     )
     assert entry["set_by"] == "Pat"  # app_user.display_name, not the user_key
 

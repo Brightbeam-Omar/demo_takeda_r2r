@@ -85,10 +85,10 @@ def test_f09_fr07_an_override_a_comment_or_a_clock_advance_is_visible_at_once(
 ) -> None:
     key = "RM10000|B0000|9000"
     first = client.get("/api/overview").json()
-    assert next(r for r in first["rows"] if r["row_key"] == key)["comment_count"] == 0
+    assert next(r for r in first["rows"] if r["row_key"] == key)["status_log_count"] == 0
     client.post(f"/api/rows/{key}/comments", json={"body": "hello"})
     again = client.get("/api/overview").json()
-    assert next(r for r in again["rows"] if r["row_key"] == key)["comment_count"] == 1
+    assert next(r for r in again["rows"] if r["row_key"] == key)["status_log_count"] == 1
 
     days_before = next(r for r in again["rows"] if r["row_key"] == key)["days_in_stage"]
     clock.set_clock_source(FixedClock(NOW + timedelta(days=1)))

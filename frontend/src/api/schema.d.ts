@@ -403,7 +403,11 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Post Comment */
+        /**
+         * Post Comment
+         * @deprecated
+         * @description Deprecated: appends a status-log entry without a status.
+         */
         post: operations["post_comment_api_rows__row_key__comments_post"];
         delete?: never;
         options?: never;
@@ -490,9 +494,31 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** Put Status */
+        /**
+         * Put Status
+         * @deprecated
+         * @description Deprecated: appends a status-log entry (green/amber/red map to on_track/at_risk/blocked).
+         */
         put: operations["put_status_api_rows__row_key__status_put"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/rows/{row_key}/status-log": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Status Log */
+        get: operations["get_status_log_api_rows__row_key__status_log_get"];
+        put?: never;
+        /** Post Status Log */
+        post: operations["post_status_log_api_rows__row_key__status_log_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -681,7 +707,10 @@ export interface components {
              */
             today_local: string;
         };
-        /** CommentIn */
+        /**
+         * CommentIn
+         * @description Deprecated body of ``POST /rows/{row_key}/comments`` (F19-FR-05): a wrapper over the status log.
+         */
         CommentIn: {
             /** Body */
             body: string;
@@ -963,6 +992,33 @@ export interface components {
             /** Total */
             total: number;
         };
+        /**
+         * LatestStatusOut
+         * @description The newest status-log entry that has a status, with its profile label and colour (F19-FR-05).
+         */
+        LatestStatusOut: {
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Author User Key */
+            author_user_key: string;
+            /** Colour */
+            colour: string;
+            /** Comment */
+            comment: string;
+            /** Label */
+            label: string;
+            /** Reason Code */
+            reason_code: string | null;
+            /** Reason Label */
+            reason_label: string | null;
+            /** Status */
+            status: string;
+            /** Team */
+            team: string | null;
+        };
         /** MetricExplain */
         MetricExplain: {
             /** Completed */
@@ -1226,6 +1282,14 @@ export interface components {
             stages: {
                 [key: string]: unknown;
             }[];
+            /** Status Options */
+            status_options: {
+                [key: string]: string;
+            }[];
+            /** Status Reasons */
+            status_reasons: {
+                [key: string]: string;
+            }[];
             /** Terms */
             terms: {
                 [key: string]: string;
@@ -1233,7 +1297,7 @@ export interface components {
         };
         /**
          * RowDetail
-         * @description ``GET /api/rows/{row_key}``: the row with every mirror column, its overrides, comments and siblings.
+         * @description ``GET /api/rows/{row_key}``: the row with every mirror column, overrides, status log and siblings.
          */
         RowDetail: {
             /** Adjusted Need By Date */
@@ -1250,10 +1314,6 @@ export interface components {
             campaign: string | null;
             /** Coa Release Reason */
             coa_release_reason: string | null;
-            /** Comment Count */
-            comment_count: number;
-            /** Comments */
-            comments: components["schemas"]["CommentOut"][];
             /** Current Overrides */
             current_overrides: {
                 [key: string]: components["schemas"]["OverrideOut"];
@@ -1282,6 +1342,7 @@ export interface components {
             inspection_lot_no: string;
             /** Late */
             late: boolean;
+            latest_status: components["schemas"]["LatestStatusOut"] | null;
             /** Lims Approved Date */
             lims_approved_date: string | null;
             /** Lims Status */
@@ -1292,10 +1353,6 @@ export interface components {
             lot_type: string;
             /** Manual Hold Reason */
             manual_hold_reason: string | null;
-            /** Manual Status */
-            manual_status: {
-                [key: string]: unknown;
-            } | null;
             /** Material Class */
             material_class: string | null;
             /** Material Desc */
@@ -1323,6 +1380,10 @@ export interface components {
             stage_label: string;
             /** Stage Rule Id */
             stage_rule_id: string | null;
+            /** Status Log */
+            status_log: components["schemas"]["StatusLogOut"][];
+            /** Status Log Count */
+            status_log_count: number;
             /** Storage Location */
             storage_location: string | null;
             /** Supplier Batch */
@@ -1355,8 +1416,6 @@ export interface components {
             campaign: string | null;
             /** Coa Release Reason */
             coa_release_reason: string | null;
-            /** Comment Count */
-            comment_count: number;
             /** Current Stage Entry Date */
             current_stage_entry_date: string | null;
             /** Days In Stage */
@@ -1374,6 +1433,7 @@ export interface components {
             inspection_lot_no: string;
             /** Late */
             late: boolean;
+            latest_status: components["schemas"]["LatestStatusOut"] | null;
             /** Lims Approved Date */
             lims_approved_date: string | null;
             /** Lims Status */
@@ -1384,10 +1444,6 @@ export interface components {
             lot_type: string;
             /** Manual Hold Reason */
             manual_hold_reason: string | null;
-            /** Manual Status */
-            manual_status: {
-                [key: string]: unknown;
-            } | null;
             /** Material Class */
             material_class: string | null;
             /** Material Desc */
@@ -1411,6 +1467,8 @@ export interface components {
             stage_label: string;
             /** Stage Rule Id */
             stage_rule_id: string | null;
+            /** Status Log Count */
+            status_log_count: number;
             /** Storage Location */
             storage_location: string | null;
             /** Supplier Batch */
@@ -1460,7 +1518,10 @@ export interface components {
             /** Stage Label */
             stage_label: string;
         };
-        /** StatusIn */
+        /**
+         * StatusIn
+         * @description Deprecated body of ``PUT /rows/{row_key}/status`` (F19-FR-05): a wrapper over the status log.
+         */
         StatusIn: {
             /** Rag */
             rag?: ("red" | "amber" | "green") | null;
@@ -1468,6 +1529,47 @@ export interface components {
             reason?: string | null;
             /** Team */
             team?: string | null;
+        };
+        /** StatusLogIn */
+        StatusLogIn: {
+            /** Comment */
+            comment: string;
+            /** Reason Code */
+            reason_code?: string | null;
+            /** Status */
+            status: string;
+            /** Team */
+            team?: string | null;
+        };
+        /** StatusLogOut */
+        StatusLogOut: {
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Author User Key */
+            author_user_key: string;
+            /** Comment */
+            comment: string;
+            /** Id */
+            id: number;
+            /** Reason Code */
+            reason_code: string | null;
+            /** Row Key */
+            row_key: string;
+            /** Status */
+            status: string | null;
+            /** Team */
+            team: string | null;
+        };
+        /** StatusLogPage */
+        StatusLogPage: {
+            /** Count */
+            count: number;
+            /** Entries */
+            entries: components["schemas"]["StatusLogOut"][];
+            latest: components["schemas"]["StatusLogOut"] | null;
         };
         /** SyncEventOut */
         SyncEventOut: {
@@ -2715,6 +2817,76 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RowOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_status_log_api_rows__row_key__status_log_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-demo-user"?: string | null;
+            };
+            path: {
+                row_key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatusLogPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_status_log_api_rows__row_key__status_log_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-demo-user"?: string | null;
+            };
+            path: {
+                row_key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StatusLogIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatusLogOut"];
                 };
             };
             /** @description Validation Error */
