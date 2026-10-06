@@ -10,7 +10,7 @@ This is the single source of truth for R2R business logic. Every value below tha
 | Inspection lot | A quality inspection of a batch. `lot_type` `01` = initial receipt inspection, `09` = re-evaluation (periodic retest). A batch may have several lots over time |
 | Goods receipt (GR) | ERP posting that the batch was received (into a 3PL or onsite location) |
 | 3PL | Third-party logistics warehouse. Material held at a 3PL must be **called off** (transferred) to site before sampling |
-| Inbound check | Receipt-time documentation/visual check. Outcome `open`, `passed` or `failed` |
+| Inbound check | Receipt-time documentation/visual check. Outcome `open`, `passed`, `resolved` (completed with an issue resolved; F19) or `failed` |
 | Sample | LIMS sample taken for a lot. May be tested onsite or **offsite** at an external lab |
 | LIMS approval | All tests for the lot complete and approved in LIMS |
 | Usage decision (UD) | ERP quality decision closing the lot: accept (release), reject or cancel |
@@ -71,8 +71,31 @@ terms:   # UI vocabulary (F15, OQ-075), site_a values. All keys optional; generi
   planner_overrides: "planner overrides"
 release_on_coa: {sla_days: 14}   # F18: single release deadline from cycle_start_date
 exports: {sampling_plan: [sampling], qc_queue: [qc_ship, qc_testing]}   # F18: stage sets of the two queue exports
-reason_codes: [CAMPAIGN_PULLED_FORWARD, CAMPAIGN_PUSHED_OUT, CONSOLIDATED_TESTING, EXPEDITE_PRODUCTION,
-               EXPEDITE_SHIPPING, SUPPLIER_DELAY, LAB_CAPACITY, DOCUMENTATION_ISSUE, OTHER]
+reason_codes:   # F19: labelled, shown in the Adjust Needs-by window; OTHER requires a note
+  - {code: CAMPAIGN_PULLED_FORWARD, label: "Campaign pulled forward"}
+  - {code: CAMPAIGN_PUSHED_BACK,    label: "Campaign pushed back"}
+  - {code: VERBAL_CONFIRMATION,     label: "Verbal confirmation received"}
+  - {code: SHELF_LIFE_CONSTRAINT,   label: "Shelf life constraint"}
+  - {code: SUPPLIER_DELAY,          label: "Supplier/supply delay"}
+  - {code: RETEST_REQUIRED,         label: "Retest required"}
+  - {code: EXPEDITE_PRODUCTION,     label: "Expedite production requested"}
+  - {code: EXPEDITE_SHIPPING,       label: "Expedite shipping requested"}
+  - {code: TESTING_CAPACITY,        label: "Testing capacity"}
+  - {code: OTHER,                   label: "Other — see notes"}
+status_options:   # F19: the status log (§6)
+  - {key: on_track,  label: "On Track",  colour: green}
+  - {key: at_risk,   label: "At Risk",   colour: amber}
+  - {key: blocked,   label: "Blocked",   colour: red}
+  - {key: escalated, label: "Escalated", colour: red}
+  - {key: resolved,  label: "Resolved",  colour: green}
+status_reasons:   # F19: optional reason of a status entry
+  - {key: process_delay,        label: "Process delay"}
+  - {key: supplier_issue,       label: "Supplier issue"}
+  - {key: resource_constraint,  label: "Resource constraint"}
+  - {key: campaign_pull_forward, label: "Campaign pull-forward"}
+  - {key: equipment_issue,      label: "Equipment issue"}
+  - {key: awaiting_info,        label: "Awaiting info"}
+  - {key: other,                label: "Other"}
 adapters: {erp: ecc_like}       # Tier 2 adds s4_like and spreadsheet
 ```
 
@@ -83,6 +106,8 @@ One published row per **material + batch + inspection lot** (ADR-004). A batch w
 
 ## 4. Stage engine
 Inputs are the flattened row fields defined in `04-data-contracts.md` §3 (`staging.batch_flat`). Rules are **evaluated top-down and the first match wins**. Every row gets exactly one `stage_key` and the `stage_rule_id` that matched. Rules are generated from this table, and the profile can only change SLAs, labels and `applies_if`, not rule logic (Tier 1).
+
+`resolved` inbound checks (F19) behave like `passed`: the receipt stage exits on `inbound_check_completed_date`, and R-RCP (open or failed only) does not match them.
 
 Helper definitions (`cycle_start_date` and `ud_effective` are derived by the stage engine and **published** in `batch_pipeline_v`, so Explain shows them without recomputing; each `StageRule` lists the columns it reads in `inputs`, and every one is a published column):
 - `cycle_start_date = CASE WHEN lot_type = '09' THEN lot_start_date ELSE gr_date END`. A batch whose only receipt was netted out by a same-day reversal has `gr_date = NULL` and so falls to `pending`. This is how the pending population arises
@@ -107,7 +132,7 @@ Helper definitions (`cycle_start_date` and `ud_effective` are derived by the sta
 
 | Stage | Entry date | Exit date |
 |---|---|---|
-| receipt | `cycle_start_date` | `inbound_check_completed_date`, else entry date if `inbound_check_status = 'none'` |
+| receipt | `cycle_start_date` | `inbound_check_completed_date` (status `passed` or `resolved`), else entry date if `inbound_check_status = 'none'` |
 | call_off (3PL only) | receipt exit | `transfer_to_site_date` |
 | sampling | `transfer_to_site_date` if `received_location_type='3pl'`, else receipt exit | `sample_collected_date` |
 | qc_ship (offsite only) | `sample_collected_date` | `sample_shipped_date` |
@@ -168,6 +193,8 @@ Forward with no need-by. Backward with ample budget. Compression ratio 0.5 with 
 | `lims_rejected` | LIMS | `lims_status = 'rejected'` |
 | `air_gap` | read-time | `lims_status='approved' AND ud_code IS NULL AND erp_results_recorded_at IS NULL AND now − lims_approved_at ≥ threshold_hours` (rejected lots are never air gaps) |
 
+**Human status (F19).** Status and comments are one append-only **status log** (`status_log`, 04 §5), not an override: each entry has a status (profile `status_options`: On Track, At Risk, Blocked, Escalated, Resolved), a team, an optional reason and a required comment. The latest entry with a status is the row's `latest_status`. Every role except `viewer` may add an entry. The old `manual_status` overrides and `comment` rows were copied into the log by a migration (author kept, `at` = original time).
+
 ## 7. Metrics M1–M7
 For metric `m` bound to stage `s`, week `w` (ISO week, Monday start, site timezone):
 - `completed(w)` = rows whose exit date for `s` falls in `w`
@@ -183,7 +210,8 @@ For metric `m` bound to stage `s`, week `w` (ISO week, Monday start, site timezo
 
 ## 8. Quality indicators
 - **Deviation light** per row: `red` if any **open** deviation is linked to the batch, `amber` if linked deviations exist and all are closed, `green` if none.
-- **Inbound check light**: `red` = open or failed, `green` = passed, `grey` = none recorded.
+- **Inbound check light**: `red` = open or failed, `amber` = resolved (F19), `green` = passed, `grey` = none recorded.
+- **Deviation severity** (F19): `minor`, `moderate`, `major`. The light does not depend on severity. Change controls linked to a batch are shown in the Quality window and never change the light.
 
 ## 9. Generic vocabulary (mandatory)
 | Thing | Use | Never use |

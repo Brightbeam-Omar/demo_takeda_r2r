@@ -1,5 +1,5 @@
 # F19 · Tasks (updated for OQ-116: the drawer is kept)
-- [ ] T1 `docs(specs)`: contract changes + decisions
+- [x] T1 `docs(specs)`: contract changes + decisions
 - [ ] T2 [TDD] Inbound sub-checks + `resolved` end to end (sources → datagen → pipeline → stage engine tests) (FR-02, AC-07)
 - [ ] T3 [TDD] Quality data: deviation fields, severity migration, change controls end to end (FR-03)
 - [ ] T4 [TDD] `samples_v` + `sample_count` (FR-04)
