@@ -8,7 +8,7 @@ from decimal import Decimal
 
 import pytest
 from erp_sim import events, schemas
-from erp_sim.models import Counter, Mcha, Mchb, Mdez, Mseg, Qals, Zinbchk
+from erp_sim.models import Counter, Mcha, Mchb, Mdez, Mseg, Qals, Zinbchk, ZinbchkItem
 from r2r_core import clock
 from r2r_core.clock import FixedClock
 from r2r_core.errors import Conflict, Invalid
@@ -248,6 +248,76 @@ def test_f04_fr03_inbound_check_completes_with_a_date(factory: sessionmaker[Sess
 def test_f04_fr03_inbound_check_needs_an_existing_lot_with_a_check(factory: sessionmaker[Session]) -> None:
     with factory() as session, pytest.raises(Invalid, match="lot"):
         events.inbound_check(session, schemas.InboundCheckIn(prueflos="19999999", status="passed"))
+
+
+ITEMS = [
+    schemas.InboundItemIn(check_code="PHYS", check_label="Physical evaluation", outcome="PASS"),
+    schemas.InboundItemIn(check_code="QTY", check_label="Quantity received verification", outcome="FAIL"),
+    schemas.InboundItemIn(check_code="RES", check_label="Results of analytical work", outcome="PENDING"),
+]
+
+
+def items_of(session: Session, prueflos: str) -> list[tuple[int, str, str]]:
+    rows = session.scalars(
+        select(ZinbchkItem).where(ZinbchkItem.prueflos == prueflos).order_by(ZinbchkItem.seq)
+    ).all()
+    return [(r.seq, r.check_code, r.outcome) for r in rows]
+
+
+def test_f19_fr02_inbound_check_accepts_items_and_the_resolved_status(factory: sessionmaker[Session]) -> None:
+    with factory() as session:
+        prueflos = str(receive(session)["qals"]["prueflos"])  # type: ignore[index]
+        result = events.inbound_check(
+            session, schemas.InboundCheckIn(prueflos=prueflos, status="resolved", items=ITEMS)
+        )
+        session.commit()
+        check = session.get(Zinbchk, prueflos)
+        assert check is not None
+        assert (check.status, check.completed_on) == ("resolved", TODAY)
+        assert items_of(session, prueflos) == [(1, "PHYS", "PASS"), (2, "QTY", "FAIL"), (3, "RES", "PENDING")]
+        assert [i["outcome"] for i in result["zinbchk_item"]] == ["PASS", "FAIL", "PENDING"]  # type: ignore[index]
+
+
+def test_f19_fr02_items_replace_the_previous_items_and_none_leaves_them(
+    factory: sessionmaker[Session],
+) -> None:
+    with factory() as session:
+        prueflos = str(receive(session, items=ITEMS)["qals"]["prueflos"])  # type: ignore[index]
+        assert len(items_of(session, prueflos)) == 3
+        events.inbound_check(session, schemas.InboundCheckIn(prueflos=prueflos, status="passed"))
+        assert len(items_of(session, prueflos)) == 3  # no items given: unchanged
+        events.inbound_check(
+            session, schemas.InboundCheckIn(prueflos=prueflos, status="passed", items=ITEMS[:1])
+        )
+        session.commit()
+        assert items_of(session, prueflos) == [(1, "PHYS", "PASS")]
+
+
+def test_f19_fr02_goods_receipt_and_reeval_lot_accept_items(factory: sessionmaker[Session]) -> None:
+    with factory() as session:
+        receive(session)
+        result = events.reeval_lot(
+            session,
+            schemas.ReevalLotIn(matnr="RM10001", charg="B1001", inbound_check="resolved", items=ITEMS),
+        )
+        session.commit()
+        prueflos = str(result["qals"]["prueflos"])  # type: ignore[index]
+        check = session.get(Zinbchk, prueflos)
+        assert check is not None
+        assert check.status == "resolved"
+        assert len(items_of(session, prueflos)) == 3
+
+
+def test_f19_fr02_items_need_an_inbound_check(factory: sessionmaker[Session]) -> None:
+    with factory() as session:
+        receive(session)
+        with pytest.raises(Invalid, match="items"):
+            events.reeval_lot(session, schemas.ReevalLotIn(matnr="RM10001", charg="B1001", items=ITEMS))
+
+
+def test_f19_fr02_item_outcomes_are_checked() -> None:
+    with pytest.raises(ValueError):
+        schemas.InboundItemIn(check_code="X", check_label="X", outcome="MAYBE")  # type: ignore[arg-type]
 
 
 # --- usage decision ----------------------------------------------------------------------------

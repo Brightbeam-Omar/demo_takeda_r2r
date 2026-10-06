@@ -410,3 +410,17 @@ def test_f18_fr03g_the_batch_next_inspection_date_reaches_every_lot_of_the_batch
     found = rows(con)
     assert found["RM1|B1|10000001"]["next_inspection_date"] == D(2027, 11, 3)
     assert found["RM1|B1|10000002"]["next_inspection_date"] == D(2027, 11, 3)
+
+
+def test_f19_fr02_a_resolved_check_has_a_receipt_completion_date(
+    tmp_path: Path, profile: SiteProfile
+) -> None:
+    world = World()
+    for charg, lot, status in (("B1", "10000001", "resolved"), ("B2", "10000002", "passed")):
+        world.receive(charg, lot, D(2026, 10, 1))
+        world.check(lot, status, D(2026, 10, 3))
+    con, _ = build(world, tmp_path, profile)
+    flat = rows(con)
+    assert flat["RM1|B1|10000001"]["inbound_check_status"] == "resolved"
+    assert flat["RM1|B1|10000001"]["inbound_check_completed_date"] == D(2026, 10, 3)
+    assert rows(con, "t_flags")["RM1|B1|10000001"]["inbound_light"] == "amber"

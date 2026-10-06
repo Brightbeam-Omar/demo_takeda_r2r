@@ -7,7 +7,7 @@ reader detect it (OQ-047). Nothing is published unless this run's snapshot and m
 """
 
 import json
-from datetime import datetime
+from datetime import date, datetime, timedelta
 
 import pyarrow as pa
 import pyarrow.compute as pc
@@ -40,6 +40,7 @@ PUBLISH_ORDER = (
     "reason_codes_v",
     "deviations_v",
     "expected_deliveries_v",
+    "inbound_checks_v",
     "pipeline_status_v",
 )
 OBJECTS_WITH_RUN_ID = (
@@ -47,6 +48,7 @@ OBJECTS_WITH_RUN_ID = (
     "weekly_metrics_v",
     "weekly_metric_rows_v",
     "expected_deliveries_v",
+    "inbound_checks_v",
     "pipeline_status_v",
 )
 
@@ -137,15 +139,11 @@ def build_metric_reference(profile: SiteProfile) -> pa.Table:
     return pa.Table.from_pylist(rows, schema=schema)
 
 
-def reason_label(code: str) -> str:
-    return code.replace("_", " ").capitalize()
-
-
 def build_reason_codes(profile: SiteProfile) -> pa.Table:
     return pa.table(
         {
-            "code": pa.array(profile.reason_codes, pa.string()),
-            "label": pa.array([reason_label(c) for c in profile.reason_codes], pa.string()),
+            "code": pa.array([r.code for r in profile.reason_codes], pa.string()),
+            "label": pa.array([r.label for r in profile.reason_codes], pa.string()),
         }
     )
 
@@ -185,6 +183,62 @@ def build_expected_deliveries(ctx: RunContext) -> pa.Table:
     return lines.append_column("run_id", pa.array([ctx.run_id] * lines.num_rows, pa.string()))
 
 
+INBOUND_CHECKS_SCHEMA = pa.schema(
+    [
+        ("row_key", pa.string()),
+        ("prueflos", pa.string()),
+        ("status", pa.string()),
+        ("deadline", pa.date32()),
+        ("failed_count", pa.int64()),
+        ("items_json", pa.string()),
+        ("run_id", pa.string()),
+    ]
+)
+
+
+def receipt_deadline(cycle_start: date | None, applicable_sla_json: str) -> date | None:
+    """Cycle start plus the row's own receipt SLA (re-evaluation aware); None without a cycle start."""
+    if cycle_start is None:
+        return None
+    sla = next(s["sla_days"] for s in json.loads(applicable_sla_json) if s["stage_key"] == "receipt")
+    return cycle_start + timedelta(days=sla)
+
+
+def build_inbound_checks(ctx: RunContext, batch: pa.Table) -> pa.Table:
+    """One row per lot that has an inbound check, with its sub-checks (F19-FR-02)."""
+    items_table = read_delta(ctx.lake_root, "staging.stg_zinbchk_item").sort_by(
+        [("prueflos", "ascending"), ("seq", "ascending")]
+    )
+    items: dict[str, list[dict[str, object]]] = {}
+    for item in items_table.to_pylist():
+        items.setdefault(item["prueflos"], []).append(
+            {
+                "seq": item["seq"],
+                "check_code": item["check_code"],
+                "check_label": item["check_label"],
+                "outcome": item["outcome"],
+            }
+        )
+    rows = []
+    for row in batch.to_pylist():
+        if row["inbound_check_status"] == "none":
+            continue
+        own = items.get(row["inspection_lot_no"], [])
+        rows.append(
+            {
+                "row_key": row["row_key"],
+                "prueflos": row["inspection_lot_no"],
+                "status": row["inbound_check_status"],
+                "deadline": receipt_deadline(row["cycle_start_date"], row["applicable_sla_json"]),
+                "failed_count": sum(1 for i in own if i["outcome"] == "FAIL"),
+                "items_json": json.dumps(own, separators=(",", ":")),
+                "run_id": ctx.run_id,
+            }
+        )
+    rows.sort(key=lambda r: str(r["row_key"]))
+    return pa.Table.from_pylist(rows, schema=INBOUND_CHECKS_SCHEMA)
+
+
 def build_status(ctx: RunContext, published_at: datetime, row_count: int) -> pa.Table:
     """The one-row status: written last, so its run id means every other object is complete."""
     freshness = step_detail(ctx, "extract").get("freshness", {})
@@ -208,7 +262,7 @@ def build_status(ctx: RunContext, published_at: datetime, row_count: int) -> pa.
 
 
 def publish(ctx: RunContext) -> StepResult:
-    """Overwrite the nine published objects, ``pipeline_status_v`` last."""
+    """Overwrite the published objects, ``pipeline_status_v`` last."""
     for step in ("transform", "snapshot_aggregate"):
         step_row(ctx, step)  # raises LookupError unless this run completed it
     published_at = clock.now()
@@ -223,6 +277,7 @@ def publish(ctx: RunContext) -> StepResult:
         "reason_codes_v": build_reason_codes(ctx.profile),
         "deviations_v": build_deviations(ctx),
         "expected_deliveries_v": build_expected_deliveries(ctx),
+        "inbound_checks_v": build_inbound_checks(ctx, batch),
         "pipeline_status_v": build_status(ctx, published_at, batch.num_rows),
     }
     for name in PUBLISH_ORDER:

@@ -25,7 +25,7 @@ const adjustedBody = {
   total: 2,
   rows: [
     { row_key: 'k1', batch_no: 'B2077', material_no: 'RM10031', material_desc: 'Lactose', system_need_by_date: '2026-12-03', adjusted_date: '2026-11-26', delta_days: -7, reason_code: 'CAMPAIGN_PULLED_FORWARD', reason_label: 'Campaign pulled forward', set_by: 'Pat', set_at: '2026-10-12T07:00:00Z' },
-    { row_key: 'k2', batch_no: 'B2100', material_no: 'RM10032', material_desc: 'Sucrose', system_need_by_date: '2026-12-01', adjusted_date: '2026-12-04', delta_days: 3, reason_code: 'CAMPAIGN_PUSHED_OUT', reason_label: 'Campaign pushed out', set_by: 'Admin', set_at: '2026-10-12T06:00:00Z' },
+    { row_key: 'k2', batch_no: 'B2100', material_no: 'RM10032', material_desc: 'Sucrose', system_need_by_date: '2026-12-01', adjusted_date: '2026-12-04', delta_days: 3, reason_code: 'CAMPAIGN_PUSHED_BACK', reason_label: 'Campaign pushed back', set_by: 'Admin', set_at: '2026-10-12T06:00:00Z' },
   ],
 }
 

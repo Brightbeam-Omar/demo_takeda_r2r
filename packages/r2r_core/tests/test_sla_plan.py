@@ -40,7 +40,7 @@ def run(
 
 def test_f03_ac07_operative_need_by_prefers_the_adjusted_date(facts: FactsFactory) -> None:
     row = facts(system_need_by_locked=d("2026-11-05"))
-    assert operative_need_by(row, AdjustedNeedBy(d("2026-12-31"), "CAMPAIGN_PUSHED_OUT")) == d("2026-12-31")
+    assert operative_need_by(row, AdjustedNeedBy(d("2026-12-31"), "CAMPAIGN_PUSHED_BACK")) == d("2026-12-31")
     assert operative_need_by(row, None) == d("2026-11-05")
     assert operative_need_by(facts(), None) is None
 
@@ -254,7 +254,7 @@ def test_f03_ac07_adjusted_date_replaces_the_locked_date_even_when_later(
     """F03-AC-07: locked 2026-11-05 would compress; the later adjusted date 2026-12-31 replaces it."""
     row = {"current_stage_entry_date": d("2026-10-08"), "system_need_by_locked": d("2026-11-05")}
     locked_only = run(profile, facts, **row)
-    pushed = run(profile, facts, AdjustedNeedBy(d("2026-12-31"), "CAMPAIGN_PUSHED_OUT"), **row)
+    pushed = run(profile, facts, AdjustedNeedBy(d("2026-12-31"), "CAMPAIGN_PUSHED_BACK"), **row)
     assert locked_only.compressed is True
     assert locked_only.expected_completion == d("2026-10-11")
     assert pushed.compressed is False

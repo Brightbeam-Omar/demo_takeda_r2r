@@ -38,6 +38,13 @@ def po_ref(batch: BatchPlan) -> str:
     return f"@po:{batch.po_ref}"
 
 
+def _items(lot: LotPlan) -> list[dict[str, str]]:
+    return [
+        {"check_code": code, "check_label": label, "outcome": outcome}
+        for code, label, outcome in lot.check_items
+    ]
+
+
 def _lot_events(batch: BatchPlan, lot: LotPlan) -> list[Event]:
     out: list[Event] = []
     key = {"matnr": batch.matnr, "charg": batch.charg}
@@ -60,6 +67,7 @@ def _lot_events(batch: BatchPlan, lot: LotPlan) -> list[Event]:
                     "pastrterm": lot.start,
                     "ebeln": po_ref(batch),
                     "ebelp": "00010",
+                    **({"items": _items(lot)} if lot.check == "open" and lot.check_items else {}),
                 },
                 capture=lot_ref(lot),
             )
@@ -69,12 +77,16 @@ def _lot_events(batch: BatchPlan, lot: LotPlan) -> list[Event]:
             return out
         if lot.check_done is not None:
             body = {"prueflos": lot_ref(lot), "status": lot.check, "completed_on": lot.check_done}
+            if lot.check_items:
+                body["items"] = _items(lot)
             out.append(Event(lot.check_done, "erp", "inbound_check", body))
         if lot.transfer is not None:
             body = {**key, "from_lgort": batch.lgort, "to_lgort": batch.site_lgort, "budat": lot.transfer}
             out.append(Event(lot.transfer, "erp", "transfer", body))
     else:
         body = {**key, "pastrterm": lot.start, "inbound_check": lot.check}
+        if lot.check_items:
+            body["items"] = _items(lot)
         out.append(Event(lot.start, "erp", "reeval_lot", body, capture=lot_ref(lot)))
     for index, sample in enumerate(lot.samples):
         ref = sample_ref(lot, index)

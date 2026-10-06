@@ -14,6 +14,7 @@ from r2r_core.domain import LotType, RowFacts, StageKey
 from r2r_core.profile import SiteProfile
 from r2r_core.sla import plan as plan_dates
 
+from datagen.inbound_items import plan_inbound_items
 from datagen.model import (
     BatchPlan,
     DemandPlan,
@@ -61,6 +62,7 @@ def build_plan(profile: SiteProfile, params: Params, seed: int, world: World | N
     plan_po_lines(plan, params)
     plan_next_inspection(plan)
     plan_supplier_batches(plan)
+    plan_inbound_items(plan)
     return plan
 
 

@@ -97,7 +97,7 @@ def test_f16_ac04_a_pull_forward_lists_delta_reason_label_and_who_set_it(client:
 
 @pytest.mark.usefixtures("mirror")
 def test_f16_fr07_a_push_out_has_a_positive_delta(client: TestClient) -> None:
-    adjust(client, "B2", "RM10032", adjusted_date="2026-12-15", reason_code="CAMPAIGN_PUSHED_OUT")
+    adjust(client, "B2", "RM10032", adjusted_date="2026-12-15", reason_code="CAMPAIGN_PUSHED_BACK")
     assert adjusted(client)["rows"][0]["delta_days"] == 5
 
 

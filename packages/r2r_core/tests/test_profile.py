@@ -43,7 +43,17 @@ def test_f03_fr01_site_a_loads_with_the_domain_model_values() -> None:
     assert profile.rag.amber_days_remaining_lt == 3
     assert profile.air_gap.threshold_hours == 24
     assert profile.metric_rag.green_min_pct == 90
-    assert len(profile.reason_codes) == 9
+    assert len(profile.reason_codes) == 10
+    assert profile.reason_codes[0].label == "Campaign pulled forward"
+    assert [o.key for o in profile.status_options] == [
+        "on_track",
+        "at_risk",
+        "blocked",
+        "escalated",
+        "resolved",
+    ]
+    assert profile.status_options[1].colour == "amber"
+    assert len(profile.status_reasons) == 7
     assert profile.site.timezone == "Europe/Dublin"
     assert profile.demo.start_datetime.utcoffset() is not None
     m5 = next(m for m in profile.metrics if m.id == "M5")
@@ -105,6 +115,14 @@ def _mutate_empty_reason_codes(d: dict[str, Any]) -> None:
     d["reason_codes"] = []
 
 
+def _mutate_duplicate_reason_code(d: dict[str, Any]) -> None:
+    d["reason_codes"].append(dict(d["reason_codes"][0]))
+
+
+def _mutate_bad_status_colour(d: dict[str, Any]) -> None:
+    d["status_options"][0]["colour"] = "purple"
+
+
 def _mutate_unknown_key(d: dict[str, Any]) -> None:
     d["surprise"] = 1
 
@@ -138,6 +156,8 @@ def _mutate_naive_start(d: dict[str, Any]) -> None:
         (_mutate_metric_null_stage_without_sla, "M5"),
         (_mutate_reeval_unknown_key, "nowhere"),
         (_mutate_empty_reason_codes, "reason_codes"),
+        (_mutate_duplicate_reason_code, "duplicate key in reason_codes"),
+        (_mutate_bad_status_colour, "colour"),
         (_mutate_unknown_key, "surprise"),
         (_mutate_bad_timezone, "Mars/Base"),
         (_mutate_duplicate_metric, "M1"),

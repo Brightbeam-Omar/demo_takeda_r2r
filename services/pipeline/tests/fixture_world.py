@@ -127,6 +127,13 @@ class World:
             if row["prueflos"] == lot:
                 row["status"], row["completed_on"] = status, day
 
+    def items(self, lot: str, outcomes: list[tuple[str, str, str]]) -> None:
+        """Inbound sub-checks of the lot's check, in order: ``(code, label, outcome)``."""
+        for seq, (code, label, outcome) in enumerate(outcomes, start=1):
+            self.add(
+                "stg_zinbchk_item", prueflos=lot, seq=seq, check_code=code, check_label=label, outcome=outcome
+            )
+
     def lot_field(self, lot: str, **values: Any) -> None:
         for row in self.rows["stg_qals"]:
             if row["prueflos"] == lot:

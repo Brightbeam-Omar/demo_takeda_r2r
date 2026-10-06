@@ -129,7 +129,7 @@ def load_mirror(
         ],
         "stage_reference_v": stage_reference(profile),
         "metric_reference_v": metric_reference(profile),
-        "reason_codes_v": [{"code": c, "label": c.replace("_", " ").title()} for c in profile.reason_codes],
+        "reason_codes_v": [{"code": r.code, "label": r.label} for r in profile.reason_codes],
         "deviations_v": deviations or [],
         "expected_deliveries_v": expected_deliveries or [],
     }

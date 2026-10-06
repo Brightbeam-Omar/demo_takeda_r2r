@@ -85,8 +85,9 @@ class LotPlan:
     ref: str  # "<matnr>|<charg>|01" or "...|09-<n>": stable until the DB numbers it
     lot_type: str  # 01 initial, 09 re-evaluation
     start: date  # goods receipt date (01) or lot start (09)
-    check: str  # open | passed | failed | none
+    check: str  # open | passed | resolved | failed | none
     check_done: date | None = None
+    check_items: list[tuple[str, str, str]] = field(default_factory=list)  # (code, label, outcome), F19
     transfer: date | None = None  # 311 from the 3PL to site
     samples: list[SamplePlan] = field(default_factory=list)  # oldest first; the last is the latest
     ud_code: str | None = None

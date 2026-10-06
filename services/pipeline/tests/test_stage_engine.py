@@ -208,3 +208,42 @@ def test_f06_fr09_the_pipeline_steps_do_not_depend_on_dagster() -> None:
     )
     result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True)
     assert result.stdout.strip() == "[]"
+
+
+def test_f19_fr02_a_resolved_check_behaves_like_a_passed_one(profile: SiteProfile, tmp_path: Path) -> None:
+    """F19-FR-02: R-RCP does not match `resolved`; the receipt exits on the completion date."""
+    row = stage_of(
+        profile, tmp_path, inbound_check_status="resolved", inbound_check_completed_date=D(2026, 9, 4)
+    )
+    assert (row["stage_key"], row["stage_rule_id"]) == ("sampling", "R-SMP")
+    assert (row["receipt_exit"], row["sampling_entry"]) == (D(2026, 9, 4), D(2026, 9, 4))
+    assert row["inbound_light"] == "amber"
+
+
+def test_f19_fr02_a_resolved_check_on_a_3pl_lot_goes_on_to_call_off(
+    profile: SiteProfile, tmp_path: Path
+) -> None:
+    row = stage_of(
+        profile,
+        tmp_path,
+        inbound_check_status="resolved",
+        inbound_check_completed_date=D(2026, 9, 4),
+        received_location_type="3pl",
+    )
+    assert (row["stage_key"], row["stage_rule_id"], row["call_off_entry"]) == (
+        "call_off",
+        "R-CLO",
+        D(2026, 9, 4),
+    )
+
+
+@pytest.mark.parametrize(
+    ("status", "light"),
+    [("open", "red"), ("failed", "red"), ("resolved", "amber"), ("passed", "green"), ("none", "grey")],
+)
+def test_f19_fr02_the_inbound_light_follows_the_check_status(
+    profile: SiteProfile, tmp_path: Path, status: str, light: str
+) -> None:
+    done = D(2026, 9, 3) if status in ("passed", "resolved") else None
+    row = stage_of(profile, tmp_path, inbound_check_status=status, inbound_check_completed_date=done)
+    assert row["inbound_light"] == light

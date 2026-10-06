@@ -64,6 +64,10 @@ STAGING: dict[str, dict[str, tuple[str, pa.Schema]]] = {
             "zinbchk",
             _schema(prueflos=TEXT, status=TEXT, completed_on=DATE, notes=TEXT),
         ),
+        "stg_zinbchk_item": (
+            "zinbchk_item",
+            _schema(prueflos=TEXT, seq=INT, check_code=TEXT, check_label=TEXT, outcome=TEXT),
+        ),
         "stg_mdez": (
             "mdez",
             _schema(id=INT, matnr=TEXT, campaign=TEXT, bdter=DATE, bdmng=QTY, is_open=BOOL),
