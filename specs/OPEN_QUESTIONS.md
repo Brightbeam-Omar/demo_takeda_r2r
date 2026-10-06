@@ -669,3 +669,63 @@ Add entries as: `## OQ-NNN · <feature> · <date>` then context, question, optio
 **Question:** n/a (decision recorded).
 **Proposal:** n/a.
 **Decision:** The drawer is non-modal, 560 px, right side. The table stays interactive and a row click swaps its content. The persona switcher works while it is open (the "close the drawer before switching persona" limitation goes). It opens from the batch link, a row click, Enter and `?row=<row_key>`. Its top sections are the history (summary, milestone dates with gaps, stage timeline, other lots with all 5 for B4410 and the current one marked, export). Closing the drawer puts the batch number into the Batch filter box. Below the history are summary sections with "Open ↗" links: Quality (W3), Inbound (W2), Status log (W4), Samples (W5), Need-by (W6) and a collapsed Source refs. The windows also open from the table cells. URLs: `?row=` opens the drawer; `?win=<inbound|quality|status|samples|needby>&row=` opens a window, which can sit on top of an open drawer; closing it leaves the drawer open; one window at a time. `components/drawer/*` is refactored, not deleted, and the F11 drawer e2e specs stay, updated for the new sections. AC-01 and the screenshot (`drawer-b4410.png`, table and drawer side by side) change accordingly. 05 §5 gains the batch drawer line.
+
+## OQ-117 · F20 · 2026-10-06
+**Context:** F20-FR-01 sets `release_annual: 700`, but the Executive Summary example reads "318 / 450". The datagen report has 321 released rows (lots, `01` and `09`) over a history that starts ~26 weeks before demo start. AC-01 says the pro-rata marker is `release_annual × coverage weeks / 52` and never defines "coverage weeks". FR-04's "Coverage from <first date>" has no stated source either.
+**Question:** What are "coverage weeks" and the coverage date, and does "released lots" count lots or distinct batches?
+**Proposal:** Coverage start = the earliest `ud_date` of any effective-UD row in the selected year; coverage weeks = whole ISO weeks from that date's week to the snapshot date's week, inclusive (capped at 52). The note reads "Coverage from <that date>". Released lots = rows (lots) with `ud_effective` and `ud_date` in the year, so a batch with a re-eval counts once per lot (03 §3). The "450" in the example is illustrative only; the target is the profile's 700.
+**Decision:** Accepted as proposed (2026-10-06).
+
+## OQ-118 · F20 · 2026-10-06
+**Context:** FR-02(a) grows `weekly_metrics_v` from 12 to 52 weeks, but data covers only ~26 weeks, so ~26 weeks per metric are empty. F05's report, F07's tests (13 rows per metric) and the Overview metric cards ("4-wk", F17) assume the 12-week shape. `weekly_metric_rows_v` (the Explain contributors) is not mentioned and must match. `monthly_metrics_v` does not say which month a week belongs to, nor how a partial first month is treated.
+**Question:** How are the window change, the contributor view and the month assignment handled?
+**Proposal:** The window constant becomes 52 complete weeks plus the current week to date, for `weekly_metrics_v`, `weekly_metric_rows_v` and `intelligence.*`; empty weeks stay emitted (`completed = 0`, NULL `pct`). Existing F05/F07/F17 tests and the F05 report table are updated to read "the last 12 of the 52 weeks"; the week-41 figures do not move. `monthly_metrics_v` pools by the **exit date's** calendar month in the site timezone (not the week), for the last 12 complete months plus the current month to date, from the same contributing rows; a month with no completions is emitted with `completed = 0` and NULL `pct`. Watermark rows go from 12 to 15 and F08's "twelve objects" tests are updated.
+**Decision:** Accepted as proposed (2026-10-06).
+
+## OQ-119 · F20 · 2026-10-06
+**Context:** `need_by_at_release` is defined as "earliest `mdez.bdter ≥ gr_date` for the material". Demand is per material, not per batch (OQ-034), so two batches of one material get the same value. For a re-eval lot (`09`), `gr_date` is the original receipt, which can be months before the lot's cycle. Consumables may have no demand at all.
+**Question:** Which date anchors the demand lookup, and how are rows without a value counted?
+**Proposal:** Anchor on `cycle_start_date` (the lot's own cycle start, as for every other cycle date), not `gr_date`. The value is published only for rows with an effective UD. A row with no demand line is excluded from the adherence numerator and denominator (not counted as late), and the card shows the count excluded in its caption. The Tier 1 limitation (material-level demand) is stated in the F20 spec notes. Datagen keeps closed demand lines for released batches (it already closes lines at release); no open line is touched.
+**Decision:** Accepted as proposed (2026-10-06).
+
+## OQ-120 · F20 · 2026-10-06
+**Context:** FR-03 says expedite on-time counts "any app expedite overrides on rows released since". The app `expedite` override is a boolean with no due date, so the rule "released on or before `expedite_due_date`" cannot apply to it. FR-02(d) stores the source facts on `mcha` (a batch), while rows are lots. Today `expedite` (flag, tag, filter, F09/F18) is read from the app override only.
+**Question:** What is the due date of an app-only expedite, how does a batch-level fact map to lots, and does the source fact feed the EXPEDITE tag?
+**Proposal:** An app-only expedite has **no due date**, so it is shown in the card's caption as "n expedited in the app, no due date" and is **not** in the on-time ratio. The ratio uses source facts only (`expedite_due_date` non-null, effective UD). Source facts apply to every lot of the batch; the due date is compared with the lot's `ud_date`. The Overview EXPEDITE tag, filter and sort stay on the app override and are not changed in F20 (the tag does not read the source fact), to keep F18's tests valid. If you want the tag to also show source expedites, say so and it becomes a small F18 follow-up.
+**Decision:** Accepted as proposed (2026-10-06).
+
+## OQ-121 · F20 · 2026-10-06
+**Context:** FR-03 says an adjusted need-by counts for adherence only when the override was "created before `ud_date`". `created_at` is a demo-clock timestamp, `ud_date` is a date. Overrides are versioned, and a "clear" is a version with a null value.
+**Question:** How is "before `ud_date`" decided, and which version applies?
+**Proposal:** Take the latest version whose `created_at` (site-local date) is **on or before** `ud_date`. If its value is null (a clear), use `need_by_at_release`. If its value is a date, it replaces `need_by_at_release` entirely, as in 03 §5.1. Versions created after the release are ignored. Adherence is `ud_date ≤ operative need-by`. With no seeded history this path only matters in live scenarios and fixtures (AC-06).
+**Decision:** Accepted as proposed (2026-10-06).
+
+## OQ-122 · F20 · 2026-10-06
+**Context:** FR-07 asks for adherence "about 85–92% (amber against 90)", which straddles the 90% target, so it could land green. The spec example "280 on-time / 31 late" is 90.0%. It also demands ≥ 4 historic expedites with exactly one missed, giving 3/4 = 75% (red against 90). Datagen must add these without changing F05's counts or the week-41 percentages.
+**Question:** What exact targets should datagen aim for?
+**Proposal:** Adherence between 85% and 89.9% (so amber, below 90). Expedites: exactly 4 historic, on released lots, 3 on time and 1 missed; all drawn from new `rng.stream` names and applied only to demand dates and the new `mcha` columns, so no stage, date or SLA input of an existing lot changes. A test asserts the F05 report counts and week-41 M3/M6/M7 (94% / 84% / 69%) are unchanged.
+**Decision:** Accepted as proposed (2026-10-06).
+
+## OQ-123 · F20 · 2026-10-06
+**Context:** "Days Over SLA" and "Late-Reason Category" are not defined precisely. Late rows are those with RAG red (`days_remaining < 0`), where the expected completion may be compressed by the need-by. The category falls back from the status log to the auto late reason, but the status log's reasons (`status_reasons`) and the auto reason (`reason_codes`) are two different label sets. M1, M2 and M4 are app-computed and N/A, yet the stage-bound metric for receipt, call-off and QC ship is one of them. The page has no explicit scope rule for Overview filters.
+**Question:** How are these three columns defined?
+**Proposal:** Days Over SLA = `−days_remaining` (days past the row's own expected completion, the figure behind the Overview's LATE +Nd), so the count and ordering match the Overview exactly (AC-05). Late-Reason Category = the label of the reason on the **latest status-log entry that has a reason**; else the label of `late_reason_auto` from `reason_codes`; else "—". Metric Breached = the profile metric bound to the current stage (M1/M2/M4 are shown even though N/A, so the lot is traceable); "—" for stages with no bound metric. Late Items ignores the Overview filters and period, and the year selector, since it lists the lots late now.
+**Decision:** Accepted as proposed (2026-10-06).
+
+## OQ-124 · F20 · 2026-10-06
+**Context:** FR-06 gives one `grain` parameter, but the Trends tab has two independent toggles (SLA Trends: Weekly/Monthly; Pipeline Stage Trends: Daily/Weekly). The SLA Performance tab shows "the last complete period", with no grain. `pipeline_daily_v` covers the last 365 days, so it cannot serve a past year. The year selector "lists years with any data" and nothing else says what it filters.
+**Question:** How do grain and year work?
+**Proposal:** Trends uses two params, `grain=weekly|monthly` (the table) and `stage_grain=daily|weekly` (the chart). Weekly stage bars use the open count on the **Sunday ending the week** (the snapshot date for the current week). SLA Performance always shows the last complete **week** (week 41 for AC-02), with no grain. The year selector filters Executive Summary, Release Rate and Adherence to NBD (by `ud_date` year) and the range scrubber's span. SLA Performance, Trends and Late Items are always "as of the demo date". The list of years is those with any release or metric week in the mirror (2026 only at demo start).
+**Decision:** Accepted as proposed (2026-10-06).
+
+## OQ-125 · F20 · 2026-10-06
+**Context:** AC-04 says the latest day's stacked total equals the open non-pending rows (468). Stage membership is "entry ≤ d < exit, or exit null", from per-stage dates. A lot whose exit and next entry fall on the same day is counted once, but a lot that exits a stage on the snapshot day would drop out of the latest day's bar until the next stage's entry is also that day. Skipped stages (onsite lots have no call-off dates) are fine. Released rows leave once `ud_date` passes.
+**Question:** Is the snapshot day inclusive of today's exits, and is a lot counted on its release day?
+**Proposal:** A lot is counted on day `d` for stage `s` when `entry(s) ≤ d` and (`exit(s)` is null or `d < exit(s)`); the next stage's entry date equals this exit date in the stage engine, so the lot appears in exactly one stage per day. Released lots are not counted on or after `ud_date`. A unit test asserts that for every day, each non-pending lot appears in at most one stage, and that the latest day matches `stage_key` for open rows (468 at demo start).
+**Decision:** Accepted as proposed (2026-10-06).
+
+## OQ-126 · F20 · 2026-10-06
+**Context:** Smaller points. (a) "Trend ▲ +n%" and "Stable (|Δ| < 2 pp)" mix percent and percentage points. (b) `[↓ Export]` "CSV of the figures behind the current tab" is not defined for the two-part Trends tab or the cards on Executive Summary. (c) Recharts is described as "approved" but is not in `frontend/package.json`. (d) The N/A banner is "hidden once T2-01 is done" with no switch.
+**Question:** Confirm the small rules?
+**Proposal:** (a) Trend is the difference in percentage points, shown as "▲ +3.2 pp" and "▼ −4.0 pp"; the Stable band is |Δ| < 2 pp; fewer than two periods with `completed > 0` gives "—". (b) Executive Summary exports the three cards as rows (metric, value, target, counts). Trends exports the SLA Trends table; the stage-trend series has its own second file via `?part=stage`. Others export the table or series shown. Exports are not audited (as the F18 exports). (c) Add `recharts` to the frontend dependencies in T7. (d) The banner shows when any `mirror_metric_reference` row has `status = 'awaiting_signal'`, so it disappears by itself when T2-01 changes the data.
+**Decision:** Accepted as proposed (2026-10-06).
