@@ -360,6 +360,128 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/reports/adherence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Adherence */
+        get: operations["adherence_api_reports_adherence_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reports/late": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Late */
+        get: operations["late_api_reports_late_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reports/release-rate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Release Rate */
+        get: operations["release_rate_api_reports_release_rate_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reports/sla": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Sla */
+        get: operations["sla_api_reports_sla_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reports/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Summary */
+        get: operations["summary_api_reports_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reports/trends": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Trends */
+        get: operations["trends_api_reports_trends_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reports/{tab}/export.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export
+         * @description The figures behind the tab. Trends exports the SLA table, or the stage series with ``part=stage``.
+         */
+        get: operations["export_api_reports__tab__export_csv_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/rows/{row_key}": {
         parameters: {
             query?: never;
@@ -603,6 +725,48 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AdherenceCard */
+        AdherenceCard: {
+            /** Excluded */
+            excluded: number;
+            /** Late */
+            late: number;
+            /** On Time */
+            on_time: number;
+            /** Pct */
+            pct: string | null;
+            /** Rag */
+            rag: string | null;
+            /** Target Pct */
+            target_pct: number;
+        };
+        /** AdherenceOut */
+        AdherenceOut: {
+            adherence: components["schemas"]["AdherenceCard"];
+            /** Awaiting Signal */
+            awaiting_signal: components["schemas"]["AwaitingMetric"][];
+            /** Coverage From */
+            coverage_from: string | null;
+            freshness: components["schemas"]["Freshness"];
+            /** Weeks */
+            weeks: components["schemas"]["AdherenceWeek"][];
+            /** Year */
+            year: number;
+            /** Years */
+            years: number[];
+        };
+        /** AdherenceWeek */
+        AdherenceWeek: {
+            /** Exceeded */
+            exceeded: number;
+            /**
+             * Week Start
+             * Format: date
+             */
+            week_start: string;
+            /** Within */
+            within: number;
+        };
         /** AdjustedOut */
         AdjustedOut: {
             /** Rows */
@@ -691,6 +855,15 @@ export interface components {
             offset: number;
             /** Total */
             total: number;
+        };
+        /** AwaitingMetric */
+        AwaitingMetric: {
+            /** Label */
+            label: string;
+            /** Metric Id */
+            metric_id: string;
+            /** Null Reason */
+            null_reason: string | null;
         };
         /** ChangeControlOut */
         ChangeControlOut: {
@@ -872,6 +1045,23 @@ export interface components {
             /** Title */
             title: string | null;
         };
+        /** ExpediteCard */
+        ExpediteCard: {
+            /** App Only */
+            app_only: number;
+            /** Expedited */
+            expedited: number;
+            /** Late */
+            late: number;
+            /** On Time */
+            on_time: number;
+            /** Pct */
+            pct: string | null;
+            /** Rag */
+            rag: string | null;
+            /** Target Pct */
+            target_pct: number;
+        };
         /** FeedbackIn */
         FeedbackIn: {
             /** Message */
@@ -1041,6 +1231,45 @@ export interface components {
             rows: components["schemas"]["InsightRowOut"][];
             /** Total */
             total: number;
+        };
+        /** LateOut */
+        LateOut: {
+            /** Awaiting Signal */
+            awaiting_signal: components["schemas"]["AwaitingMetric"][];
+            /** Count */
+            count: number;
+            /** Coverage From */
+            coverage_from: string | null;
+            freshness: components["schemas"]["Freshness"];
+            /** Items */
+            items: components["schemas"]["LateRow"][];
+            /** Year */
+            year: number;
+            /** Years */
+            years: number[];
+        };
+        /** LateRow */
+        LateRow: {
+            /** Batch No */
+            batch_no: string;
+            /** Campaign */
+            campaign: string | null;
+            /** Days Over Sla */
+            days_over_sla: number;
+            /** Late Reason */
+            late_reason: string | null;
+            /** Material Desc */
+            material_desc: string | null;
+            /** Material No */
+            material_no: string;
+            /** Metric Breached */
+            metric_breached: string | null;
+            /** Row Key */
+            row_key: string;
+            /** Stage Key */
+            stage_key: string;
+            /** Stage Label */
+            stage_label: string;
         };
         /**
          * LatestStatusOut
@@ -1345,6 +1574,46 @@ export interface components {
                 [key: string]: string;
             };
         };
+        /** ReleaseCard */
+        ReleaseCard: {
+            /** Annual Target */
+            annual_target: number;
+            /** Coverage Weeks */
+            coverage_weeks: number;
+            /** Pct Of Prorata */
+            pct_of_prorata: number | null;
+            /** Prorata Target */
+            prorata_target: number;
+            /** Released */
+            released: number;
+        };
+        /** ReleaseRateOut */
+        ReleaseRateOut: {
+            /** Awaiting Signal */
+            awaiting_signal: components["schemas"]["AwaitingMetric"][];
+            /** Coverage From */
+            coverage_from: string | null;
+            freshness: components["schemas"]["Freshness"];
+            release: components["schemas"]["ReleaseCard"];
+            /** Weekly Target */
+            weekly_target: number;
+            /** Weeks */
+            weeks: components["schemas"]["ReleaseWeek"][];
+            /** Year */
+            year: number;
+            /** Years */
+            years: number[];
+        };
+        /** ReleaseWeek */
+        ReleaseWeek: {
+            /** Released Count */
+            released_count: number;
+            /**
+             * Week Start
+             * Format: date
+             */
+            week_start: string;
+        };
         /**
          * RowDetail
          * @description ``GET /api/rows/{row_key}``: the row with every mirror column, overrides, status log and siblings.
@@ -1565,6 +1834,45 @@ export interface components {
             /** Status */
             status: string | null;
         };
+        /** SlaBar */
+        SlaBar: {
+            /** Completed */
+            completed: number;
+            /** Label */
+            label: string;
+            /** Metric Id */
+            metric_id: string;
+            /** Null Reason */
+            null_reason: string | null;
+            /** On Time */
+            on_time: number;
+            /** Pct */
+            pct: string | null;
+            /** Rag */
+            rag: string | null;
+            /** Stage Label */
+            stage_label: string | null;
+            /** Status */
+            status: string;
+            /** Week Start */
+            week_start: string | null;
+        };
+        /** SlaOut */
+        SlaOut: {
+            /** Awaiting Signal */
+            awaiting_signal: components["schemas"]["AwaitingMetric"][];
+            /** Bars */
+            bars: components["schemas"]["SlaBar"][];
+            /** Coverage From */
+            coverage_from: string | null;
+            freshness: components["schemas"]["Freshness"];
+            /** Target Pct */
+            target_pct: number;
+            /** Year */
+            year: number;
+            /** Years */
+            years: number[];
+        };
         /** StageExplain */
         StageExplain: {
             freshness: components["schemas"]["Freshness"];
@@ -1587,6 +1895,31 @@ export interface components {
             stage_key: string;
             /** Stage Label */
             stage_label: string;
+        };
+        /** StageInfo */
+        StageInfo: {
+            /** Label */
+            label: string;
+            /** Sort */
+            sort: number;
+            /** Stage Key */
+            stage_key: string;
+        };
+        /** StagePoint */
+        StagePoint: {
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /**
+             * Day
+             * Format: date
+             */
+            day: string;
+            /** Total */
+            total: number;
+            /** Week Start */
+            week_start: string | null;
         };
         /**
          * StatusIn
@@ -1641,6 +1974,21 @@ export interface components {
             entries: components["schemas"]["StatusLogOut"][];
             latest: components["schemas"]["StatusLogOut"] | null;
         };
+        /** SummaryOut */
+        SummaryOut: {
+            adherence: components["schemas"]["AdherenceCard"];
+            /** Awaiting Signal */
+            awaiting_signal: components["schemas"]["AwaitingMetric"][];
+            /** Coverage From */
+            coverage_from: string | null;
+            expedite: components["schemas"]["ExpediteCard"];
+            freshness: components["schemas"]["Freshness"];
+            release: components["schemas"]["ReleaseCard"];
+            /** Year */
+            year: number;
+            /** Years */
+            years: number[];
+        };
         /** SyncEventOut */
         SyncEventOut: {
             /** Age Seconds */
@@ -1688,6 +2036,67 @@ export interface components {
             on: boolean;
             /** Reason */
             reason: string;
+        };
+        /** TrendCell */
+        TrendCell: {
+            /** Completed */
+            completed: number;
+            /** Pct */
+            pct: string | null;
+            /**
+             * Period Start
+             * Format: date
+             */
+            period_start: string;
+            /** Rag */
+            rag: string | null;
+        };
+        /** TrendRow */
+        TrendRow: {
+            /** Cells */
+            cells: components["schemas"]["TrendCell"][];
+            /** Label */
+            label: string;
+            /** Metric Id */
+            metric_id: string;
+            /** Null Reason */
+            null_reason: string | null;
+            /** Status */
+            status: string;
+            /** Trend */
+            trend: string;
+            /** Trend Delta Pp */
+            trend_delta_pp: string | null;
+        };
+        /** TrendsOut */
+        TrendsOut: {
+            /** Awaiting Signal */
+            awaiting_signal: components["schemas"]["AwaitingMetric"][];
+            /** Coverage From */
+            coverage_from: string | null;
+            freshness: components["schemas"]["Freshness"];
+            /**
+             * Grain
+             * @enum {string}
+             */
+            grain: "weekly" | "monthly";
+            /** Periods */
+            periods: string[];
+            /** Points */
+            points: components["schemas"]["StagePoint"][];
+            /** Rows */
+            rows: components["schemas"]["TrendRow"][];
+            /**
+             * Stage Grain
+             * @enum {string}
+             */
+            stage_grain: "daily" | "weekly";
+            /** Stages */
+            stages: components["schemas"]["StageInfo"][];
+            /** Year */
+            year: number;
+            /** Years */
+            years: number[];
         };
         /** UserOut */
         UserOut: {
@@ -2597,6 +3006,244 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReferenceOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    adherence_api_reports_adherence_get: {
+        parameters: {
+            query?: {
+                year?: number | null;
+            };
+            header?: {
+                "x-demo-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdherenceOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    late_api_reports_late_get: {
+        parameters: {
+            query?: {
+                year?: number | null;
+            };
+            header?: {
+                "x-demo-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LateOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    release_rate_api_reports_release_rate_get: {
+        parameters: {
+            query?: {
+                year?: number | null;
+            };
+            header?: {
+                "x-demo-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseRateOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sla_api_reports_sla_get: {
+        parameters: {
+            query?: {
+                year?: number | null;
+            };
+            header?: {
+                "x-demo-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SlaOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    summary_api_reports_summary_get: {
+        parameters: {
+            query?: {
+                year?: number | null;
+            };
+            header?: {
+                "x-demo-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SummaryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    trends_api_reports_trends_get: {
+        parameters: {
+            query?: {
+                year?: number | null;
+                grain?: "weekly" | "monthly";
+                stage_grain?: "daily" | "weekly";
+            };
+            header?: {
+                "x-demo-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrendsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_api_reports__tab__export_csv_get: {
+        parameters: {
+            query?: {
+                year?: number | null;
+                grain?: "weekly" | "monthly";
+                stage_grain?: "daily" | "weekly";
+                part?: "sla" | "stage";
+            };
+            header?: {
+                "x-demo-user"?: string | null;
+            };
+            path: {
+                tab: "summary" | "sla" | "trends" | "late" | "release-rate" | "adherence";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

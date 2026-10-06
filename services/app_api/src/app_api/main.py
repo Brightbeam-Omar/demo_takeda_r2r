@@ -15,6 +15,7 @@ from app_api.routers import (
     overview,
     presets,
     reference,
+    reports,
     rows,
 )
 from app_api.sync import status, webhook
@@ -25,7 +26,19 @@ def create_app() -> FastAPI:
     app.include_router(health_router("app-api"), prefix="/api")
     app.include_router(me.router, prefix="/api")
     app.include_router(overview.router, prefix="/api")
-    routers = (audit, bookmarks, deliveries, explain, export, feedback, metrics, presets, reference, rows)
+    routers = (
+        audit,
+        bookmarks,
+        deliveries,
+        explain,
+        export,
+        feedback,
+        metrics,
+        presets,
+        reference,
+        reports,
+        rows,
+    )
     for router in (module.router for module in routers):
         app.include_router(router, prefix="/api")
     app.include_router(webhook.router, prefix="/api/sync")
