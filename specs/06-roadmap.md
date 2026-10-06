@@ -37,7 +37,7 @@ Claude Code updates `in_progress` and `review`. Only the human sets `done`.
 | F17 | Overview II: stage cards (incl. Expected Delivery), metric cards, tag row | F16 | 1 | done |
 | F18 | Overview III: pipeline table parity, row actions, exports | F17 | 1 | done |
 | F19 | Batch windows: History, Inbound, Quality, Status Log, Sample Data, Adjust Needs-by | F18 | 1 | done |
-| F20 | Reports & Metrics page (6 tabs) | F19 | 1 | review |
+| F20 | Reports & Metrics page (6 tabs) | F19 | 1 | done |
 | F21 | Sync Status, Webhook Sync Status & Admin pages | F20 | 1 | ready |
 | F12 | Agent harness & Air-gap agent | F09 (API), F21 (UI) | 1 | ready |
 | F13 | Scenario engine & demo reset | F07, F09, F10, F12 | 1 | ready |
