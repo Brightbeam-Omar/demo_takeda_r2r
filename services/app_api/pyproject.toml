@@ -9,7 +9,7 @@ dependencies = [
     "pyarrow>=16",
     "fastapi>=0.110",
     "uvicorn>=0.29",
-    "sqlalchemy>=2",
+    "sqlalchemy>=2,<2.1",  # 2.1 breaks the stack tests (F20 CI); see services/pipeline
     "alembic>=1.13",
     "psycopg[binary]>=3.2",
 ]
