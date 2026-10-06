@@ -5,3 +5,6 @@ export const canEditNeedBy = (role: string | undefined) => role === 'planner' ||
 export const canSetStatus = (role: string | undefined) =>
   role === 'qc_lead' || role === 'qa_release' || role === 'admin'
 export const canComment = (role: string | undefined) => role !== undefined && role !== 'viewer'
+/** Place/Release Hold (F18-FR-08): planner, QA release and admin. Release on COA: QA release and admin. */
+export const canHold = (role: string | undefined) => role === 'planner' || role === 'qa_release' || role === 'admin'
+export const canReleaseOnCoa = (role: string | undefined) => role === 'qa_release' || role === 'admin'

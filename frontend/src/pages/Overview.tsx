@@ -14,6 +14,7 @@ import { StageStrip, activeTotal } from '../components/pipeline/StageStrip'
 import { ExpectedDeliveriesWindow } from '../components/windows/ExpectedDeliveriesWindow'
 import { OverviewTable } from '../components/overview/OverviewTable'
 import { QueueExports } from '../components/overview/QueueExports'
+import { RowActionsMenu } from '../components/overview/RowActionsMenu'
 import { useToast } from '../components/common/Toasts'
 import { canEditNeedBy } from '../lib/roles'
 import { ShowingLine, TagRow } from '../components/tags/TagRow'
@@ -72,6 +73,8 @@ export function Overview() {
     },
     [toggleBookmark, bookmarkSet],
   )
+  const role = me.data?.role
+  const actions = useCallback((row: Row) => <RowActionsMenu row={row} role={role} />, [role])
   const onToggleBookmark = useCallback(
     (rowKey: string, on: boolean) =>
       toggleBookmark.mutate({ rowKey, on }, { onError: (error) => notify(`Could not update the bookmark: ${error.message}`, 'error') }),
@@ -173,6 +176,7 @@ export function Overview() {
                 bookmarks={bookmarkSet}
                 onToggleBookmark={onToggleBookmark}
                 onRowKey={onRowKey}
+                actions={actions}
                 search={{ value: filters.q, onChange: (q) => update({ q }) }}
                 columnsKey={`overview.${me.data?.user_key ?? 'default'}`}
                 toolbarExtra={<QueueExports params={queueParams} />}
