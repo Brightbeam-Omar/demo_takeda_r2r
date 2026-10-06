@@ -187,3 +187,19 @@ test('F18-FR-05: the search text marks the matches in the Batch cell and the cou
   expect(within(screen.getByRole('button', { name: 'B202' })).getByText('B202').tagName).toBe('MARK')
   expect(screen.getByTestId('page-summary')).toHaveTextContent('1–1 of 1 lot (1 batch)')
 })
+
+test('F18-FR-12: all rows of the page are in the DOM (no virtualisation) and a just-changed row keeps the highlight class', () => {
+  const rows = Array.from({ length: 50 }, (_, n) => makeRow(n + 10))
+  show(rows, { changedKeys: new Set([rows[3]!.row_key]) })
+  const shown = screen.getAllByTestId('batch-row')
+  expect(shown).toHaveLength(50)
+  expect(shown[3]).toHaveClass('row-changed')
+  expect(shown[4]).not.toHaveClass('row-changed')
+})
+
+test('F18-FR-03c: the Inbound and Deviation cells are 8 px dots in green, amber, red or grey', () => {
+  show([makeRow(1, { inbound_light: 'red', deviation_light: null } as unknown as Partial<Row>)])
+  const inbound = screen.getByRole('img', { name: 'Inbound check: red' })
+  expect(inbound).toHaveClass('h-2', 'w-2', 'bg-red-600')
+  expect(screen.getByRole('img', { name: 'Deviations: none recorded' })).toHaveClass('bg-slate-300')
+})
