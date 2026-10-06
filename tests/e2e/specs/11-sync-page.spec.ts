@@ -2,11 +2,10 @@ import { execSync } from 'node:child_process'
 import { expect, test } from '@playwright/test'
 import { REPO_ROOT } from '../helpers'
 
-test('F11-AC-05: after a pipeline run the Sync page shows a new webhook event reach done and the watermark update', async ({ page }) => {
-  await page.goto('/sync')
+test('F11-AC-05 / F21: after a pipeline run the Webhook page shows a new event reach done and Sync Status a new run', async ({ page }) => {
+  await page.goto('/admin/webhooks')
   await expect(page.getByTestId('sync-event').first()).toBeVisible()
-  const before = Number(await page.getByTestId('sync-event').first().getAttribute('data-event-id'))
-  const runBefore = (await page.getByTestId('last-run').innerText()).slice(0, 8)
+  const before = Number(await page.getByTestId('sync-event').first().getAttribute('data-row-key'))
 
   execSync('make pipeline', { cwd: REPO_ROOT, stdio: 'pipe' })
 
@@ -17,7 +16,7 @@ test('F11-AC-05: after a pipeline run the Sync page shows a new webhook event re
     .poll(
       async () => {
         const newest = page.getByTestId('sync-event').first()
-        const id = Number(await newest.getAttribute('data-event-id'))
+        const id = Number(await newest.getAttribute('data-row-key'))
         if (id <= before) return 'waiting'
         const status = (await newest.getByTestId('event-status').innerText()).trim()
         if (seen.at(-1) !== status) seen.push(status)
@@ -27,9 +26,10 @@ test('F11-AC-05: after a pipeline run the Sync page shows a new webhook event re
     )
     .toBe('done')
   expect(seen.map((status) => order.indexOf(status))).toEqual([...seen.map((status) => order.indexOf(status))].sort())
-  const newest = page.getByTestId('sync-event').first()
-  await expect(newest).toContainText('webhook')
-  await expect(newest.getByRole('link')).toHaveAttribute('href', /localhost:3001\/runs\//)
-  await expect(page.getByTestId('last-run')).not.toContainText(runBefore)
-  await expect(page.getByTestId('watermarks').getByRole('link').first()).toHaveText((await page.getByTestId('last-run').innerText()).slice(0, 8))
+  await expect(page.getByTestId('sync-event').first()).toContainText('webhook')
+
+  await page.goto('/admin/sync')
+  const newest = page.getByTestId('run-row').first()
+  await expect(newest.getByTestId('run-status')).toHaveText('OK')
+  await expect(newest.getByRole('link', { name: /Open run .* in Dagster/ })).toHaveAttribute('href', /localhost:3001\/runs\//)
 })

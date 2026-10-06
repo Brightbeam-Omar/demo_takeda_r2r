@@ -112,7 +112,7 @@ There is no SSO. In `DEMO_MODE`, the UI persona switcher sends `X-Demo-User: <us
 
 ## 8. Observability (Tier 1 minimum)
 - Structured JSON logs with `service`, `run_id`, `event_id`, `trace_id`.
-- Sync Status page: last 50 `sync_event` rows, watermark versus `pipeline_status_v.last_run_id`, freshness age.
+- Sync Status page (`/admin/sync`): every pipeline run (`pipeline_runs_v`) with per-step detail. Webhook Sync Status page (`/admin/webhooks`): queue health cards (pending, error, abandoned, safety-poll fallbacks, last drain from the worker heartbeat) and the last 50 `sync_event` rows. The worker wakes every 2 s and runs a full pass every `DRAIN_INTERVAL_SECONDS`.
 - Dagster UI for pipeline runs.
 
 ## 9. Architecture decisions (record new ones in `specs/adr/`)

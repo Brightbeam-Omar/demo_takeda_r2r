@@ -118,6 +118,8 @@ def load_mirror(
     monthly: list[dict[str, Any]] | None = None,
     daily: list[dict[str, Any]] | None = None,
     releases: list[dict[str, Any]] | None = None,
+    runs: list[dict[str, Any]] | None = None,
+    run_steps: list[dict[str, Any]] | None = None,
 ) -> None:
     """Replace the mirror tables with ``rows`` and the profile's reference data."""
     data: dict[str, list[dict[str, Any]]] = {
@@ -144,6 +146,8 @@ def load_mirror(
         "monthly_metrics_v": monthly or [],
         "pipeline_daily_v": daily or [],
         "releases_weekly_v": releases or [],
+        "pipeline_runs_v": runs or [],
+        "pipeline_run_steps_v": run_steps or [],
     }
     with factory() as session:
         for name, (table, columns, _, _) in MIRRORS.items():

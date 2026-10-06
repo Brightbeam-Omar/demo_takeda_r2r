@@ -211,14 +211,6 @@ class StatusLogOut(BaseModel):
     at: dt.datetime
 
 
-class CommentOut(BaseModel):
-    id: int
-    row_key: str
-    body: str
-    author_user_key: str
-    created_at: dt.datetime
-
-
 class DeviationOut(BaseModel):
     deviation_no: str
     title: str | None

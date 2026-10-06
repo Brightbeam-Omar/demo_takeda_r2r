@@ -307,6 +307,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/pipeline/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pipeline Runs */
+        get: operations["pipeline_runs_api_pipeline_runs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/pipeline/runs/{pipeline_run_id}/steps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pipeline Run Steps */
+        get: operations["pipeline_run_steps_api_pipeline_runs__pipeline_run_id__steps_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/presets": {
         parameters: {
             query?: never;
@@ -516,27 +550,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/rows/{row_key}/comments": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Post Comment
-         * @deprecated
-         * @description Deprecated: appends a status-log entry without a status.
-         */
-        post: operations["post_comment_api_rows__row_key__comments_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/rows/{row_key}/explain": {
         parameters: {
             query?: never;
@@ -608,27 +621,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/rows/{row_key}/status": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Put Status
-         * @deprecated
-         * @description Deprecated: appends a status-log entry (green/amber/red map to on_track/at_risk/blocked).
-         */
-        put: operations["put_status_api_rows__row_key__status_put"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/rows/{row_key}/status-log": {
         parameters: {
             query?: never;
@@ -641,6 +633,60 @@ export interface paths {
         put?: never;
         /** Post Status Log */
         post: operations["post_status_log_api_rows__row_key__status_log_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/schema": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Schema */
+        get: operations["schema_api_schema_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sync/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Sync Health */
+        get: operations["sync_health_api_sync_health_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sync/run-pipeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run Pipeline
+         * @description Start a pipeline run through the scenario service (admin). Its webhook flows as usual.
+         */
+        post: operations["run_pipeline_api_sync_run_pipeline_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -695,6 +741,23 @@ export interface paths {
         put?: never;
         /** Webhook */
         post: operations["webhook_api_sync_webhook_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/teams": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Teams */
+        get: operations["teams_api_teams_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -897,29 +960,14 @@ export interface components {
              */
             today_local: string;
         };
-        /**
-         * CommentIn
-         * @description Deprecated body of ``POST /rows/{row_key}/comments`` (F19-FR-05): a wrapper over the status log.
-         */
-        CommentIn: {
-            /** Body */
-            body: string;
-        };
-        /** CommentOut */
-        CommentOut: {
-            /** Author User Key */
-            author_user_key: string;
-            /** Body */
-            body: string;
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-            /** Id */
-            id: number;
-            /** Row Key */
-            row_key: string;
+        /** ColumnOut */
+        ColumnOut: {
+            /** Description */
+            description: string;
+            /** Name */
+            name: string;
+            /** Type */
+            type: string;
         };
         /** CompletionExplain */
         CompletionExplain: {
@@ -1386,6 +1434,17 @@ export interface components {
             /** Reason Code */
             reason_code?: string | null;
         };
+        /** ObjectOut */
+        ObjectOut: {
+            /** Columns */
+            columns: components["schemas"]["ColumnOut"][];
+            /** Description */
+            description: string;
+            /** Grain */
+            grain: string;
+            /** Name */
+            name: string;
+        };
         /** OverrideOut */
         OverrideOut: {
             /** Author User Key */
@@ -1435,6 +1494,29 @@ export interface components {
             /** Total */
             total: number;
         };
+        /** PipelineRunOut */
+        PipelineRunOut: {
+            /** Age Seconds */
+            age_seconds: number | null;
+            /** Duration Ms */
+            duration_ms: number | null;
+            /** Failed Step */
+            failed_step: string | null;
+            /** Files */
+            files: number | null;
+            /** Inserted */
+            inserted: number | null;
+            /** Pipeline Run Id */
+            pipeline_run_id: string;
+            /** Skipped */
+            skipped: number | null;
+            /** Started At */
+            started_at: string | null;
+            /** Status */
+            status: string;
+            /** Total */
+            total: number | null;
+        };
         /** PipelineStatusOut */
         PipelineStatusOut: {
             /** Last Run Id */
@@ -1455,6 +1537,37 @@ export interface components {
              * Format: date-time
              */
             started_at: string;
+        };
+        /** PipelineStepOut */
+        PipelineStepOut: {
+            /** Duration Ms */
+            duration_ms: number | null;
+            /** Error */
+            error: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /** Rows */
+            rows: number | null;
+            /** Started At */
+            started_at: string | null;
+            /** Status */
+            status: string;
+            /** Step */
+            step: string;
+        };
+        /** PipelineStepsOut */
+        PipelineStepsOut: {
+            /** Pipeline Run Id */
+            pipeline_run_id: string;
+            /** Steps */
+            steps: components["schemas"]["PipelineStepOut"][];
+        };
+        /** PipelineTriggerOut */
+        PipelineTriggerOut: {
+            /** Run Id */
+            run_id: string;
+            /** Status */
+            status: string;
         };
         /** PlanOut */
         PlanOut: {
@@ -1547,6 +1660,8 @@ export interface components {
             }[];
             /** Periods */
             periods: string[];
+            /** Profile File */
+            profile_file: string;
             /** Reason Codes */
             reason_codes: {
                 [key: string]: unknown;
@@ -1836,6 +1951,11 @@ export interface components {
             /** Status */
             status: string | null;
         };
+        /** SchemaOut */
+        SchemaOut: {
+            /** Objects */
+            objects: components["schemas"]["ObjectOut"][];
+        };
         /** SlaBar */
         SlaBar: {
             /** Completed */
@@ -1923,18 +2043,6 @@ export interface components {
             /** Week Start */
             week_start: string | null;
         };
-        /**
-         * StatusIn
-         * @description Deprecated body of ``PUT /rows/{row_key}/status`` (F19-FR-05): a wrapper over the status log.
-         */
-        StatusIn: {
-            /** Rag */
-            rag?: ("red" | "amber" | "green") | null;
-            /** Reason */
-            reason?: string | null;
-            /** Team */
-            team?: string | null;
-        };
         /** StatusLogIn */
         StatusLogIn: {
             /** Comment */
@@ -1995,8 +2103,12 @@ export interface components {
         SyncEventOut: {
             /** Age Seconds */
             age_seconds: number;
+            /** Attempts */
+            attempts: number;
             /** Claimed At */
             claimed_at: string | null;
+            /** Drain Pass Id */
+            drain_pass_id: string | null;
             /** Duration Ms */
             duration_ms: number | null;
             /** Error */
@@ -2005,6 +2117,8 @@ export interface components {
             finished_at: string | null;
             /** Id */
             id: number;
+            /** Objects Synced */
+            objects_synced: number | null;
             /**
              * Received At
              * Format: date-time
@@ -2019,6 +2133,25 @@ export interface components {
             /** Status */
             status: string;
         };
+        /** SyncHealthOut */
+        SyncHealthOut: {
+            /** Abandoned */
+            abandoned: number;
+            /** Error */
+            error: number;
+            /** Last Drain Age Seconds */
+            last_drain_age_seconds: number | null;
+            /** Last Webhook Age Seconds */
+            last_webhook_age_seconds: number | null;
+            /** Pending */
+            pending: number;
+            /** Poll Available */
+            poll_available: boolean;
+            /** Poll Fallbacks 24H */
+            poll_fallbacks_24h: number;
+            /** Stale Claim Minutes */
+            stale_claim_minutes: number;
+        };
         /** SyncStatusOut */
         SyncStatusOut: {
             /** Events */
@@ -2028,6 +2161,40 @@ export interface components {
             pipeline_status: components["schemas"]["PipelineStatusOut"] | null;
             /** Watermarks */
             watermarks: components["schemas"]["WatermarkOut"][];
+        };
+        /** TeamOut */
+        TeamOut: {
+            /** Amber */
+            amber: number;
+            /** At Risk Pct */
+            at_risk_pct: number | null;
+            /** Late */
+            late: number;
+            /** Oldest Late Days */
+            oldest_late_days: number | null;
+            /** Open */
+            open: number;
+            /** Stage Keys */
+            stage_keys: string[];
+            /** Stage Labels */
+            stage_labels: string[];
+            /** Team */
+            team: string;
+        };
+        /** TeamTotals */
+        TeamTotals: {
+            /** Amber */
+            amber: number;
+            /** Late */
+            late: number;
+            /** Open */
+            open: number;
+        };
+        /** TeamsOut */
+        TeamsOut: {
+            /** Teams */
+            teams: components["schemas"]["TeamOut"][];
+            totals: components["schemas"]["TeamTotals"];
         };
         /**
          * ToggleIn
@@ -2856,6 +3023,70 @@ export interface operations {
             };
         };
     };
+    pipeline_runs_api_pipeline_runs_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-demo-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PipelineRunOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pipeline_run_steps_api_pipeline_runs__pipeline_run_id__steps_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-demo-user"?: string | null;
+            };
+            path: {
+                pipeline_run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PipelineStepsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_presets_api_presets_get: {
         parameters: {
             query?: never;
@@ -3329,43 +3560,6 @@ export interface operations {
             };
         };
     };
-    post_comment_api_rows__row_key__comments_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "x-demo-user"?: string | null;
-            };
-            path: {
-                row_key: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CommentIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CommentOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     explain_row_api_rows__row_key__explain_get: {
         parameters: {
             query: {
@@ -3512,43 +3706,6 @@ export interface operations {
             };
         };
     };
-    put_status_api_rows__row_key__status_put: {
-        parameters: {
-            query?: never;
-            header?: {
-                "x-demo-user"?: string | null;
-            };
-            path: {
-                row_key: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["StatusIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RowOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     get_status_log_api_rows__row_key__status_log_get: {
         parameters: {
             query?: never;
@@ -3606,6 +3763,99 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StatusLogOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    schema_api_schema_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-demo-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchemaOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sync_health_api_sync_health_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-demo-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyncHealthOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_pipeline_api_sync_run_pipeline_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-demo-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PipelineTriggerOut"];
                 };
             };
             /** @description Validation Error */
@@ -3688,6 +3938,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    teams_api_teams_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-demo-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeamsOut"];
                 };
             };
             /** @description Validation Error */

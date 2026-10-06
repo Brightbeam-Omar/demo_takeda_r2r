@@ -77,11 +77,25 @@ class SyncEvent(Base):
     finished_at: Mapped[datetime | None] = mapped_column(STAMP)
     error: Mapped[str | None] = mapped_column(Text)
     rows_upserted: Mapped[int | None] = mapped_column(Integer)
+    attempts: Mapped[int] = mapped_column(
+        Integer, server_default="0"
+    )  # incremented on each claim (F21-FR-04)
+    objects_synced: Mapped[int | None] = mapped_column(Integer)
+    drain_pass_id: Mapped[str | None] = mapped_column(Text)
     __table_args__ = (
         CheckConstraint("source IN ('webhook','poll','manual')", name="ck_sync_event_source"),
         CheckConstraint("status IN ('pending','claimed','done','failed')", name="ck_sync_event_status"),
         Index("ix_sync_event_status_received", "status", "received_at"),
     )
+
+
+class WorkerHeartbeat(Base):
+    """One row per drain worker, rewritten on every wake of its loop (F21-FR-04). Infrastructure time."""
+
+    __tablename__ = "worker_heartbeat"
+    worker_id: Mapped[str] = mapped_column(Text, primary_key=True)
+    last_loop_at: Mapped[datetime] = mapped_column(STAMP)
+    last_pass_id: Mapped[str | None] = mapped_column(Text)
 
 
 class Watermark(Base):
@@ -398,6 +412,22 @@ MIRRORS: dict[str, tuple[str, MirrorColumns, tuple[str, ...], tuple[tuple[str, .
         "mirror_releases_weekly",
         (("week_start", DATE), ("released_count", INTEGER), ("run_id", TEXT)),
         ("week_start",),
+        (),
+    ),
+    "pipeline_runs_v": (
+        "mirror_pipeline_runs",
+        (("pipeline_run_id", TEXT), ("run_seq", INTEGER), ("started_at", TIMESTAMP),
+         ("duration_ms", INTEGER), ("files", INTEGER), ("inserted", INTEGER), ("total", INTEGER),
+         ("skipped", INTEGER), ("status", TEXT), ("failed_step", TEXT), ("run_id", TEXT)),
+        ("pipeline_run_id",),
+        (),
+    ),
+    "pipeline_run_steps_v": (
+        "mirror_pipeline_run_steps",
+        (("pipeline_run_id", TEXT), ("step", TEXT), ("status", TEXT), ("started_at", TIMESTAMP),
+         ("finished_at", TIMESTAMP), ("duration_ms", INTEGER), ("rows", INTEGER), ("error", TEXT),
+         ("run_id", TEXT)),
+        ("pipeline_run_id", "step"),
         (),
     ),
 }  # fmt: skip

@@ -79,7 +79,11 @@ def _row(
     detail: dict[str, Any],
     began: float,
 ) -> dict[str, Any]:
-    detail = {**detail, "duration_ms": round((time.perf_counter() - began) * 1000)}
+    detail = {
+        **detail,
+        "duration_ms": round((time.perf_counter() - began) * 1000),
+        "wall_us": time.time_ns() // 1000,  # orders the runs: the demo clock does not tick (F21-FR-01)
+    }
     return {
         "run_id": ctx.run_id,
         "step": step,

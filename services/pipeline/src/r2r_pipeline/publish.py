@@ -7,6 +7,7 @@ reader detect it (OQ-047). Nothing is published unless this run's snapshot and m
 """
 
 import json
+import time
 from datetime import date, datetime, timedelta
 
 import pyarrow as pa
@@ -16,7 +17,9 @@ from r2r_core.profile import SiteProfile
 
 from r2r_pipeline.context import RunContext
 from r2r_pipeline.lake import read_delta, write_delta
+from r2r_pipeline.rowhash import write_last
 from r2r_pipeline.runlog import StepResult, step_detail, step_row
+from r2r_pipeline.runs import build_runs
 from r2r_pipeline.snapshot import (
     BATCH_SNAPSHOT,
     MONTHLY_METRICS,
@@ -53,6 +56,8 @@ PUBLISH_ORDER = (
     "monthly_metrics_v",
     "pipeline_daily_v",
     "releases_weekly_v",
+    "pipeline_runs_v",
+    "pipeline_run_steps_v",
     "pipeline_status_v",
 )
 OBJECTS_WITH_RUN_ID = (
@@ -67,6 +72,8 @@ OBJECTS_WITH_RUN_ID = (
     "monthly_metrics_v",
     "pipeline_daily_v",
     "releases_weekly_v",
+    "pipeline_runs_v",
+    "pipeline_run_steps_v",
     "pipeline_status_v",
 )
 
@@ -341,12 +348,21 @@ def build_status(ctx: RunContext, published_at: datetime, row_count: int) -> pa.
     return pa.Table.from_pylist([row], schema=schema)
 
 
+def _snapshot_hashes(ctx: RunContext) -> pa.Table:
+    snapshot = read_delta(ctx.lake_root, BATCH_SNAPSHOT)
+    return snapshot.filter(pc.equal(snapshot["snapshot_date"], pa.scalar(ctx.snapshot_date, pa.date32())))
+
+
 def publish(ctx: RunContext) -> StepResult:
     """Overwrite the published objects, ``pipeline_status_v`` last."""
     for step in ("transform", "snapshot_aggregate"):
         step_row(ctx, step)  # raises LookupError unless this run completed it
+    began = time.perf_counter()  # infrastructure timing for the run's duration (OQ-003)
     published_at = clock.now()
     batch = build_batch_pipeline(ctx, published_at)
+    runs, run_steps = build_runs(
+        ctx, published_at, batch.num_rows, round((time.perf_counter() - began) * 1000)
+    )
     # Everything is built before anything is written, so a build error leaves published/ untouched.
     tables = {
         "batch_pipeline_v": batch,
@@ -363,10 +379,14 @@ def publish(ctx: RunContext) -> StepResult:
         "monthly_metrics_v": build_metrics(ctx, MONTHLY_METRICS),
         "pipeline_daily_v": build_metrics(ctx, PIPELINE_DAILY),
         "releases_weekly_v": build_metrics(ctx, RELEASES_WEEKLY),
+        "pipeline_runs_v": runs,
+        "pipeline_run_steps_v": run_steps,
         "pipeline_status_v": build_status(ctx, published_at, batch.num_rows),
     }
     for name in PUBLISH_ORDER:
         write_delta(ctx.lake_root, published_name(name), tables[name])
+    # Only now, with the run fully published, does it become the baseline of the next comparison (OQ-129).
+    write_last(ctx, _snapshot_hashes(ctx))
     counts = {name: tables[name].num_rows for name in PUBLISH_ORDER}
     return StepResult(
         rows=batch.num_rows, detail={"published_at": published_at.isoformat(), "objects": counts}

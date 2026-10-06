@@ -18,6 +18,8 @@ COPY packages/ packages/
 COPY services/ services/
 COPY tools/ tools/
 COPY config/ config/
+# The Schema Reference page (F21-FR-06) serves this generated file; `make contract-json` regenerates it.
+COPY specs/contract.json specs/contract.json
 
 # Install the shared core first, then the requested member (a no-op when they are the same).
 RUN uv pip install ./packages/r2r_core \

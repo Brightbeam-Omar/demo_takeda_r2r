@@ -84,7 +84,7 @@ def test_f08_fr08_claim_pull_and_upsert_are_logged_with_event_run_and_duration(
 
 
 @pytest.mark.integration
-def test_f08_fr04_the_worker_loop_drains_on_every_pass_and_stops_when_asked(
+def test_f08_fr04_the_worker_loop_drains_on_every_wake_and_stops_when_asked(
     app_factory: sessionmaker[Session],
 ) -> None:
     stop = threading.Event()
@@ -103,7 +103,7 @@ def test_f08_fr04_the_worker_loop_drains_on_every_pass_and_stops_when_asked(
         session.add(SyncEvent(source="manual"))
         session.commit()
     run_forever(app_factory, FakeReader(published("run-A")), interval_seconds=20, stop=stop, sleep=sleep)
-    assert passes == [20, 20]
+    assert passes == [2, 2]  # F21: the loop wakes every 2 s (a full pass still runs every interval)
     with app_factory() as session:
         statuses = [e.status for e in session.query(SyncEvent)]
     assert statuses == ["done", "done"]

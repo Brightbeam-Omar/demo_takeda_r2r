@@ -12,8 +12,6 @@ from sqlalchemy.orm import Session
 
 from app_api.models import AppUser, AuditEvent, StatusLog
 
-RAG_TO_STATUS = {"green": "on_track", "amber": "at_risk", "red": "blocked"}
-
 
 def require_row(session: Session, row_key: str) -> None:
     found = session.execute(

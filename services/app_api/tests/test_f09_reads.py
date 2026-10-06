@@ -52,7 +52,7 @@ def test_f09_fr01_row_detail_has_facts_overrides_comments_deviations_and_sibling
     client.put(
         f"/api/rows/{ROW}/need-by", json={"adjusted_date": "2026-11-20", "reason_code": "SUPPLIER_DELAY"}
     )
-    client.post(f"/api/rows/{ROW}/comments", json={"body": "first"})
+    client.post(f"/api/rows/{ROW}/status-log", json={"status": "on_track", "comment": "first"})
     detail = client.get(f"/api/rows/{ROW}").json()
     assert detail["facts"]["row_key"] == ROW and detail["facts"]["stage_rule_id"] == "R-SMP"
     assert detail["freshness"]["contract_run_id"] == RUN
@@ -93,9 +93,11 @@ def test_f09_endpoint_audit_is_paginated_newest_first_and_filterable(
     client: TestClient, mirror: None
 ) -> None:
     for text_ in ("a", "b", "c"):
-        client.post(f"/api/rows/{ROW}/comments", json={"body": text_})
-    client.put(
-        f"/api/rows/{ROW}/status", json={"rag": "red", "reason": "x"}, headers={"X-Demo-User": "quinn"}
+        client.post(f"/api/rows/{ROW}/status-log", json={"status": "on_track", "comment": text_})
+    client.post(
+        f"/api/rows/{ROW}/status-log",
+        json={"status": "blocked", "comment": "x"},
+        headers={"X-Demo-User": "quinn"},
     )
     page = client.get("/api/audit", params={"limit": 2}).json()
     assert page["total"] == 4 and [i["action"] for i in page["items"]] == ["status_logged", "status_logged"]

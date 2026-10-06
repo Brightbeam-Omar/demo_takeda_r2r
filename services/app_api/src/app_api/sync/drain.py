@@ -8,39 +8,60 @@ once, so a locked or already claimed event is never handed out twice. A crash af
 
 import logging
 import time
+import uuid
 
 from r2r_core.contract import ContractReader
 from sqlalchemy import func, text, update
 from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.sql.elements import TextClause
 
 from app_api.logs import bind
 from app_api.models import SyncEvent
+from app_api.sync.limits import STALE_CLAIM_MINUTES
 from app_api.sync.mirror import sync_mirror
 
 MAX_ERROR_CHARS = 2000
 log = logging.getLogger(__name__)
 
-STALE_CLAIM_MINUTES = 5
 
-_CLAIM = text(
-    f"""
-    UPDATE sync_event SET status = 'claimed', claimed_at = now()
-    WHERE id = (
-        SELECT id FROM sync_event
-        WHERE status = 'pending'
-           OR (status = 'claimed' AND claimed_at < now() - interval '{STALE_CLAIM_MINUTES} minutes')
-        ORDER BY id
-        LIMIT 1
-        FOR UPDATE SKIP LOCKED
+def _claim_sql(include_stale: bool) -> TextClause:
+    stale = (
+        f"OR (status = 'claimed' AND claimed_at < now() - interval '{STALE_CLAIM_MINUTES} minutes')"
+        if include_stale
+        else ""
     )
-    RETURNING id
+    return text(
+        f"""
+        UPDATE sync_event
+        SET status = 'claimed', claimed_at = now(), attempts = attempts + 1, drain_pass_id = :pass_id
+        WHERE id = (
+            SELECT id FROM sync_event
+            WHERE status = 'pending' {stale}
+            ORDER BY id
+            LIMIT 1
+            FOR UPDATE SKIP LOCKED
+        )
+        RETURNING id
+        """
+    )
+
+
+_CLAIM = _claim_sql(True)
+_CLAIM_PENDING_ONLY = _claim_sql(False)
+
+
+def new_pass_id() -> str:
+    return uuid.uuid4().hex[:12]
+
+
+def claim_next(session: Session, pass_id: str | None = None, include_stale: bool = True) -> SyncEvent | None:
+    """Claim the oldest claimable event and commit the claim; ``None`` when there is nothing to do.
+
+    A claim counts as an attempt and records the drain pass that made it (F21-FR-04). ``include_stale=False``
+    leaves events whose claim went stale to the next full pass (OQ-131).
     """
-)
-
-
-def claim_next(session: Session) -> SyncEvent | None:
-    """Claim the oldest claimable event and commit the claim; ``None`` when there is nothing to do."""
-    event_id = session.execute(_CLAIM).scalar_one_or_none()
+    statement = _CLAIM if include_stale else _CLAIM_PENDING_ONLY
+    event_id = session.execute(statement, {"pass_id": pass_id or new_pass_id()}).scalar_one_or_none()
     session.commit()
     if event_id is None:
         return None
@@ -60,7 +81,13 @@ def process_event(factory: sessionmaker[Session], reader: ContractReader, event_
             session.execute(
                 update(SyncEvent)
                 .where(SyncEvent.id == event_id)
-                .values(status="done", finished_at=func.now(), rows_upserted=result.rows_upserted, error=None)
+                .values(
+                    status="done",
+                    finished_at=func.now(),
+                    rows_upserted=result.rows_upserted,
+                    objects_synced=result.objects,
+                    error=None,
+                )
             )
             session.commit()
         log.info(
@@ -73,7 +100,7 @@ def process_event(factory: sessionmaker[Session], reader: ContractReader, event_
             session.execute(
                 update(SyncEvent)
                 .where(SyncEvent.id == event_id)
-                .values(status="failed", finished_at=func.now(), error=message)
+                .values(status="failed", finished_at=func.now(), objects_synced=0, error=message)
             )
             session.commit()
         log.error("event_failed", extra={"error": message, "duration_ms": _ms(began)})
@@ -83,12 +110,18 @@ def _ms(began: float) -> float:
     return round((time.perf_counter() - began) * 1000, 1)
 
 
-def drain_once(factory: sessionmaker[Session], reader: ContractReader) -> int:
+def drain_once(
+    factory: sessionmaker[Session],
+    reader: ContractReader,
+    pass_id: str | None = None,
+    include_stale: bool = True,
+) -> int:
     """Claim and process events one at a time until none is claimable. Returns how many were processed."""
     processed = 0
+    pass_id = pass_id or new_pass_id()
     while True:
         with factory() as session:
-            event = claim_next(session)
+            event = claim_next(session, pass_id, include_stale)
             event_id, run_id = (None, None) if event is None else (event.id, event.run_id)
         if event_id is None:
             return processed

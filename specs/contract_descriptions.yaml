@@ -1,0 +1,239 @@
+# Descriptions for the Schema Reference page (F21-FR-06, OQ-132). `tools/contract_schema.py` merges them with
+# the types of the pipeline's published schemas and the derivation table of 04-data-contracts section 3 into
+# `specs/contract.json`.
+#
+# Lookup for a column: `<object>.<column>` here, then the section 3 derivation table (batch_pipeline_v only),
+# then `_common.<column>` here. A column with none of the three fails the generator.
+# Keep the wording generic: no vendor names, no client names (constitution P5).
+
+objects:
+  batch_pipeline_v:
+    description: The pipeline. One row per lot in flight or released, with its stage, stage dates, flags and lights. The facts every page of the application is built on.
+    grain: One row per material + batch + inspection lot (row_key).
+  weekly_metrics_v:
+    description: On-time performance of each pipeline-computed metric, by ISO week (the last 52 complete weeks plus the current week to date).
+    grain: One row per metric and week; weeks with no completions are present with 0 completed.
+  weekly_metric_rows_v:
+    description: The lots behind every weekly metric figure, so a number can be explained row by row.
+    grain: One row per metric, week and lot.
+  stage_reference_v:
+    description: The stages of the site profile in order, with their SLA, owning team and the action that moves a lot on.
+    grain: One row per stage.
+  metric_reference_v:
+    description: The metrics of the site profile, and whether each is computed by the pipeline or waits for a signal that arrives later.
+    grain: One row per metric.
+  reason_codes_v:
+    description: The labelled reason codes a planner can give when adjusting a need-by date.
+    grain: One row per reason code.
+  deviations_v:
+    description: Quality deviations linked to batches, from the QMS.
+    grain: One row per deviation-to-batch link.
+  expected_deliveries_v:
+    description: Open purchase-order lines that have not been received yet (a grain before the batch exists).
+    grain: One row per open purchase-order line (ebeln + ebelp).
+  inbound_checks_v:
+    description: The receipt-time inbound check of each lot that has one, with its sub-checks.
+    grain: One row per lot that has an inbound check.
+  change_controls_v:
+    description: Change controls linked to batches, from the QMS. They are shown in the Quality window and never change a light.
+    grain: One row per change-control-to-batch link.
+  samples_v:
+    description: Every LIMS sample of every published lot, not only the latest one.
+    grain: One row per lot and sample.
+  monthly_metrics_v:
+    description: On-time performance of each pipeline-computed metric by calendar month of the exit date (the last 12 complete months plus the current month).
+    grain: One row per metric and month; empty months are present with 0 completed.
+  pipeline_daily_v:
+    description: How many lots sat in each stage on each of the last 365 days, derived from the stage entry and exit dates.
+    grain: One row per day and stage.
+  releases_weekly_v:
+    description: Lots released (an effective usage decision) per ISO week of the usage decision date.
+    grain: One row per ISO week.
+  pipeline_runs_v:
+    description: The history of pipeline runs (the last 100), including runs that failed since the previous publication. Behind the Sync Status page.
+    grain: One row per pipeline run.
+  pipeline_run_steps_v:
+    description: The steps of each run in the history, with their status, duration, rows and error.
+    grain: One row per run and step.
+  pipeline_status_v:
+    description: The last successful run, written last so its run id means every other object of that run is complete.
+    grain: Exactly one row.
+
+columns:
+  _common:
+    run_id: The pipeline run that published the row. A mixed run id across objects means a publish was interrupted.
+    row_key: "Key of the lot: material_no|batch_no|inspection_lot_no."
+    material_no: Material number.
+    material_desc: Material description.
+    material_class: Material class (drug substance or consumable); null when unknown.
+    molecule_type: Molecule type of the material (small molecule, large molecule, peptide).
+    supplier_id: Supplier identifier.
+    supplier_name: Supplier name.
+    batch_no: Batch number.
+    campaign: Production campaign of the earliest open demand for the material.
+    stage_key: Key of a stage of the site profile.
+    metric_id: Metric identifier (M1 to M7).
+    week_start: Monday that starts the ISO week, in the site time zone.
+    month_start: First day of the calendar month, in the site time zone.
+    completed: Lots whose exit date for the metric's stage falls in the period.
+    on_time: Completed lots that took no longer than their SLA for the stage.
+    pct: On-time share of the completed lots, one decimal; null when nothing completed.
+    sla_days: SLA of the stage in days.
+    status: Status of the record.
+    title: Short title.
+    description: Longer description.
+    opened_on: Date it was opened.
+    effective_on: Date the change takes effect; null until set.
+    label: Display label.
+    team: Owning team.
+    code: Code.
+    error: Error text; null when there was none.
+    rows: Rows the step produced.
+    duration_ms: Real elapsed time in milliseconds (the demo clock does not tick, so it cannot be derived from the timestamps).
+    started_at: When it started, on the demo clock.
+    finished_at: When it finished, on the demo clock.
+
+  batch_pipeline_v:
+    material_no: Material number.
+    batch_status_code: ERP batch status; H means the batch is on hold.
+    inspection_lot_no: ERP inspection lot number.
+    lot_type: 01 initial receipt inspection, 09 re-evaluation (periodic retest).
+    supplier_batch: The supplier's own batch number.
+    storage_location: Current storage location of the batch.
+    location_type: Current location type (onsite or 3pl). Used for display only.
+    sample_id: Latest LIMS sample of the lot; null when none.
+    sample_collected_date: Date the latest sample was collected.
+    offsite_test: True when the sample is tested at an external lab.
+    external_lab: The external lab, for an offsite test.
+    sample_shipped_date: Date the sample was shipped to the external lab.
+    lims_approved_at: When LIMS approved all tests of the lot.
+    ud_code: ERP usage decision code of the lot; null until decided.
+    ud_date: Date of the usage decision.
+    campaign: Production campaign of the earliest open demand for the material; null for a released lot.
+    system_need_by_date: Earliest open MRP requirement date on or after the snapshot date; drifts as demand moves. Null for a released lot.
+    open_deviation_count: Open deviations linked to the batch.
+    closed_deviation_count: Closed deviations linked to the batch.
+    next_inspection_date: Next inspection (retest) date of the batch, from the ERP.
+    need_by_at_release: For a released lot, the earliest requirement date on or after its cycle start (closed lines included), used for needs-by adherence.
+    expedite_requested_on: Date the ERP requested the batch be expedited.
+    expedite_due_date: Date the expedited batch is due.
+    stage_key: The stage the lot is in now (first matching rule wins).
+    stage_rule_id: The stage rule that matched, for example R-QCT (constitution P3).
+    cycle_start_date: "Start of the lot's cycle: the goods receipt date, or the lot start for a re-evaluation. Null for a pending lot."
+    ud_effective: True when the usage decision is an accept code, so the lot is released.
+    stage_sort: Position of the stage in the profile order.
+    current_stage_entry_date: Entry date of the current stage; null for pending.
+    lims_rejected: True when the latest LIMS sample was rejected (a retest is expected).
+    receipt_entry: Entry date of the receipt stage.
+    receipt_exit: Exit date of the receipt stage.
+    call_off_entry: Entry date of the call-off stage (3PL lots only).
+    call_off_exit: Exit date of the call-off stage.
+    sampling_entry: Entry date of the sampling stage.
+    sampling_exit: Exit date of the sampling stage.
+    qc_ship_entry: Entry date of the external-testing shipment stage (offsite lots only).
+    qc_ship_exit: Exit date of the external-testing shipment stage.
+    qc_testing_entry: Entry date of the testing stage.
+    qc_testing_exit: Exit date of the testing stage.
+    qa_release_entry: Entry date of the QA release stage.
+    qa_release_exit: Exit date of the QA release stage.
+    applicable_sla_json: Ordered list of {stage_key, sla_days} for the stages that apply to this lot (re-evaluation SLAs included).
+    source_refs_json: The source records the row was built from (ERP, LIMS, QMS), shown by Explain.
+    system_need_by_locked: The first need-by ever seen for the lot, locked so the SLAs do not creep.
+    on_hold: The ERP hold fact (batch status H).
+    erp_blocked: True when the stock is blocked in the ERP.
+    re_eval: True for a re-evaluation lot.
+    offsite: True when the test is offsite.
+    full_spec: True when the material and supplier pair needs full-spec testing.
+    ud_rejected: True when the usage decision is a reject code.
+    deviation_light: Red when an open deviation is linked, amber when only closed ones are, green when none.
+    inbound_light: Red when the inbound check is open or failed, amber when resolved, green when passed, grey when none.
+    snapshot_date: The demo day the snapshot was taken.
+    published_at: When the run published, on the demo clock.
+
+  stage_reference_v:
+    sort: Position of the stage in the profile order.
+    reeval_sla_days: SLA of the stage for a re-evaluation lot, where it differs.
+    action: What has to happen to move a lot out of the stage.
+    terminal: True for the final stage (released).
+    show_card: Whether the stage has a card on the Overview.
+
+  metric_reference_v:
+    computed_in: Where the metric is computed (pipeline or app).
+    status: active, or awaiting_signal when the input arrives later.
+    null_reason: Why an awaiting metric has no value yet.
+    stage_key: The stage the metric measures; null for a metric that spans stages.
+
+  weekly_metric_rows_v:
+    entry_date: Entry date of the metric's stage for the lot.
+    exit_date: Exit date of the metric's stage for the lot.
+    duration_days: Days from entry to exit.
+    sla_days: The lot's own SLA for the stage (re-evaluation aware).
+    on_time: True when the lot completed within its SLA.
+
+  deviations_v:
+    deviation_no: Deviation number.
+    severity: minor, moderate or major.
+    status: open or closed.
+    closed_on: Date it was closed; null while open.
+    root_cause_category: Root cause category.
+    causal_factor: Causal factor, once investigated.
+    investigation_summary: Summary of the investigation.
+    owner: Owning role.
+
+  expected_deliveries_v:
+    ebeln: Purchase order number.
+    ebelp: Purchase order line.
+    scheduled_date: Scheduled delivery date of the line.
+    quantity: Ordered quantity.
+    planned_location: Planned receiving storage location.
+    planned_location_type: Location type of the planned location (onsite or 3pl).
+    overdue: True when the scheduled date is before the snapshot date.
+
+  inbound_checks_v:
+    prueflos: ERP inspection lot number.
+    status: open, passed, resolved or failed.
+    deadline: Cycle start plus the lot's receipt SLA; null without a cycle start.
+    failed_count: Number of sub-checks that failed.
+    items_json: Ordered list of {seq, check_code, check_label, outcome}.
+
+  change_controls_v:
+    cc_no: Change control number.
+    status: open, approved, closed or cancelled.
+    current_state: The state before the change.
+    proposed_state: The state after the change.
+
+  samples_v:
+    sample_id: LIMS sample id.
+    status: registered, in_progress, approved or rejected.
+    collected_date: Date the sample was collected.
+    approved_at: When LIMS approved the sample.
+
+  pipeline_daily_v:
+    day: The day.
+    open_count: Lots in the stage that day (entered, not yet exited, no effective usage decision).
+
+  releases_weekly_v:
+    released_count: Lots with an effective usage decision in the week.
+
+  pipeline_runs_v:
+    pipeline_run_id: Id of the pipeline run the row describes (the Dagster run id).
+    run_seq: Wall-clock microseconds when the run was logged; orders the runs, because the demo clock does not tick.
+    files: Source tables extracted by the run; null when extract failed.
+    inserted: Rows that are new or whose content hash changed since the previous successful run; null for a failed run.
+    total: Rows in the published pipeline after the run; null for a failed run.
+    skipped: Rows unchanged since the previous successful run (total minus inserted); null for a failed run.
+    status: ok or failed.
+    failed_step: The step that failed; null for an ok run.
+    run_id: The run that published this history (not the run described by the row).
+
+  pipeline_run_steps_v:
+    pipeline_run_id: Id of the run the step belongs to.
+    step: setup, extract, transform, snapshot_aggregate, publish or notify.
+    status: success or failed.
+    run_id: The run that published this history.
+
+  pipeline_status_v:
+    last_run_id: Id of the last successful run (the Dagster run id).
+    last_success_at: When the last successful run published, on the demo clock.
+    row_count: Rows in the published pipeline.
+    source_freshness_json: "Per source (erp, lims, qms): newest record time and extraction time."

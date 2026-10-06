@@ -1,7 +1,7 @@
 """Replace the ``mirror_*`` tables from the published contract (F08-FR-05, FR-05b, FR-10).
 
 ``sync_mirror`` runs inside the caller's transaction: it reads every published object, refuses a mixed state,
-and then replaces every mirror (twelve) and its watermark row. The caller commits (or rolls everything back).
+and then replaces every mirror (seventeen) and its watermark row. The caller commits (or rolls back).
 """
 
 import json
@@ -28,6 +28,7 @@ class SyncError(Exception):
 class SyncResult:
     rows_upserted: int
     noop: bool
+    objects: int = 0  # objects whose mirror was replaced (zero for a noop), F21-FR-04
 
 
 def _ms(began: float) -> float:
@@ -88,7 +89,7 @@ def sync_mirror(session: Session, reader: ContractReader) -> SyncResult:
     check_consistent(run_id, data)
     held = dict(session.execute(select(Watermark.object_name, Watermark.run_id)).tuples().all())
     if all(held.get(name) == run_id for name in MIRRORS):
-        return SyncResult(rows_upserted=0, noop=True)
+        return SyncResult(rows_upserted=0, noop=True, objects=0)
 
     began = time.perf_counter()
     now = session.execute(select(func.now())).scalar_one()
@@ -105,4 +106,4 @@ def sync_mirror(session: Session, reader: ContractReader) -> SyncResult:
             )
         )
     log.info("mirror_upserted", extra={"run_id": run_id, "rows": total, "duration_ms": _ms(began)})
-    return SyncResult(rows_upserted=total, noop=False)
+    return SyncResult(rows_upserted=total, noop=False, objects=len(MIRROR_TABLES))

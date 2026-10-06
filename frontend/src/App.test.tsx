@@ -86,14 +86,45 @@ test('F20: Reports & Metrics is a built page, not a placeholder', async () => {
   expect(screen.queryByTestId('placeholder-page')).not.toBeInTheDocument()
 })
 
-test('F15-FR-02 / OQ-081: unbuilt pages render a titled placeholder', async () => {
+test.each([
+  ['Upload Data', /spreadsheet/, 'T2-07'],
+  ['Process / Campaign Mapping', /campaign/, undefined],
+  ['POC — Integrations', /source/, 'T2-01'],
+  ['Configuration', /site profile/, undefined],
+])('F21-FR-06: %s is a placeholder with a paragraph about the capability and a Tier 2 tag', async (label, about, roadmap) => {
   stub()
   render(<App />)
   const nav = within(await screen.findByRole('navigation', { name: 'Pages' }))
-  await userEvent.click(nav.getByRole('link', { name: 'SLA Configuration' }))
-  expect(await screen.findByTestId('placeholder-page')).toHaveTextContent('Coming in F21')
-  await userEvent.click(nav.getByRole('link', { name: 'Upload Data' }))
-  expect(screen.getByTestId('placeholder-page')).toHaveTextContent('Tier 2')
+  await userEvent.click(nav.getByRole('link', { name: label }))
+  const page = await screen.findByTestId('placeholder-page')
+  expect(page).toHaveTextContent(label)
+  expect(within(page).getByTestId('placeholder-about')).toHaveTextContent(about)
+  expect(within(page).getByTestId('tier-tag')).toHaveTextContent(roadmap ? `Tier 2 · ${roadmap}` : 'Tier 2')
+})
+
+test('F15-FR-02 / OQ-081: an unbuilt view page still renders a titled placeholder', async () => {
+  stub()
+  render(<App />)
+  const nav = within(await screen.findByRole('navigation', { name: 'Pages' }))
+  await userEvent.click(nav.getByRole('link', { name: 'Agents' }))
+  expect(await screen.findByTestId('placeholder-page')).toHaveTextContent('Coming in F12')
+})
+
+test('F21-FR-06: Team Dashboard, Schema Reference and SLA Configuration are built pages', async () => {
+  stub()
+  render(<App />)
+  const nav = within(await screen.findByRole('navigation', { name: 'Pages' }))
+  for (const [label, page] of [
+    ['Team Dashboard', 'team-dashboard-page'],
+    ['Schema Reference', 'schema-reference-page'],
+    ['SLA Configuration', 'sla-config-page'],
+    ['Sync Status', 'sync-status-page'],
+    ['Webhook Sync Status', 'webhook-status-page'],
+  ]) {
+    await userEvent.click(nav.getByRole('link', { name: label }))
+    expect(await screen.findByTestId(page)).toBeInTheDocument()
+    expect(screen.queryByTestId('placeholder-page')).not.toBeInTheDocument()
+  }
 })
 
 test('F15-FR-02: the sidebar collapses to icons and expands again', async () => {

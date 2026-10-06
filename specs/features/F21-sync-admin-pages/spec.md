@@ -14,6 +14,15 @@ This brings the operational and admin pages to parity. **Sync Status** lists eve
 | F21-FR-06 | **Admin pages:** **Team Dashboard:** per owning team (from the stage reference), open rows, late rows, the oldest late (days over), and the share at risk (amber), each team row linking to the Overview filtered to its stages. **Audit Log:** F11's page moved under ADMIN. **Schema Reference:** the published contract as a browsable list of each object with its description, grain and columns (name, type, description), served from a committed `contract.json` generated from `04-data-contracts.md` by a script, with a CI check that it's in sync. **SLA Configuration:** a read-only table of stages (label, SLA, re-eval SLA, team, card shown) and metrics (entry, exit, SLA, window), with the note "Configured in the site profile `<active profile file>`; changes take effect at the next pipeline run". **Feedback:** the F15 list. **Upload Data, Process / Campaign Mapping, POC — Integrations and Configuration:** placeholder pages titled per the menu, each with a one-paragraph description of the intended capability and a "Tier 2" tag (Upload Data → T2-07 spreadsheet ingest) |
 | F21-FR-07 | Remove the deprecated F09/F11 status and comment endpoints (superseded by the F19 status log) and the old `/sync` route (redirect it to `/admin/sync`) |
 
+## Decisions (OQ-129 to OQ-135)
+- **OQ-129:** a failed run shows "—" for `inserted`, `total` and `skipped`; `row_hash_last` is written only by successful runs, after the comparison; AC-01 is tested without a clock move.
+- **OQ-130:** Abandoned counts only events still `claimed` (stale, or `attempts ≥ 2`); Error counts `failed` only.
+- **OQ-131:** the worker wakes every 2 s, runs a full pass every `DRAIN_INTERVAL_SECONDS` and writes the heartbeat on every wake; a manual event shows "—" for Run ID.
+- **OQ-132:** column types come from the pipeline's Delta schemas, descriptions from 04 §3 plus `specs/contract_descriptions.yaml`; `contract.json` is copied into the app image; CI regenerates and diffs it.
+- **OQ-133:** Team Dashboard = snapshot, open = not released and not pending, late = RAG red, at-risk = amber ÷ open; ignores filters; rows link to `/overview?stage=…`.
+- **OQ-134:** the entry/exit lookup lives in the API keyed by stage; `/api/reference` gains `profile_file`.
+- **OQ-135:** Feedback is the last ADMIN item; Audit Log at `/admin/audit` (`/audit` redirects); run ages use the demo clock, event ages wall-clock, each stated in a tooltip.
+
 ## Contract changes
 - **04 §4:** `pipeline_runs_v` and `pipeline_run_steps_v`. **04 §2:** `row_hash` in the snapshot and `intelligence.row_hash_last`. **04 §5:** `sync_event.attempts`, `objects_synced`, `drain_pass_id`, the `worker_heartbeat` table, `mirror_pipeline_runs` and `mirror_pipeline_run_steps`.
 - **F08:** the drain flag and heartbeat, plus consistency for the new object.

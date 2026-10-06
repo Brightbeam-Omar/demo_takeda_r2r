@@ -11,8 +11,9 @@ from sqlalchemy.orm import Session
 
 from app_api.auth import current_user
 from app_api.db import get_session
-from app_api.deps import get_profile
+from app_api.deps import get_profile, profile_file
 from app_api.services.overview import FLAG_NAMES, PERIODS
+from app_api.services.stage_events import metric_events, metric_window
 
 DEFAULT_RELEASE_BADGE = "ALPHA – LOCAL"
 
@@ -35,11 +36,23 @@ class ReferenceOut(BaseModel):
     metric_rag: dict[str, int]
     terms: dict[str, str]
     release_badge: str
+    profile_file: str
     air_gap_threshold_hours: int
 
 
 def _rows(session: Session, sql: str) -> list[dict[str, Any]]:
     return [dict(row) for row in session.execute(text(sql)).mappings()]
+
+
+def _with_events(metric: dict[str, Any]) -> dict[str, Any]:
+    """The metric row plus what starts and stops its stage and the window it is measured over (OQ-134)."""
+    entry, exit_ = metric_events(metric["stage_key"])
+    return {
+        **metric,
+        "entry_event": entry,
+        "exit_event": exit_,
+        "window": metric_window(metric["computed_in"]),
+    }
 
 
 @router.get("/reference")
@@ -54,7 +67,10 @@ def reference(
         site_name=profile.site.name,
         site_timezone=profile.site.timezone,
         stages=_rows(session, "SELECT * FROM mirror_stage_reference ORDER BY sort"),
-        metrics=_rows(session, "SELECT * FROM mirror_metric_reference ORDER BY metric_id"),
+        metrics=[
+            _with_events(row)
+            for row in _rows(session, "SELECT * FROM mirror_metric_reference ORDER BY metric_id")
+        ],
         reason_codes=_rows(session, "SELECT code, label FROM mirror_reason_codes ORDER BY code"),
         status_options=[option.model_dump() for option in profile.status_options],
         status_reasons=[reason.model_dump() for reason in profile.status_reasons],
@@ -69,5 +85,6 @@ def reference(
         },
         terms=profile.terms.model_dump(),
         air_gap_threshold_hours=profile.air_gap.threshold_hours,
+        profile_file=profile_file(),
         release_badge=os.environ.get("RELEASE_BADGE", "").strip() or DEFAULT_RELEASE_BADGE,
     )
