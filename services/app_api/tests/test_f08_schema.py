@@ -13,6 +13,7 @@ SECTION_5_TABLES = {
     "feedback", "bookmark", "filter_preset", "proposal", "action_log", "agent_trace", "mirror_batch_pipeline", "mirror_weekly_metrics",
     "mirror_weekly_metric_rows", "mirror_pipeline_status", "mirror_stage_reference",
     "mirror_metric_reference", "mirror_reason_codes", "mirror_deviations", "mirror_expected_deliveries",
+    "mirror_inbound_checks", "mirror_change_controls", "mirror_samples",
 }  # fmt: skip
 
 

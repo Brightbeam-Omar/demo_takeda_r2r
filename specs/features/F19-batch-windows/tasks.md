@@ -5,6 +5,6 @@
 - [x] T4 [TDD] `samples_v` + `sample_count` (FR-04) (the published `samples_v` here; the `sample_count` read-time count comes with the mirror in T7)
 - [x] T5 [TDD] Status log table, migration from manual status/comments, endpoints, profile options (FR-05)
 - [x] T6 [TDD] Labelled reason codes + migration + OTHER-needs-note (FR-06)
-- [ ] T7 Mirror tables + F08 consistency (FR-08)
+- [x] T7 Mirror tables + F08 consistency (FR-08)
 - [ ] T8 Drawer refactor (non-modal, 560 px, history sections, summary sections with Open ↗, row-click swap, persona switcher works while open, close fills the Batch filter) and windows W2–W6 (modal). Keep `components/drawer/*`, refactored into the sections. Wire the cells and deep links (FR-01, FR-07, AC-01–06)
 - [ ] T9 Update the F11 drawer e2e specs (AC-01/03/06) for the new sections (not migrated to W1). Playwright for all ACs, screenshots, F06 agreement, spec check, PR (AC-07, AC-08)

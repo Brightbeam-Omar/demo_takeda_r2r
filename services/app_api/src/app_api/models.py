@@ -344,7 +344,8 @@ MIRRORS: dict[str, tuple[str, MirrorColumns, tuple[str, ...], tuple[tuple[str, .
         "mirror_deviations",
         (("deviation_no", TEXT), ("material_no", TEXT), ("batch_no", TEXT), ("title", TEXT),
          ("severity", TEXT), ("status", TEXT), ("opened_on", DATE), ("closed_on", DATE),
-         ("root_cause_category", TEXT), ("owner", TEXT)),
+         ("root_cause_category", TEXT), ("causal_factor", TEXT), ("investigation_summary", TEXT),
+         ("description", TEXT), ("owner", TEXT), ("run_id", TEXT)),
         ("deviation_no", "material_no", "batch_no"),
         (("material_no", "batch_no"),),
     ),
@@ -356,6 +357,28 @@ MIRRORS: dict[str, tuple[str, MirrorColumns, tuple[str, ...], tuple[tuple[str, .
          ("planned_location_type", TEXT), ("overdue", BOOLEAN), ("run_id", TEXT)),
         ("ebeln", "ebelp"),
         (("material_no",),),
+    ),
+    "inbound_checks_v": (
+        "mirror_inbound_checks",
+        (("row_key", TEXT), ("prueflos", TEXT), ("status", TEXT), ("deadline", DATE),
+         ("failed_count", INTEGER), ("items_json", TEXT), ("run_id", TEXT)),
+        ("row_key",),
+        (),
+    ),
+    "change_controls_v": (
+        "mirror_change_controls",
+        (("cc_no", TEXT), ("material_no", TEXT), ("batch_no", TEXT), ("title", TEXT), ("status", TEXT),
+         ("current_state", TEXT), ("proposed_state", TEXT), ("opened_on", DATE), ("effective_on", DATE),
+         ("run_id", TEXT)),
+        ("cc_no", "material_no", "batch_no"),
+        (("material_no", "batch_no"),),
+    ),
+    "samples_v": (
+        "mirror_samples",
+        (("row_key", TEXT), ("sample_id", TEXT), ("status", TEXT), ("collected_date", DATE),
+         ("approved_at", TIMESTAMP), ("run_id", TEXT)),
+        ("row_key", "sample_id"),
+        (),
     ),
 }  # fmt: skip
 

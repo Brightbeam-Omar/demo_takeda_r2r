@@ -692,6 +692,23 @@ export interface components {
             /** Total */
             total: number;
         };
+        /** ChangeControlOut */
+        ChangeControlOut: {
+            /** Cc No */
+            cc_no: string;
+            /** Current State */
+            current_state: string | null;
+            /** Effective On */
+            effective_on: string | null;
+            /** Opened On */
+            opened_on: string | null;
+            /** Proposed State */
+            proposed_state: string | null;
+            /** Status */
+            status: string | null;
+            /** Title */
+            title: string | null;
+        };
         /** ClockOut */
         ClockOut: {
             /** Frozen */
@@ -832,10 +849,16 @@ export interface components {
         };
         /** DeviationOut */
         DeviationOut: {
+            /** Causal Factor */
+            causal_factor: string | null;
             /** Closed On */
             closed_on: string | null;
+            /** Description */
+            description: string | null;
             /** Deviation No */
             deviation_no: string;
+            /** Investigation Summary */
+            investigation_summary: string | null;
             /** Opened On */
             opened_on: string | null;
             /** Owner */
@@ -965,6 +988,33 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * InboundCheckOut
+         * @description The inbound check of the lot and its sub-checks (F19-FR-02); a lot without a check has none.
+         */
+        InboundCheckOut: {
+            /** Deadline */
+            deadline: string | null;
+            /** Failed Count */
+            failed_count: number;
+            /** Items */
+            items: components["schemas"]["InboundItemOut"][];
+            /** Prueflos */
+            prueflos: string;
+            /** Status */
+            status: string;
+        };
+        /** InboundItemOut */
+        InboundItemOut: {
+            /** Check Code */
+            check_code: string;
+            /** Check Label */
+            check_label: string;
+            /** Outcome */
+            outcome: string;
+            /** Seq */
+            seq: number;
         };
         /** InsightRowOut */
         InsightRowOut: {
@@ -1312,6 +1362,8 @@ export interface components {
             batch_no: string;
             /** Campaign */
             campaign: string | null;
+            /** Changes */
+            changes: components["schemas"]["ChangeControlOut"][];
             /** Coa Release Reason */
             coa_release_reason: string | null;
             /** Current Overrides */
@@ -1336,6 +1388,7 @@ export interface components {
             freshness: components["schemas"]["Freshness"];
             /** Gr Date */
             gr_date: string | null;
+            inbound_check: components["schemas"]["InboundCheckOut"] | null;
             /** Inbound Light */
             inbound_light: string | null;
             /** Inspection Lot No */
@@ -1372,6 +1425,10 @@ export interface components {
             qc_testing_entry: string | null;
             /** Row Key */
             row_key: string;
+            /** Sample Count */
+            sample_count: number;
+            /** Samples */
+            samples: components["schemas"]["SampleOut"][];
             /** Siblings */
             siblings: components["schemas"]["RowOut"][];
             /** Stage Key */
@@ -1461,6 +1518,8 @@ export interface components {
             qc_testing_entry: string | null;
             /** Row Key */
             row_key: string;
+            /** Sample Count */
+            sample_count: number;
             /** Stage Key */
             stage_key: string;
             /** Stage Label */
@@ -1494,6 +1553,17 @@ export interface components {
             inputs: string[];
             /** Stage Key */
             stage_key: string;
+        };
+        /** SampleOut */
+        SampleOut: {
+            /** Approved At */
+            approved_at: string | null;
+            /** Collected Date */
+            collected_date: string | null;
+            /** Sample Id */
+            sample_id: string;
+            /** Status */
+            status: string | null;
         };
         /** StageExplain */
         StageExplain: {

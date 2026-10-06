@@ -246,6 +246,93 @@
         "title": "AuditPage",
         "type": "object"
       },
+      "ChangeControlOut": {
+        "properties": {
+          "cc_no": {
+            "title": "Cc No",
+            "type": "string"
+          },
+          "current_state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current State"
+          },
+          "effective_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective On"
+          },
+          "opened_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Opened On"
+          },
+          "proposed_state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proposed State"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "required": [
+          "cc_no",
+          "title",
+          "status",
+          "current_state",
+          "proposed_state",
+          "opened_on",
+          "effective_on"
+        ],
+        "title": "ChangeControlOut",
+        "type": "object"
+      },
       "ClockOut": {
         "properties": {
           "frozen": {
@@ -716,6 +803,17 @@
       },
       "DeviationOut": {
         "properties": {
+          "causal_factor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Causal Factor"
+          },
           "closed_on": {
             "anyOf": [
               {
@@ -728,9 +826,31 @@
             ],
             "title": "Closed On"
           },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
           "deviation_no": {
             "title": "Deviation No",
             "type": "string"
+          },
+          "investigation_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Investigation Summary"
           },
           "opened_on": {
             "anyOf": [
@@ -808,6 +928,9 @@
           "opened_on",
           "closed_on",
           "root_cause_category",
+          "causal_factor",
+          "investigation_summary",
+          "description",
           "owner"
         ],
         "title": "DeviationOut",
@@ -1116,6 +1239,79 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "InboundCheckOut": {
+        "description": "The inbound check of the lot and its sub-checks (F19-FR-02); a lot without a check has none.",
+        "properties": {
+          "deadline": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deadline"
+          },
+          "failed_count": {
+            "title": "Failed Count",
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/InboundItemOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "prueflos": {
+            "title": "Prueflos",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "prueflos",
+          "status",
+          "deadline",
+          "failed_count",
+          "items"
+        ],
+        "title": "InboundCheckOut",
+        "type": "object"
+      },
+      "InboundItemOut": {
+        "properties": {
+          "check_code": {
+            "title": "Check Code",
+            "type": "string"
+          },
+          "check_label": {
+            "title": "Check Label",
+            "type": "string"
+          },
+          "outcome": {
+            "title": "Outcome",
+            "type": "string"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "seq",
+          "check_code",
+          "check_label",
+          "outcome"
+        ],
+        "title": "InboundItemOut",
         "type": "object"
       },
       "InsightRowOut": {
@@ -2191,6 +2387,13 @@
             ],
             "title": "Campaign"
           },
+          "changes": {
+            "items": {
+              "$ref": "#/components/schemas/ChangeControlOut"
+            },
+            "title": "Changes",
+            "type": "array"
+          },
           "coa_release_reason": {
             "anyOf": [
               {
@@ -2276,6 +2479,16 @@
               }
             ],
             "title": "Gr Date"
+          },
+          "inbound_check": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InboundCheckOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "inbound_light": {
             "anyOf": [
@@ -2442,6 +2655,17 @@
             "title": "Row Key",
             "type": "string"
           },
+          "sample_count": {
+            "title": "Sample Count",
+            "type": "integer"
+          },
+          "samples": {
+            "items": {
+              "$ref": "#/components/schemas/SampleOut"
+            },
+            "title": "Samples",
+            "type": "array"
+          },
           "siblings": {
             "items": {
               "$ref": "#/components/schemas/RowOut"
@@ -2588,6 +2812,7 @@
           "inbound_light",
           "flags",
           "status_log_count",
+          "sample_count",
           "manual_hold_reason",
           "coa_release_reason",
           "freshness",
@@ -2596,6 +2821,9 @@
           "override_history",
           "status_log",
           "deviations",
+          "inbound_check",
+          "changes",
+          "samples",
           "siblings"
         ],
         "title": "RowDetail",
@@ -2872,6 +3100,10 @@
             "title": "Row Key",
             "type": "string"
           },
+          "sample_count": {
+            "title": "Sample Count",
+            "type": "integer"
+          },
           "stage_key": {
             "title": "Stage Key",
             "type": "string"
@@ -3004,6 +3236,7 @@
           "inbound_light",
           "flags",
           "status_log_count",
+          "sample_count",
           "manual_hold_reason",
           "coa_release_reason"
         ],
@@ -3044,6 +3277,57 @@
           "inputs"
         ],
         "title": "RuleOut",
+        "type": "object"
+      },
+      "SampleOut": {
+        "properties": {
+          "approved_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved At"
+          },
+          "collected_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Collected Date"
+          },
+          "sample_id": {
+            "title": "Sample Id",
+            "type": "string"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "required": [
+          "sample_id",
+          "status",
+          "collected_date",
+          "approved_at"
+        ],
+        "title": "SampleOut",
         "type": "object"
       },
       "StageExplain": {

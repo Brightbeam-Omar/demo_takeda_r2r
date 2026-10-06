@@ -62,6 +62,7 @@ class ComposedRow:
     air_gap_hours: int
     stage_terminal: bool
     status_log_count: int
+    sample_count: int = 0  # samples of the lot in the mirror (F19-FR-04)
     manual_hold: Mapping[str, Any] | None = None  # the current hold override while it is on
     coa_release: Mapping[str, Any] | None = None  # the current Release on COA override while it is on
     overrides: Mapping[str, CurrentOverride] = field(default_factory=dict)
@@ -146,6 +147,7 @@ def compose_row(
     status_log_count: int,
     profile: SiteProfile,
     now: dt.datetime,
+    sample_count: int = 0,
 ) -> ComposedRow:
     base = row_facts(facts)
     adjusted = adjusted_need_by(overrides)
@@ -175,6 +177,7 @@ def compose_row(
         air_gap_hours=hours,
         stage_terminal=terminal,
         status_log_count=status_log_count,
+        sample_count=sample_count,
         manual_hold=_switched_on(overrides.get(MANUAL_HOLD)),
         coa_release=coa if plans_on_coa else None,
         overrides=overrides,
@@ -188,6 +191,7 @@ def compose_rows(
     status_counts: Mapping[str, int],
     profile: SiteProfile,
     now: dt.datetime,
+    sample_counts: Mapping[str, int] | None = None,
 ) -> list[ComposedRow]:
     return [
         compose_row(
@@ -197,6 +201,7 @@ def compose_rows(
             status_counts.get(row["row_key"], 0),
             profile,
             now,
+            (sample_counts or {}).get(row["row_key"], 0),
         )
         for row in mirror_rows
     ]

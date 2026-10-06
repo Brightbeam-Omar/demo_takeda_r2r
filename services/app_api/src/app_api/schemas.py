@@ -120,6 +120,7 @@ class RowOut(BaseModel):
     inbound_light: str | None
     flags: FlagsOut
     status_log_count: int
+    sample_count: int
     manual_hold_reason: str | None
     coa_release_reason: str | None
 
@@ -181,6 +182,7 @@ class RowOut(BaseModel):
                 late=row.plan.late,
             ),
             status_log_count=row.status_log_count,
+            sample_count=row.sample_count,
             manual_hold_reason=row.manual_hold["reason"] if row.manual_hold else None,
             coa_release_reason=row.coa_release["reason"] if row.coa_release else None,
         )
@@ -225,7 +227,44 @@ class DeviationOut(BaseModel):
     opened_on: dt.date | None
     closed_on: dt.date | None
     root_cause_category: str | None
+    causal_factor: str | None
+    investigation_summary: str | None
+    description: str | None
     owner: str | None
+
+
+class InboundItemOut(BaseModel):
+    seq: int
+    check_code: str
+    check_label: str
+    outcome: str
+
+
+class InboundCheckOut(BaseModel):
+    """The inbound check of the lot and its sub-checks (F19-FR-02); a lot without a check has none."""
+
+    prueflos: str
+    status: str
+    deadline: dt.date | None
+    failed_count: int
+    items: list[InboundItemOut]
+
+
+class ChangeControlOut(BaseModel):
+    cc_no: str
+    title: str | None
+    status: str | None
+    current_state: str | None
+    proposed_state: str | None
+    opened_on: dt.date | None
+    effective_on: dt.date | None
+
+
+class SampleOut(BaseModel):
+    sample_id: str
+    status: str | None
+    collected_date: dt.date | None
+    approved_at: dt.datetime | None
 
 
 class RowDetail(RowOut):
@@ -237,4 +276,7 @@ class RowDetail(RowOut):
     override_history: list[OverrideOut]
     status_log: list[StatusLogOut]
     deviations: list[DeviationOut]
+    inbound_check: InboundCheckOut | None
+    changes: list[ChangeControlOut]
+    samples: list[SampleOut]
     siblings: list[RowOut]

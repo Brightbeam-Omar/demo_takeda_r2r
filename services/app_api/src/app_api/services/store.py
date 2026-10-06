@@ -102,5 +102,7 @@ def _compose(
             )
         ).mappings()
     }
-    rows = compose_rows(mirror, overrides, latest, counts, profile, now)
+    sampled = session.execute(text("SELECT row_key, count(*) FROM mirror_samples GROUP BY row_key"))
+    sample_counts = {row_key: total for row_key, total in sampled.tuples()}
+    rows = compose_rows(mirror, overrides, latest, counts, profile, now, sample_counts)
     return Composed(rows=rows, freshness=fresh, today=today, now=now)

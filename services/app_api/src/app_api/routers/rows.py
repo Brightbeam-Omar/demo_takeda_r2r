@@ -1,6 +1,7 @@
 """Row detail, the explain endpoints and human input on one row (F09-FR-04, FR-06)."""
 
 import datetime as dt
+import json
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Response
@@ -14,12 +15,16 @@ from app_api.db import get_session
 from app_api.deps import get_profile
 from app_api.models import AppUser, OverrideValue
 from app_api.schemas import (
+    ChangeControlOut,
     CommentOut,
     DeviationOut,
+    InboundCheckOut,
+    InboundItemOut,
     OverrideOut,
     PlanOut,
     RowDetail,
     RowOut,
+    SampleOut,
     StatusLogOut,
 )
 from app_api.services import overrides, status_log
@@ -87,6 +92,29 @@ class ToggleIn(BaseModel):
     reason: str
 
 
+def _inbound_check(session: Session, row_key: str) -> InboundCheckOut | None:
+    found = (
+        session.execute(
+            text(
+                "SELECT prueflos, status, deadline, failed_count, items_json FROM mirror_inbound_checks "
+                "WHERE row_key = :k"
+            ),
+            {"k": row_key},
+        )
+        .mappings()
+        .first()
+    )
+    if found is None:
+        return None
+    return InboundCheckOut(
+        prueflos=found["prueflos"],
+        status=found["status"],
+        deadline=found["deadline"],
+        failed_count=found["failed_count"],
+        items=[InboundItemOut(**item) for item in json.loads(found["items_json"] or "[]")],
+    )
+
+
 def _latest_of(row: object) -> dict[str, object] | None:
     """The composed row's latest status as the mapping ``compose_row`` takes again (used by the preview)."""
     latest = getattr(row, "latest_status", None)
@@ -145,10 +173,25 @@ def get_row(
     batch_key = (found.facts["material_no"], found.facts["batch_no"])
     deviations = session.execute(
         text(
-            "SELECT deviation_no, title, severity, status, opened_on, closed_on, root_cause_category, owner "
+            "SELECT deviation_no, title, severity, status, opened_on, closed_on, root_cause_category, "
+            "causal_factor, investigation_summary, description, owner "
             "FROM mirror_deviations WHERE material_no = :m AND batch_no = :b ORDER BY deviation_no"
         ),
         {"m": batch_key[0], "b": batch_key[1]},
+    ).mappings()
+    changes = session.execute(
+        text(
+            "SELECT cc_no, title, status, current_state, proposed_state, opened_on, effective_on "
+            "FROM mirror_change_controls WHERE material_no = :m AND batch_no = :b ORDER BY cc_no"
+        ),
+        {"m": batch_key[0], "b": batch_key[1]},
+    ).mappings()
+    samples = session.execute(
+        text(
+            "SELECT sample_id, status, collected_date, approved_at FROM mirror_samples "
+            "WHERE row_key = :k ORDER BY sample_id"
+        ),
+        {"k": row_key},
     ).mappings()
     siblings = [
         RowOut.of(row, labels)
@@ -163,6 +206,9 @@ def get_row(
         override_history=[_override_out(o) for o in history],
         status_log=[StatusLogOut.model_validate(e, from_attributes=True) for e in log],
         deviations=[DeviationOut(**d) for d in deviations],
+        inbound_check=_inbound_check(session, row_key),
+        changes=[ChangeControlOut(**c) for c in changes],
+        samples=[SampleOut(**x) for x in samples],
         siblings=siblings,
     )
 

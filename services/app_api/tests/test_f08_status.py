@@ -83,7 +83,7 @@ def test_f08_fr07_and_fr11_events_carry_iso_times_age_and_duration(
     [event] = client.get("/api/sync/status").json()["events"]
     assert event["status"] == "done"
     assert event["source"] == "webhook"
-    assert event["rows_upserted"] == 22
+    assert event["rows_upserted"] == 31
     assert event["duration_ms"] == 1400
     assert 119 <= event["age_seconds"] <= 125
     for field in ("received_at", "claimed_at", "finished_at"):
@@ -107,7 +107,8 @@ def test_f08_fr07_status_shows_watermarks_and_the_pipeline_status_after_a_sync(
     body = client.get("/api/sync/status").json()
     assert {w["object_name"] for w in body["watermarks"]} == {
         "batch_pipeline_v", "weekly_metrics_v", "weekly_metric_rows_v", "stage_reference_v",
-        "metric_reference_v", "reason_codes_v", "deviations_v", "expected_deliveries_v", "pipeline_status_v",
+        "metric_reference_v", "reason_codes_v", "deviations_v", "expected_deliveries_v", "inbound_checks_v",
+        "change_controls_v", "samples_v", "pipeline_status_v",
     }  # fmt: skip
     assert {w["run_id"] for w in body["watermarks"]} == {"run-A"}
     assert all(w["age_seconds"] >= 0 for w in body["watermarks"])
