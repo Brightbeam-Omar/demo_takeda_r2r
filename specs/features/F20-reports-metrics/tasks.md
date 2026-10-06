@@ -7,4 +7,4 @@
 - [x] T6 Datagen tuning for YTD figures and expedites (FR-07)
 - [x] T7 Page shell, tabs, year selector, coverage note, N/A banner (FR-04)
 - [x] T8 Six tab UIs with Recharts (FR-05, AC-01–05)
-- [ ] T9 Playwright, screenshots, spec check, PR (AC-07)
+- [x] T9 Playwright, screenshots, spec check, PR (AC-07)

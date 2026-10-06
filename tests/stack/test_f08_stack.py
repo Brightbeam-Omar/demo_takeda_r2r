@@ -38,6 +38,9 @@ OBJECTS = {
     "inbound_checks_v": "mirror_inbound_checks",
     "change_controls_v": "mirror_change_controls",
     "samples_v": "mirror_samples",
+    "monthly_metrics_v": "mirror_monthly_metrics",
+    "pipeline_daily_v": "mirror_pipeline_daily",
+    "releases_weekly_v": "mirror_releases_weekly",
     "pipeline_status_v": "mirror_pipeline_status",
 }
 
