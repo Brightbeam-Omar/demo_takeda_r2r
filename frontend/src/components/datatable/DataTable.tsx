@@ -63,6 +63,8 @@ interface Props<T> {
   filterRequest?: ColumnFilterRequest | null
   keyboardHint?: string
   ariaLabel?: string
+  /** Small tables (the Sample Data window) drop the second toolbar and the pager. Default: both shown. */
+  compact?: boolean
 }
 
 const text = (value: unknown) => String(value ?? '')
@@ -112,6 +114,7 @@ export function DataTable<T>({
   filterRequest,
   keyboardHint,
   ariaLabel = 'Table',
+  compact = false,
 }: Props<T>) {
   // Unsorted = the order the rows arrive in (the server's exceptions-first order for the Overview).
   const [sorting, setSorting] = useState<SortingState>([])
@@ -355,8 +358,8 @@ export function DataTable<T>({
           {keyboardHint}
         </p>
       )}
-      {toolbar('bottom')}
-      <Pagination table={table} pageSizes={pageSizes} />
+      {!compact && toolbar('bottom')}
+      {!compact && <Pagination table={table} pageSizes={pageSizes} />}
     </div>
   )
 }

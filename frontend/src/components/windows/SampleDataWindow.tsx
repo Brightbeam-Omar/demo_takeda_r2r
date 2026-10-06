@@ -91,6 +91,7 @@ function SampleBody({ samples }: { samples: Sample[] }) {
         headerFilters={false}
         stickyFirst={false}
         defaultPageSize={25}
+        compact
         ariaLabel="Samples"
       />
     </div>
