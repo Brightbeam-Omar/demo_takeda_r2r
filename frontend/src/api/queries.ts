@@ -11,6 +11,7 @@ export type SyncStatus = Schemas['SyncStatusOut']
 export type SyncHealth = Schemas['SyncHealthOut']
 export type PipelineRun = Schemas['PipelineRunOut']
 export type PipelineSteps = Schemas['PipelineStepsOut']
+export type Teams = Schemas['TeamsOut']
 export type Overview = Schemas['OverviewOut']
 export type Row = Schemas['RowOut']
 export type Metrics = Schemas['MetricsOut']
@@ -74,6 +75,14 @@ export function usePipelineRunSteps(runId: string | null) {
     queryKey: useKey('pipeline-run-steps', runId),
     queryFn: () => apiGet<PipelineSteps>(`/pipeline/runs/${encodeURIComponent(runId ?? '')}/steps`),
     enabled: runId !== null,
+  })
+}
+
+export function useTeams() {
+  return useQuery({
+    queryKey: useKey('teams'),
+    queryFn: () => apiGet<Teams>('/teams'),
+    refetchInterval: POLL_MS,
   })
 }
 

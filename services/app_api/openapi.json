@@ -4821,6 +4821,117 @@
         "title": "SyncStatusOut",
         "type": "object"
       },
+      "TeamOut": {
+        "properties": {
+          "amber": {
+            "title": "Amber",
+            "type": "integer"
+          },
+          "at_risk_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "At Risk Pct"
+          },
+          "late": {
+            "title": "Late",
+            "type": "integer"
+          },
+          "oldest_late_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Oldest Late Days"
+          },
+          "open": {
+            "title": "Open",
+            "type": "integer"
+          },
+          "stage_keys": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Stage Keys",
+            "type": "array"
+          },
+          "stage_labels": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Stage Labels",
+            "type": "array"
+          },
+          "team": {
+            "title": "Team",
+            "type": "string"
+          }
+        },
+        "required": [
+          "team",
+          "stage_keys",
+          "stage_labels",
+          "open",
+          "late",
+          "oldest_late_days",
+          "amber",
+          "at_risk_pct"
+        ],
+        "title": "TeamOut",
+        "type": "object"
+      },
+      "TeamTotals": {
+        "properties": {
+          "amber": {
+            "title": "Amber",
+            "type": "integer"
+          },
+          "late": {
+            "title": "Late",
+            "type": "integer"
+          },
+          "open": {
+            "title": "Open",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "open",
+          "late",
+          "amber"
+        ],
+        "title": "TeamTotals",
+        "type": "object"
+      },
+      "TeamsOut": {
+        "properties": {
+          "teams": {
+            "items": {
+              "$ref": "#/components/schemas/TeamOut"
+            },
+            "title": "Teams",
+            "type": "array"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/TeamTotals"
+          }
+        },
+        "required": [
+          "teams",
+          "totals"
+        ],
+        "title": "TeamsOut",
+        "type": "object"
+      },
       "ToggleIn": {
         "description": "Body of Place/Release Hold and Release on COA/Undo: the reason is required either way (OQ-103).",
         "properties": {
@@ -9491,6 +9602,52 @@
           }
         },
         "summary": "Webhook"
+      }
+    },
+    "/api/teams": {
+      "get": {
+        "operationId": "teams_api_teams_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Teams"
       }
     },
     "/api/users": {

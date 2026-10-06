@@ -6,6 +6,7 @@ import { ToastProvider } from './components/common/Toasts'
 import { ADMIN, VIEWS } from './components/shell/nav'
 import { AdminFeedback } from './pages/AdminFeedback'
 import { Audit } from './pages/Audit'
+import { TeamDashboard } from './pages/admin/TeamDashboard'
 import { SyncStatus } from './pages/admin/SyncStatus'
 import { WebhookStatus } from './pages/admin/WebhookStatus'
 import { Overview } from './pages/Overview'
@@ -21,7 +22,7 @@ const createQueryClient = () =>
   })
 
 // Pages that exist. Every other menu item renders a titled placeholder (F15-FR-02, OQ-081).
-const BUILT = new Set(['/overview', '/reports', '/admin/audit', '/admin/sync', '/admin/webhooks', '/admin/feedback'])
+const BUILT = new Set(['/overview', '/reports', '/admin/audit', '/admin/team', '/admin/sync', '/admin/webhooks', '/admin/feedback'])
 const PLACEHOLDERS = [...VIEWS, ...ADMIN].filter((item) => !BUILT.has(item.to))
 
 export default function App() {
@@ -36,6 +37,7 @@ export default function App() {
               <Route index element={<Navigate to="/overview" replace />} />
               <Route path="/overview" element={<Overview />} />
               <Route path="/reports" element={<Reports />} />
+              <Route path="/admin/team" element={<TeamDashboard />} />
               <Route path="/admin/sync" element={<SyncStatus />} />
               <Route path="/admin/webhooks" element={<WebhookStatus />} />
               <Route path="/admin/audit" element={<Audit />} />

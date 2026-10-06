@@ -772,6 +772,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/teams": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Teams */
+        get: operations["teams_api_teams_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/users": {
         parameters: {
             query?: never;
@@ -2178,6 +2195,40 @@ export interface components {
             pipeline_status: components["schemas"]["PipelineStatusOut"] | null;
             /** Watermarks */
             watermarks: components["schemas"]["WatermarkOut"][];
+        };
+        /** TeamOut */
+        TeamOut: {
+            /** Amber */
+            amber: number;
+            /** At Risk Pct */
+            at_risk_pct: number | null;
+            /** Late */
+            late: number;
+            /** Oldest Late Days */
+            oldest_late_days: number | null;
+            /** Open */
+            open: number;
+            /** Stage Keys */
+            stage_keys: string[];
+            /** Stage Labels */
+            stage_labels: string[];
+            /** Team */
+            team: string;
+        };
+        /** TeamTotals */
+        TeamTotals: {
+            /** Amber */
+            amber: number;
+            /** Late */
+            late: number;
+            /** Open */
+            open: number;
+        };
+        /** TeamsOut */
+        TeamsOut: {
+            /** Teams */
+            teams: components["schemas"]["TeamOut"][];
+            totals: components["schemas"]["TeamTotals"];
         };
         /**
          * ToggleIn
@@ -3964,6 +4015,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    teams_api_teams_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-demo-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeamsOut"];
                 };
             };
             /** @description Validation Error */

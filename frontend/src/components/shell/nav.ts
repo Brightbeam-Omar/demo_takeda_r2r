@@ -24,7 +24,6 @@ export const ADMIN: NavItem[] = [
     to: '/admin/team',
     label: 'Team Dashboard',
     icon: '◉',
-    coming: 'Coming in F21',
   },
   { to: '/admin/audit', label: 'Audit Log', icon: '☰' },
   {
