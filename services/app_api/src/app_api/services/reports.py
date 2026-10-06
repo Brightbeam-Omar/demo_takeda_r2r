@@ -27,7 +27,9 @@ from r2r_core.reports import (
     expedite_on_time,
     late_items,
     needs_by_adherence,
+    release_rag,
     release_rate,
+    representative_start,
     stage_metric_map,
     trend,
 )
@@ -67,6 +69,7 @@ class ReleaseCard(BaseModel):
     prorata_target: int
     pct_of_prorata: int | None
     coverage_weeks: int
+    rag: str | None
 
 
 class AdherenceCard(BaseModel):
@@ -239,12 +242,14 @@ def _metric_reference(session: Session) -> list[dict[str, object]]:
     ]
 
 
-def history_start(session: Session) -> dt.date | None:
-    """The first ISO week of the metric history: the first week with any completion (OQ-127 review)."""
-    found = session.execute(
-        text("SELECT min(week_start) FROM mirror_weekly_metrics WHERE completed > 0")
-    ).scalar()
-    return found if isinstance(found, dt.date) else None
+def history_start(session: Session, profile: SiteProfile) -> dt.date | None:
+    """The first representative week: every pipeline metric has the profile's minimum completions."""
+    completed = {
+        (r.metric_id, r.week_start): r.completed
+        for r in session.execute(text("SELECT metric_id, week_start, completed FROM mirror_weekly_metrics"))
+    }
+    ids = [m.id for m in profile.metrics if m.computed_in == "pipeline"]
+    return representative_start(completed, ids, profile.targets.representative_min_completions)
 
 
 def meta(session: Session, profile: SiteProfile, year: int | None, lots: Sequence[ReleasedLot]) -> ReportMeta:
@@ -262,7 +267,7 @@ def meta(session: Session, profile: SiteProfile, year: int | None, lots: Sequenc
         )
     }
     years.add(today.year)
-    start, _ = coverage(history_start(session), chosen, today)
+    start, _ = coverage(history_start(session, profile), chosen, today)
     awaiting = [
         AwaitingMetric(
             metric_id=str(r["metric_id"]), label=str(r["label"]), null_reason=_text(r["null_reason"])
@@ -283,17 +288,10 @@ def _text(value: object) -> str | None:
     return None if value is None else str(value)
 
 
-def _adherence_rag(pct: Decimal | None, target: int) -> str | None:
-    """Green at the target, amber within 10 points below it, otherwise red."""
-    if pct is None:
-        return None
-    if pct >= target:
-        return "green"
-    return "amber" if pct >= target - 10 else "red"
-
-
-def release_card(result: ReleaseRate) -> ReleaseCard:
+def release_card(result: ReleaseRate, profile: SiteProfile) -> ReleaseCard:
+    thresholds = profile.targets.release_rag
     return ReleaseCard(
+        rag=release_rag(result.pct_of_prorata, thresholds.green_min_pct, thresholds.amber_min_pct),
         released=result.released,
         annual_target=result.annual_target,
         prorata_target=int(result.prorata_target.quantize(Decimal(1), rounding=ROUND_HALF_UP)),
@@ -310,7 +308,7 @@ def adherence_card(result: Adherence, profile: SiteProfile) -> AdherenceCard:
         excluded=result.excluded,
         pct=result.pct,
         target_pct=target,
-        rag=_adherence_rag(result.pct, target),
+        rag=metric_rag(result.pct, profile),
     )
 
 
@@ -323,7 +321,7 @@ def expedite_card(result: ExpediteResult, profile: SiteProfile) -> ExpediteCard:
         app_only=result.app_only,
         pct=result.pct,
         target_pct=target,
-        rag=_adherence_rag(result.pct, target),
+        rag=metric_rag(result.pct, profile),
     )
 
 
@@ -338,7 +336,10 @@ def summary(session: Session, profile: SiteProfile, year: int | None) -> Summary
     return SummaryOut(
         **base.model_dump(),
         release=release_card(
-            release_rate(lots, base.year, today, profile.targets.release_annual, history_start(session))
+            release_rate(
+                lots, base.year, today, profile.targets.release_annual, history_start(session, profile)
+            ),
+            profile,
         ),
         adherence=adherence_card(needs_by_adherence(lots, versions, base.year), profile),
         expedite=expedite_card(expedite_on_time(lots, app_expedited(session), base.year), profile),
@@ -544,7 +545,10 @@ def release_rate_tab(session: Session, profile: SiteProfile, year: int | None) -
         weekly_target=profile.targets.release_weekly,
         weeks=weeks,
         release=release_card(
-            release_rate(lots, base.year, today, profile.targets.release_annual, history_start(session))
+            release_rate(
+                lots, base.year, today, profile.targets.release_annual, history_start(session, profile)
+            ),
+            profile,
         ),
     )
 

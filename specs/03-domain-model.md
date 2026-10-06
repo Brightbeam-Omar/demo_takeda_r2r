@@ -97,7 +97,13 @@ status_reasons:   # F19: optional reason of a status entry
   - {key: equipment_issue,      label: "Equipment issue"}
   - {key: awaiting_info,        label: "Awaiting info"}
   - {key: other,                label: "Other"}
-targets: {release_annual: 700, release_weekly: 13, needs_by_adherence_pct: 90, expedite_on_time_pct: 90}   # F20: positive values, shown on Reports & Metrics
+targets:   # F20: positive values, shown on Reports & Metrics
+  release_annual: 700
+  release_weekly: 13
+  needs_by_adherence_pct: 90
+  expedite_on_time_pct: 90
+  representative_min_completions: 7   # coverage starts at the first week in which M3, M6 and M7 each have this many completions
+  release_rag: {green_min_pct: 95, amber_min_pct: 80}   # Release Rate card, as a share of the pro-rata target
 adapters: {erp: ecc_like}       # Tier 2 adds s4_like and spreadsheet
 ```
 
@@ -212,7 +218,7 @@ For metric `m` bound to stage `s`, week `w` (ISO week, Monday start, site timezo
 - UI colour from `metric_rag`: `pct ≥ green_min_pct` green, `pct ≥ amber_min_pct` amber, otherwise red.
 
 ### 7.1 Report figures (F20, `r2r_core.reports`, read-time)
-- **Release rate:** released lots (rows with `ud_effective`) with `ud_date` in the year and on or after the coverage start. Target marker = `release_annual × coverage_weeks / 52`; coverage starts at the first ISO week of the metric history (the first week in `weekly_metrics_v` with any completion; OQ-117 as superseded by the F20 review) and runs in whole ISO weeks to the snapshot week, inclusive.
+- **Release rate:** released lots (rows with `ud_effective`) with `ud_date` in the year and on or after the coverage start. Target marker = `release_annual × coverage_weeks / 52`; coverage starts at the first ISO week in which M3, M6 and M7 each have at least `targets.representative_min_completions` completions (OQ-128, superseding the coverage rule of OQ-117) and runs in whole ISO weeks to the snapshot week, inclusive. The card colour uses `targets.release_rag` (green and amber minimums, as a percentage of the pro-rata target); the adherence and expedite cards use `metric_rag`.
 - **Needs-by adherence:** a released lot is on time when `ud_date ≤` its need-by. The need-by is `need_by_at_release` (earliest `mdez.bdter ≥ cycle_start_date` for the material, closed lines included), replaced by the latest `adjusted_need_by_date` version created on or before `ud_date` (a clear falls back to `need_by_at_release`). Lots with no need-by are excluded and counted separately (OQ-119, OQ-121).
 - **Expedite on-time:** source facts only: lots of a batch with `expedite_due_date`, on time when `ud_date ≤ expedite_due_date`. App-only expedites have no due date and are shown as a count, not in the ratio (OQ-120).
 - **Late items:** rows with RAG red. Days over SLA = `−days_remaining`; late-reason category = label of the latest status-log entry that has a reason, else the label of `late_reason_auto`, else none (OQ-123).

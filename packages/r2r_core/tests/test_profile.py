@@ -297,3 +297,26 @@ def test_f20_fr01_targets_are_required() -> None:
     del data["targets"]
     with pytest.raises(ProfileError, match="targets"):
         parse_profile(data)
+
+
+def test_f20_followup_site_a_coverage_and_release_thresholds(profile: SiteProfile) -> None:
+    assert profile.targets.representative_min_completions == 7
+    assert (profile.targets.release_rag.green_min_pct, profile.targets.release_rag.amber_min_pct) == (95, 80)
+
+
+@pytest.mark.parametrize("missing", ["representative_min_completions", "release_rag"])
+def test_f20_followup_both_new_targets_are_required(missing: str) -> None:
+    data = _raw()
+    del data["targets"][missing]
+    with pytest.raises(ProfileError, match=missing):
+        parse_profile(data)
+
+
+def test_f20_followup_release_thresholds_must_be_ordered_and_positive() -> None:
+    data = _raw()
+    data["targets"]["release_rag"] = {"green_min_pct": 70, "amber_min_pct": 80}
+    with pytest.raises(ProfileError, match="release_rag"):
+        parse_profile(data)
+    data["targets"]["release_rag"] = {"green_min_pct": 95, "amber_min_pct": 0}
+    with pytest.raises(ProfileError, match="amber_min_pct"):
+        parse_profile(data)

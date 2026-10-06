@@ -734,3 +734,8 @@ Add entries as: `## OQ-NNN · <feature> · <date>` then context, question, optio
 **Context:** Release Rate coverage now starts at the first ISO week of the metric history (the first week in `weekly_metrics_v` with any completion), and counts releases from that date (supersedes the coverage part of OQ-117). The synthetic history starts from empty: the first weeks have few lots in flight, so early-week volumes and metrics are low until the pipeline fills up.
 **Question (after Tier 1):** Datagen warm-up: generate lots received before the history window, so the pipeline is in steady state at window start. This changes the F05 frozen counts and early-week metrics, so it needs a product decision.
 **Decision:** Open. Not for Tier 1.
+
+## OQ-128 · F20 follow-up · 2026-10-06
+**Context:** The first rule for the Release Rate coverage start (the first week with any completion) landed on 1 Jan 2026, because a trickle of re-evaluation completions begins in late 2025, and gave 56% of the pro-rata target.
+**Question:** When does the coverage start, and how is the card coloured?
+**Decision (product owner):** Coverage starts at the first ISO week in which M3, M6 and M7 each have at least 7 completions (`targets.representative_min_completions: 7`). Releases are counted from that date and the "Coverage from …" note uses it. **This supersedes the coverage rule of OQ-117 and the first rule of the F20 review.** The Release Rate card colour uses `targets.release_rag: {green_min_pct: 95, amber_min_pct: 80}` of the pro-rata target. The adherence and expedite cards keep `metric_rag`. The profile validator requires both new keys.

@@ -16,7 +16,9 @@ from r2r_core.reports import (
     expedite_on_time,
     late_items,
     needs_by_adherence,
+    release_rag,
     release_rate,
+    representative_start,
     stage_metric_map,
     trend,
 )
@@ -268,3 +270,32 @@ def test_f20_oq123_the_stage_metric_map_comes_from_the_profile(profile: SiteProf
     assert stage_metric_map(profile) == {
         "receipt": "M1", "call_off": "M2", "sampling": "M3", "qc_ship": "M4", "qc_testing": "M6", "qa_release": "M7",
     }  # fmt: skip
+
+
+# --- representative start and release RAG (F20 follow-up) ----------------------------------------
+
+
+def test_f20_followup_coverage_starts_at_the_first_week_where_every_metric_has_enough_completions() -> None:
+    done = {
+        ("M3", D(2026, 3, 30)): 11, ("M6", D(2026, 3, 30)): 2, ("M7", D(2026, 3, 30)): 2,  # M6 and M7 too few
+        ("M3", D(2026, 4, 6)): 9, ("M6", D(2026, 4, 6)): 8, ("M7", D(2026, 4, 6)): 0,  # M7 none
+        ("M3", D(2026, 4, 13)): 7, ("M6", D(2026, 4, 13)): 9, ("M7", D(2026, 4, 13)): 7,  # all at least 7
+        ("M3", D(2026, 4, 20)): 20, ("M6", D(2026, 4, 20)): 20, ("M7", D(2026, 4, 20)): 20,
+    }  # fmt: skip
+    assert representative_start(done, ["M3", "M6", "M7"], 7) == D(2026, 4, 13)
+    assert representative_start(done, ["M3", "M6", "M7"], 8) == D(2026, 4, 20)
+
+
+def test_f20_followup_no_representative_week_gives_no_start() -> None:
+    assert representative_start({("M3", D(2026, 4, 6)): 3}, ["M3", "M6"], 1) is None
+    assert representative_start({}, ["M3"], 1) is None
+
+
+@pytest.mark.parametrize(
+    ("pct", "colour"),
+    [(100, "green"), (95, "green"), (94, "amber"), (80, "amber"), (79, "red"), (0, "red"), (None, None)],
+)
+def test_f20_followup_release_rag_uses_the_thresholds_of_the_pro_rata_target(
+    pct: int | None, colour: str | None
+) -> None:
+    assert release_rag(pct, 95, 80) == colour

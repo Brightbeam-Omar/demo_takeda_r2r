@@ -19,7 +19,7 @@ export function ExecutiveSummary({ params }: { params: URLSearchParams }) {
         fill={fillPercent(release.released, release.annual_target)}
         marker={markerPercent(release.prorata_target, release.annual_target)}
         markerLabel={`Pro-rata target ${release.prorata_target}`}
-        rag={release.pct_of_prorata === null ? null : release.pct_of_prorata >= 100 ? 'green' : release.pct_of_prorata >= 90 ? 'amber' : 'red'}
+        rag={release.rag}
         counts={
           <>
             {release.pct_of_prorata === null ? '–' : `${release.pct_of_prorata}%`} of pro-rata target

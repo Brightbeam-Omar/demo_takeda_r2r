@@ -52,14 +52,37 @@ def _pct(part: int, whole: int) -> Decimal | None:
     return (Decimal(100) * part / whole).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP)
 
 
+def representative_start(
+    completions: Mapping[tuple[str, date], int], metric_ids: Sequence[str], minimum: int
+) -> date | None:
+    """The first ISO week in which every metric has at least ``minimum`` completions (F20 follow-up).
+
+    That is when the pipeline is representative: the weeks before it are the history filling up from empty.
+    """
+    weeks = sorted({week for _, week in completions})
+    for week in weeks:
+        if all(completions.get((metric, week), 0) >= minimum for metric in metric_ids):
+            return week
+    return None
+
+
+def release_rag(pct_of_prorata: int | None, green_min: int, amber_min: int) -> str | None:
+    """Green, amber or red for the share of the pro-rata target reached; None without a target."""
+    if pct_of_prorata is None:
+        return None
+    if pct_of_prorata >= green_min:
+        return "green"
+    return "amber" if pct_of_prorata >= amber_min else "red"
+
+
 # --- release rate (OQ-117) ---------------------------------------------------------------------
 
 
 def coverage(history_start: date | None, year: int, today: date) -> tuple[date | None, int]:
     """``(coverage start, whole ISO weeks covered)`` for ``year``.
 
-    Coverage starts at the first ISO week of the metric history (the first week with a completion), or at
-    1 Jan if the history began earlier. It runs to the snapshot week, or to the end of the year for a past
+    Coverage starts at the first representative ISO week of the metric history (``representative_start``), or
+    at 1 Jan if that came earlier. It runs to the snapshot week, or to the end of the year for a past
     year. The week count is inclusive of both weeks and capped at 52. A year the history has not reached
     has none.
     """

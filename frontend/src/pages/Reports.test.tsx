@@ -25,7 +25,7 @@ const meta = {
 
 const summary = {
   ...meta,
-  release: { released: 318, annual_target: 700, prorata_target: 350, pct_of_prorata: 91, coverage_weeks: 26 },
+  release: { released: 318, annual_target: 700, prorata_target: 350, pct_of_prorata: 91, coverage_weeks: 26, rag: 'amber' },
   adherence: { on_time: 280, late: 31, excluded: 3, pct: '90.0', target_pct: 90, rag: 'green' },
   expedite: { on_time: 3, late: 1, expedited: 4, app_only: 1, pct: '75.0', target_pct: 90, rag: 'red' },
 }
@@ -119,6 +119,7 @@ test('F20-AC-01: Executive Summary shows the three cards with their figures and 
   expect(within(release).getByTestId('card-release-figure')).toHaveTextContent('318 / 700')
   expect(within(release).getByTestId('card-release-counts')).toHaveTextContent('91% of pro-rata target')
   expect(within(release).getByTestId('card-release-marker')).toHaveStyle({ left: '50%' }) // 350 of 700
+  expect(release).toHaveAttribute('data-rag', 'amber')
   const adherence = screen.getByTestId('card-adherence')
   expect(within(adherence).getByTestId('card-adherence-figure')).toHaveTextContent('90.0%')
   expect(within(adherence).getByTestId('card-adherence-counts')).toHaveTextContent('280 on-time / 31 late')

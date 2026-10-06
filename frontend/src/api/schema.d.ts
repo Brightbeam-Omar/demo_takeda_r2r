@@ -1584,6 +1584,8 @@ export interface components {
             pct_of_prorata: number | null;
             /** Prorata Target */
             prorata_target: number;
+            /** Rag */
+            rag: string | null;
             /** Released */
             released: number;
         };

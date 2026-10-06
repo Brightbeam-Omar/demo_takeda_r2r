@@ -2731,6 +2731,17 @@
             "title": "Prorata Target",
             "type": "integer"
           },
+          "rag": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rag"
+          },
           "released": {
             "title": "Released",
             "type": "integer"
@@ -2741,7 +2752,8 @@
           "annual_target",
           "prorata_target",
           "pct_of_prorata",
-          "coverage_weeks"
+          "coverage_weeks",
+          "rag"
         ],
         "title": "ReleaseCard",
         "type": "object"

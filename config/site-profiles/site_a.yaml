@@ -72,5 +72,11 @@ status_reasons:   # F19: optional reason of a status entry
   - {key: equipment_issue,      label: "Equipment issue"}
   - {key: awaiting_info,        label: "Awaiting info"}
   - {key: other,                label: "Other"}
-targets: {release_annual: 700, release_weekly: 13, needs_by_adherence_pct: 90, expedite_on_time_pct: 90}   # F20: positive values, shown on Reports & Metrics
+targets:   # F20: positive values, shown on Reports & Metrics
+  release_annual: 700
+  release_weekly: 13
+  needs_by_adherence_pct: 90
+  expedite_on_time_pct: 90
+  representative_min_completions: 7   # coverage starts at the first week in which M3, M6 and M7 each have this many completions
+  release_rag: {green_min_pct: 95, amber_min_pct: 80}   # Release Rate card, as a share of the pro-rata target
 adapters: {erp: ecc_like}       # Tier 2 adds s4_like and spreadsheet

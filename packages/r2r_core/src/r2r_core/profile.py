@@ -136,6 +136,19 @@ class ReleaseOnCoa(_Model):
     sla_days: PositiveInt
 
 
+class ReleaseRag(_Model):
+    """Colour thresholds of the Release Rate card, as a percentage of the pro-rata target (F20 follow-up)."""
+
+    green_min_pct: PositiveInt
+    amber_min_pct: PositiveInt
+
+    @model_validator(mode="after")
+    def _ordered(self) -> "ReleaseRag":
+        if self.green_min_pct < self.amber_min_pct:
+            raise ValueError("targets.release_rag.green_min_pct must be >= amber_min_pct")
+        return self
+
+
 class Targets(_Model):
     """F20-FR-01: the figures the Reports & Metrics page measures against."""
 
@@ -143,6 +156,8 @@ class Targets(_Model):
     release_weekly: PositiveInt
     needs_by_adherence_pct: PositiveInt = Field(le=100)
     expedite_on_time_pct: PositiveInt = Field(le=100)
+    representative_min_completions: PositiveInt
+    release_rag: ReleaseRag
 
 
 class Exports(_Model):
