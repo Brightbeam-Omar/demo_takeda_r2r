@@ -9,6 +9,7 @@ from pathlib import Path
 from r2r_core.profile import SiteProfile
 
 from r2r_pipeline.context import RunContext, SourceDsns, new_context
+from r2r_pipeline.reports import write_calendar
 from r2r_pipeline.runlog import StepResult, run_step
 
 
@@ -25,7 +26,8 @@ def setup(
         ctx,
         "setup",
         lambda: StepResult(
-            detail={"snapshot_date": ctx.snapshot_date.isoformat(), "site": profile.site.code}
+            rows=write_calendar(ctx),
+            detail={"snapshot_date": ctx.snapshot_date.isoformat(), "site": profile.site.code},
         ),
     )
     return ctx

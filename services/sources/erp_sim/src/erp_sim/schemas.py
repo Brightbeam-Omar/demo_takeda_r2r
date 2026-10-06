@@ -4,7 +4,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class Body(BaseModel):
@@ -102,6 +102,21 @@ class HoldIn(Body):
     matnr: str
     charg: str
     hold: bool
+
+
+class ExpediteRequestedIn(Body):
+    """F20-FR-02(d): an expedite request on a batch. It applies to every lot of the batch."""
+
+    matnr: str
+    charg: str
+    requested_on: date
+    due_date: date
+
+    @model_validator(mode="after")
+    def _due_after_request(self) -> "ExpediteRequestedIn":
+        if self.due_date < self.requested_on:
+            raise ValueError("due_date may not be before requested_on")
+        return self
 
 
 class DemandIn(Body):

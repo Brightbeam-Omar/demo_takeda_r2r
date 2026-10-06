@@ -8,6 +8,7 @@
     "typecheck": "tsc --noEmit",
     "screenshot": "node screenshot.mjs",
     "screenshots": "node screenshots.mjs",
+    "screenshots:reports": "node screenshot-reports.mjs",
     "screenshot:filters": "node screenshot-filters.mjs",
     "screenshot:stages": "node screenshot-stages.mjs",
     "screenshot:table": "node screenshot-table.mjs",

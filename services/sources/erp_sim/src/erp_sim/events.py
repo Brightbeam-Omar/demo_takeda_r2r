@@ -472,6 +472,15 @@ def hold(session: Session, body: schemas.HoldIn) -> dict[str, Any]:
     return {"mcha": row_dict(batch)}
 
 
+def expedite_requested(session: Session, body: schemas.ExpediteRequestedIn) -> dict[str, Any]:
+    """Record (or replace) the expedite request of a batch (F20-FR-02)."""
+    batch = _batch(session, body.matnr, body.charg)
+    batch.zexprq = body.requested_on
+    batch.zexpdd = body.due_date
+    session.flush()
+    return {"mcha": row_dict(batch)}
+
+
 def demand(session: Session, body: schemas.DemandIn) -> dict[str, Any]:
     """Create or update an MRP demand line. Closing a demand is ``is_open=false``."""
     _material(session, body.matnr)

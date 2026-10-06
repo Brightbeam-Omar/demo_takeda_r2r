@@ -391,6 +391,9 @@ def test_f06_fr09_transform_is_a_plain_function_that_writes_batch_flat(
         "open_deviation_count",
         "closed_deviation_count",
         "next_inspection_date",
+        "need_by_at_release",
+        "expedite_requested_on",
+        "expedite_due_date",
     ]
     assert table.column_names == ["row_key", *expected]
 
@@ -424,3 +427,68 @@ def test_f19_fr02_a_resolved_check_has_a_receipt_completion_date(
     assert flat["RM1|B1|10000001"]["inbound_check_status"] == "resolved"
     assert flat["RM1|B1|10000001"]["inbound_check_completed_date"] == D(2026, 10, 3)
     assert rows(con, "t_flags")["RM1|B1|10000001"]["inbound_light"] == "amber"
+
+
+def _released(world: World, charg: str, lot: str, received: date, released: date) -> None:
+    world.receive(charg, lot, received)
+    world.lot_field(lot, vcode="A", vdatum=released)
+
+
+def test_f20_fr02_need_by_at_release_is_the_earliest_demand_from_the_cycle_start_closed_lines_included(
+    tmp_path: Path, profile: SiteProfile
+) -> None:
+    world = World()
+    _released(world, "B1", "10000001", D(2026, 8, 3), D(2026, 8, 20))
+    world.demand(1, D(2026, 7, 1), is_open=False)  # before the cycle: not this lot's demand
+    world.demand(2, D(2026, 9, 15), is_open=False)  # closed when the lot was released: counts
+    world.demand(3, D(2026, 10, 20))  # open, later: loses to the earlier line
+    con, _ = build(world, tmp_path, profile)
+    assert rows(con)["RM1|B1|10000001"]["need_by_at_release"] == D(2026, 9, 15)
+
+
+def test_f20_fr02_need_by_at_release_is_only_for_released_lots_and_null_without_demand(
+    tmp_path: Path, profile: SiteProfile
+) -> None:
+    world = World()
+    _released(world, "B1", "10000001", D(2026, 8, 3), D(2026, 8, 20))
+    world.receive("B2", "10000002", D(2026, 8, 3))  # not released
+    world.demand(1, D(2026, 9, 15), is_open=False)
+    world.stock("B3", "0100")
+    con, _ = build(world, tmp_path, profile)
+    found = rows(con)
+    assert found["RM1|B2|10000002"]["need_by_at_release"] is None
+    world2 = World()
+    _released(world2, "B1", "10000001", D(2026, 8, 3), D(2026, 8, 20))
+    con2, _ = build(world2, tmp_path, profile)
+    assert rows(con2)["RM1|B1|10000001"]["need_by_at_release"] is None  # no demand line at all
+
+
+def test_f20_fr02_a_re_evaluation_lot_anchors_on_its_own_lot_start(
+    tmp_path: Path, profile: SiteProfile
+) -> None:
+    world = World()
+    _released(world, "B1", "10000001", D(2026, 3, 2), D(2026, 3, 20))
+    world.reeval("B1", "10000002", D(2026, 9, 1))
+    world.lot_field("10000002", vcode="A", vdatum=D(2026, 9, 15))
+    world.demand(1, D(2026, 4, 1), is_open=False)  # in the original cycle only
+    world.demand(2, D(2026, 10, 5), is_open=False)
+    con, _ = build(world, tmp_path, profile)
+    found = rows(con)
+    assert found["RM1|B1|10000001"]["need_by_at_release"] == D(2026, 4, 1)
+    assert found["RM1|B1|10000002"]["need_by_at_release"] == D(2026, 10, 5)
+
+
+def test_f20_fr02_expedite_facts_apply_to_every_lot_of_the_batch(
+    tmp_path: Path, profile: SiteProfile
+) -> None:
+    world = World()
+    world.receive("B1", "10000001", D(2026, 9, 1))
+    world.reeval("B1", "10000002", D(2026, 10, 1))
+    world.expedite("B1", D(2026, 9, 2), D(2026, 9, 20))
+    world.receive("B2", "10000003", D(2026, 9, 1))
+    con, _ = build(world, tmp_path, profile)
+    found = rows(con)
+    for lot in ("10000001", "10000002"):
+        row = found[f"RM1|B1|{lot}"]
+        assert (row["expedite_requested_on"], row["expedite_due_date"]) == (D(2026, 9, 2), D(2026, 9, 20))
+    assert found["RM1|B2|10000003"]["expedite_due_date"] is None

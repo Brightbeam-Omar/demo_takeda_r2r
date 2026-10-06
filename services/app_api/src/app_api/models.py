@@ -277,6 +277,7 @@ BATCH_PIPELINE_COLUMNS: MirrorColumns = (
     ("lims_approved_at", TIMESTAMP), ("ud_code", TEXT), ("ud_date", DATE),
     ("erp_results_recorded_at", TIMESTAMP), ("campaign", TEXT), ("system_need_by_date", DATE),
     ("open_deviation_count", INTEGER), ("closed_deviation_count", INTEGER), ("next_inspection_date", DATE),
+    ("need_by_at_release", DATE), ("expedite_requested_on", DATE), ("expedite_due_date", DATE),
     ("stage_key", TEXT), ("stage_rule_id", TEXT), ("cycle_start_date", DATE),
     ("ud_effective", BOOLEAN), ("stage_sort", INTEGER), ("current_stage_entry_date", DATE),
     ("lims_rejected", BOOLEAN), ("receipt_entry", DATE), ("receipt_exit", DATE), ("call_off_entry", DATE),
@@ -378,6 +379,25 @@ MIRRORS: dict[str, tuple[str, MirrorColumns, tuple[str, ...], tuple[tuple[str, .
         (("row_key", TEXT), ("sample_id", TEXT), ("status", TEXT), ("collected_date", DATE),
          ("approved_at", TIMESTAMP), ("run_id", TEXT)),
         ("row_key", "sample_id"),
+        (),
+    ),
+    "monthly_metrics_v": (
+        "mirror_monthly_metrics",
+        (("metric_id", TEXT), ("month_start", DATE), ("completed", INTEGER), ("on_time", INTEGER),
+         ("pct", PCT), ("run_id", TEXT)),
+        ("metric_id", "month_start"),
+        (),
+    ),
+    "pipeline_daily_v": (
+        "mirror_pipeline_daily",
+        (("day", DATE), ("stage_key", TEXT), ("open_count", INTEGER), ("run_id", TEXT)),
+        ("day", "stage_key"),
+        (),
+    ),
+    "releases_weekly_v": (
+        "mirror_releases_weekly",
+        (("week_start", DATE), ("released_count", INTEGER), ("run_id", TEXT)),
+        ("week_start",),
         (),
     ),
 }  # fmt: skip

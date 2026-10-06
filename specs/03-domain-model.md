@@ -16,6 +16,7 @@ This is the single source of truth for R2R business logic. Every value below tha
 | Usage decision (UD) | ERP quality decision closing the lot: accept (release), reject or cancel |
 | Need-by date | Date the material is needed by production (from ERP MRP demand) |
 | Campaign | Production campaign that consumes the material (from demand) |
+| Expedite (source fact, F20) | ERP request that a batch be expedited: `expedite_requested_on` and `expedite_due_date` (from the batch). They apply to every lot of the batch. The app-side `expedite` override (a flag with no due date) stays separate |
 | Air gap | LIMS approved but the result never transferred to the ERP (no interface record, no usage decision) after the threshold. Release is stuck between systems. A normal QA Release lot, whose results were recorded in the ERP, is not an air gap |
 
 ## 2. Site profile (YAML)
@@ -96,6 +97,13 @@ status_reasons:   # F19: optional reason of a status entry
   - {key: equipment_issue,      label: "Equipment issue"}
   - {key: awaiting_info,        label: "Awaiting info"}
   - {key: other,                label: "Other"}
+targets:   # F20: positive values, shown on Reports & Metrics
+  release_annual: 700
+  release_weekly: 13
+  needs_by_adherence_pct: 90
+  expedite_on_time_pct: 90
+  representative_min_completions: 7   # coverage starts at the first week in which M3, M6 and M7 each have this many completions
+  release_rag: {green_min_pct: 95, amber_min_pct: 80}   # Release Rate card, as a share of the pro-rata target
 adapters: {erp: ecc_like}       # Tier 2 adds s4_like and spreadsheet
 ```
 
@@ -203,10 +211,17 @@ For metric `m` bound to stage `s`, week `w` (ISO week, Monday start, site timezo
 - The pipeline publishes the last 12 complete weeks plus the current week-to-date for metrics with `computed_in: pipeline`. It also publishes the contributing rows (`weekly_metric_rows_v`), so Explain never re-implements this maths.
 - For metrics with `computed_in: app`, `metric_reference_v.status = 'awaiting_signal'` with a human-readable `null_reason`. The text comes from the profile metric's `null_reason`, which is **required** when `computed_in: app` (the profile validator enforces it). Example: "Physical delivery date comes from 3PL feed, enabled in Tier 2".
 - The weekly views (`weekly_metrics_v`, `weekly_metric_rows_v`) contain only `computed_in: pipeline` metrics.
+- **F20 history (OQ-118):** the weekly window is the last **52** complete weeks plus the current week to date (empty weeks are still emitted). `monthly_metrics_v` pools the same contributing rows by the calendar month (site timezone) of the **exit date**: the last 12 complete months plus the current month to date, with empty months emitted (`completed = 0`, NULL `pct`).
 - The SLA used for a row is its own entry for the stage in `applicable_sla_json` (re-evaluation and override aware). A row whose stage is not applicable is not counted.
 - Weeks are ISO weeks (Monday start) in the site timezone, relative to the snapshot date: the 12 weeks before the snapshot's week, plus the snapshot's week to date. A week with no completions is still emitted, with `completed = 0` and NULL `pct`.
 - The **headline value is the last complete week**. Week-to-date is shown as a secondary value, because at demo start (a Monday morning) week-to-date is empty.
 - UI colour from `metric_rag`: `pct ≥ green_min_pct` green, `pct ≥ amber_min_pct` amber, otherwise red.
+
+### 7.1 Report figures (F20, `r2r_core.reports`, read-time)
+- **Release rate:** released lots (rows with `ud_effective`) with `ud_date` in the year and on or after the coverage start. Target marker = `release_annual × coverage_weeks / 52`; coverage starts at the first ISO week in which M3, M6 and M7 each have at least `targets.representative_min_completions` completions (OQ-128, superseding the coverage rule of OQ-117) and runs in whole ISO weeks to the snapshot week, inclusive. The card colour uses `targets.release_rag` (green and amber minimums, as a percentage of the pro-rata target); the adherence and expedite cards use `metric_rag`.
+- **Needs-by adherence:** a released lot is on time when `ud_date ≤` its need-by. The need-by is `need_by_at_release` (earliest `mdez.bdter ≥ cycle_start_date` for the material, closed lines included), replaced by the latest `adjusted_need_by_date` version created on or before `ud_date` (a clear falls back to `need_by_at_release`). Lots with no need-by are excluded and counted separately (OQ-119, OQ-121).
+- **Expedite on-time:** source facts only: lots of a batch with `expedite_due_date`, on time when `ud_date ≤ expedite_due_date`. App-only expedites have no due date and are shown as a count, not in the ratio (OQ-120).
+- **Late items:** rows with RAG red. Days over SLA = `−days_remaining`; late-reason category = label of the latest status-log entry that has a reason, else the label of `late_reason_auto`, else none (OQ-123).
 
 ## 8. Quality indicators
 - **Deviation light** per row: `red` if any **open** deviation is linked to the batch, `amber` if linked deviations exist and all are closed, `green` if none.

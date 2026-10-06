@@ -23,7 +23,9 @@ SELECT q.matnr AS material_no,
        q.vcode AS ud_code,
        q.vdatum AS ud_date,
        q.zresrec AS erp_results_recorded_at,
-       b.qnext AS next_inspection_date
+       b.qnext AS next_inspection_date,
+       b.zexprq AS expedite_requested_on,
+       b.zexpdd AS expedite_due_date
 FROM stg_qals q
 JOIN stg_mcha b ON b.matnr = q.matnr AND b.charg = q.charg
 JOIN stg_mara m ON m.matnr = q.matnr

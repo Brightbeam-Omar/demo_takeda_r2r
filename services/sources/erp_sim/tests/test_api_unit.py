@@ -16,6 +16,7 @@ def client(monkeypatch: pytest.MonkeyPatch) -> TestClient:
 def test_f04_fr03_the_expected_write_endpoints_exist() -> None:
     assert WRITE_PATHS == [
         "/events/demand",
+        "/events/expedite-requested",
         "/events/goods-receipt",
         "/events/goods-receipt-reversal",
         "/events/hold",

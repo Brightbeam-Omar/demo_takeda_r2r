@@ -115,6 +115,9 @@ def load_mirror(
     inbound_checks: list[dict[str, Any]] | None = None,
     change_controls: list[dict[str, Any]] | None = None,
     samples: list[dict[str, Any]] | None = None,
+    monthly: list[dict[str, Any]] | None = None,
+    daily: list[dict[str, Any]] | None = None,
+    releases: list[dict[str, Any]] | None = None,
 ) -> None:
     """Replace the mirror tables with ``rows`` and the profile's reference data."""
     data: dict[str, list[dict[str, Any]]] = {
@@ -138,6 +141,9 @@ def load_mirror(
         "inbound_checks_v": inbound_checks or [],
         "change_controls_v": change_controls or [],
         "samples_v": samples or [],
+        "monthly_metrics_v": monthly or [],
+        "pipeline_daily_v": daily or [],
+        "releases_weekly_v": releases or [],
     }
     with factory() as session:
         for name, (table, columns, _, _) in MIRRORS.items():

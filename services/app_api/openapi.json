@@ -1,6 +1,141 @@
 {
   "components": {
     "schemas": {
+      "AdherenceCard": {
+        "properties": {
+          "excluded": {
+            "title": "Excluded",
+            "type": "integer"
+          },
+          "late": {
+            "title": "Late",
+            "type": "integer"
+          },
+          "on_time": {
+            "title": "On Time",
+            "type": "integer"
+          },
+          "pct": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pct"
+          },
+          "rag": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rag"
+          },
+          "target_pct": {
+            "title": "Target Pct",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "on_time",
+          "late",
+          "excluded",
+          "pct",
+          "target_pct",
+          "rag"
+        ],
+        "title": "AdherenceCard",
+        "type": "object"
+      },
+      "AdherenceOut": {
+        "properties": {
+          "adherence": {
+            "$ref": "#/components/schemas/AdherenceCard"
+          },
+          "awaiting_signal": {
+            "items": {
+              "$ref": "#/components/schemas/AwaitingMetric"
+            },
+            "title": "Awaiting Signal",
+            "type": "array"
+          },
+          "coverage_from": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverage From"
+          },
+          "freshness": {
+            "$ref": "#/components/schemas/Freshness"
+          },
+          "weeks": {
+            "items": {
+              "$ref": "#/components/schemas/AdherenceWeek"
+            },
+            "title": "Weeks",
+            "type": "array"
+          },
+          "year": {
+            "title": "Year",
+            "type": "integer"
+          },
+          "years": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Years",
+            "type": "array"
+          }
+        },
+        "required": [
+          "freshness",
+          "year",
+          "years",
+          "coverage_from",
+          "awaiting_signal",
+          "weeks",
+          "adherence"
+        ],
+        "title": "AdherenceOut",
+        "type": "object"
+      },
+      "AdherenceWeek": {
+        "properties": {
+          "exceeded": {
+            "title": "Exceeded",
+            "type": "integer"
+          },
+          "week_start": {
+            "format": "date",
+            "title": "Week Start",
+            "type": "string"
+          },
+          "within": {
+            "title": "Within",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "week_start",
+          "within",
+          "exceeded"
+        ],
+        "title": "AdherenceWeek",
+        "type": "object"
+      },
       "AdjustedOut": {
         "properties": {
           "rows": {
@@ -244,6 +379,36 @@
           "items"
         ],
         "title": "AuditPage",
+        "type": "object"
+      },
+      "AwaitingMetric": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "metric_id": {
+            "title": "Metric Id",
+            "type": "string"
+          },
+          "null_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Null Reason"
+          }
+        },
+        "required": [
+          "metric_id",
+          "label",
+          "null_reason"
+        ],
+        "title": "AwaitingMetric",
         "type": "object"
       },
       "ChangeControlOut": {
@@ -936,6 +1101,64 @@
         "title": "DeviationOut",
         "type": "object"
       },
+      "ExpediteCard": {
+        "properties": {
+          "app_only": {
+            "title": "App Only",
+            "type": "integer"
+          },
+          "expedited": {
+            "title": "Expedited",
+            "type": "integer"
+          },
+          "late": {
+            "title": "Late",
+            "type": "integer"
+          },
+          "on_time": {
+            "title": "On Time",
+            "type": "integer"
+          },
+          "pct": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pct"
+          },
+          "rag": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rag"
+          },
+          "target_pct": {
+            "title": "Target Pct",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "on_time",
+          "late",
+          "expedited",
+          "app_only",
+          "pct",
+          "target_pct",
+          "rag"
+        ],
+        "title": "ExpediteCard",
+        "type": "object"
+      },
       "FeedbackIn": {
         "properties": {
           "message": {
@@ -1388,6 +1611,151 @@
           "rows"
         ],
         "title": "InsightsOut",
+        "type": "object"
+      },
+      "LateOut": {
+        "properties": {
+          "awaiting_signal": {
+            "items": {
+              "$ref": "#/components/schemas/AwaitingMetric"
+            },
+            "title": "Awaiting Signal",
+            "type": "array"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "coverage_from": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverage From"
+          },
+          "freshness": {
+            "$ref": "#/components/schemas/Freshness"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/LateRow"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "year": {
+            "title": "Year",
+            "type": "integer"
+          },
+          "years": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Years",
+            "type": "array"
+          }
+        },
+        "required": [
+          "freshness",
+          "year",
+          "years",
+          "coverage_from",
+          "awaiting_signal",
+          "count",
+          "items"
+        ],
+        "title": "LateOut",
+        "type": "object"
+      },
+      "LateRow": {
+        "properties": {
+          "batch_no": {
+            "title": "Batch No",
+            "type": "string"
+          },
+          "campaign": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Campaign"
+          },
+          "days_over_sla": {
+            "title": "Days Over Sla",
+            "type": "integer"
+          },
+          "late_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Late Reason"
+          },
+          "material_desc": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Material Desc"
+          },
+          "material_no": {
+            "title": "Material No",
+            "type": "string"
+          },
+          "metric_breached": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metric Breached"
+          },
+          "row_key": {
+            "title": "Row Key",
+            "type": "string"
+          },
+          "stage_key": {
+            "title": "Stage Key",
+            "type": "string"
+          },
+          "stage_label": {
+            "title": "Stage Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "row_key",
+          "material_no",
+          "material_desc",
+          "batch_no",
+          "campaign",
+          "stage_key",
+          "stage_label",
+          "metric_breached",
+          "days_over_sla",
+          "late_reason"
+        ],
+        "title": "LateRow",
         "type": "object"
       },
       "LatestStatusOut": {
@@ -2336,6 +2704,140 @@
           "air_gap_threshold_hours"
         ],
         "title": "ReferenceOut",
+        "type": "object"
+      },
+      "ReleaseCard": {
+        "properties": {
+          "annual_target": {
+            "title": "Annual Target",
+            "type": "integer"
+          },
+          "coverage_weeks": {
+            "title": "Coverage Weeks",
+            "type": "integer"
+          },
+          "pct_of_prorata": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pct Of Prorata"
+          },
+          "prorata_target": {
+            "title": "Prorata Target",
+            "type": "integer"
+          },
+          "rag": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rag"
+          },
+          "released": {
+            "title": "Released",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "released",
+          "annual_target",
+          "prorata_target",
+          "pct_of_prorata",
+          "coverage_weeks",
+          "rag"
+        ],
+        "title": "ReleaseCard",
+        "type": "object"
+      },
+      "ReleaseRateOut": {
+        "properties": {
+          "awaiting_signal": {
+            "items": {
+              "$ref": "#/components/schemas/AwaitingMetric"
+            },
+            "title": "Awaiting Signal",
+            "type": "array"
+          },
+          "coverage_from": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverage From"
+          },
+          "freshness": {
+            "$ref": "#/components/schemas/Freshness"
+          },
+          "release": {
+            "$ref": "#/components/schemas/ReleaseCard"
+          },
+          "weekly_target": {
+            "title": "Weekly Target",
+            "type": "integer"
+          },
+          "weeks": {
+            "items": {
+              "$ref": "#/components/schemas/ReleaseWeek"
+            },
+            "title": "Weeks",
+            "type": "array"
+          },
+          "year": {
+            "title": "Year",
+            "type": "integer"
+          },
+          "years": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Years",
+            "type": "array"
+          }
+        },
+        "required": [
+          "freshness",
+          "year",
+          "years",
+          "coverage_from",
+          "awaiting_signal",
+          "weekly_target",
+          "weeks",
+          "release"
+        ],
+        "title": "ReleaseRateOut",
+        "type": "object"
+      },
+      "ReleaseWeek": {
+        "properties": {
+          "released_count": {
+            "title": "Released Count",
+            "type": "integer"
+          },
+          "week_start": {
+            "format": "date",
+            "title": "Week Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "week_start",
+          "released_count"
+        ],
+        "title": "ReleaseWeek",
         "type": "object"
       },
       "RowDetail": {
@@ -3330,6 +3832,160 @@
         "title": "SampleOut",
         "type": "object"
       },
+      "SlaBar": {
+        "properties": {
+          "completed": {
+            "title": "Completed",
+            "type": "integer"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "metric_id": {
+            "title": "Metric Id",
+            "type": "string"
+          },
+          "null_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Null Reason"
+          },
+          "on_time": {
+            "title": "On Time",
+            "type": "integer"
+          },
+          "pct": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pct"
+          },
+          "rag": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rag"
+          },
+          "stage_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage Label"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "week_start": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Week Start"
+          }
+        },
+        "required": [
+          "metric_id",
+          "label",
+          "stage_label",
+          "status",
+          "null_reason",
+          "week_start",
+          "pct",
+          "completed",
+          "on_time",
+          "rag"
+        ],
+        "title": "SlaBar",
+        "type": "object"
+      },
+      "SlaOut": {
+        "properties": {
+          "awaiting_signal": {
+            "items": {
+              "$ref": "#/components/schemas/AwaitingMetric"
+            },
+            "title": "Awaiting Signal",
+            "type": "array"
+          },
+          "bars": {
+            "items": {
+              "$ref": "#/components/schemas/SlaBar"
+            },
+            "title": "Bars",
+            "type": "array"
+          },
+          "coverage_from": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverage From"
+          },
+          "freshness": {
+            "$ref": "#/components/schemas/Freshness"
+          },
+          "target_pct": {
+            "title": "Target Pct",
+            "type": "integer"
+          },
+          "year": {
+            "title": "Year",
+            "type": "integer"
+          },
+          "years": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Years",
+            "type": "array"
+          }
+        },
+        "required": [
+          "freshness",
+          "year",
+          "years",
+          "coverage_from",
+          "awaiting_signal",
+          "target_pct",
+          "bars"
+        ],
+        "title": "SlaOut",
+        "type": "object"
+      },
       "StageExplain": {
         "properties": {
           "freshness": {
@@ -3375,6 +4031,69 @@
           "freshness"
         ],
         "title": "StageExplain",
+        "type": "object"
+      },
+      "StageInfo": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "sort": {
+            "title": "Sort",
+            "type": "integer"
+          },
+          "stage_key": {
+            "title": "Stage Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "stage_key",
+          "label",
+          "sort"
+        ],
+        "title": "StageInfo",
+        "type": "object"
+      },
+      "StagePoint": {
+        "properties": {
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Counts",
+            "type": "object"
+          },
+          "day": {
+            "format": "date",
+            "title": "Day",
+            "type": "string"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "week_start": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Week Start"
+          }
+        },
+        "required": [
+          "day",
+          "week_start",
+          "counts",
+          "total"
+        ],
+        "title": "StagePoint",
         "type": "object"
       },
       "StatusIn": {
@@ -3564,6 +4283,64 @@
         "title": "StatusLogPage",
         "type": "object"
       },
+      "SummaryOut": {
+        "properties": {
+          "adherence": {
+            "$ref": "#/components/schemas/AdherenceCard"
+          },
+          "awaiting_signal": {
+            "items": {
+              "$ref": "#/components/schemas/AwaitingMetric"
+            },
+            "title": "Awaiting Signal",
+            "type": "array"
+          },
+          "coverage_from": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverage From"
+          },
+          "expedite": {
+            "$ref": "#/components/schemas/ExpediteCard"
+          },
+          "freshness": {
+            "$ref": "#/components/schemas/Freshness"
+          },
+          "release": {
+            "$ref": "#/components/schemas/ReleaseCard"
+          },
+          "year": {
+            "title": "Year",
+            "type": "integer"
+          },
+          "years": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Years",
+            "type": "array"
+          }
+        },
+        "required": [
+          "freshness",
+          "year",
+          "years",
+          "coverage_from",
+          "awaiting_signal",
+          "release",
+          "adherence",
+          "expedite"
+        ],
+        "title": "SummaryOut",
+        "type": "object"
+      },
       "SyncEventOut": {
         "properties": {
           "age_seconds": {
@@ -3736,6 +4513,208 @@
           "reason"
         ],
         "title": "ToggleIn",
+        "type": "object"
+      },
+      "TrendCell": {
+        "properties": {
+          "completed": {
+            "title": "Completed",
+            "type": "integer"
+          },
+          "pct": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pct"
+          },
+          "period_start": {
+            "format": "date",
+            "title": "Period Start",
+            "type": "string"
+          },
+          "rag": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rag"
+          }
+        },
+        "required": [
+          "period_start",
+          "pct",
+          "completed",
+          "rag"
+        ],
+        "title": "TrendCell",
+        "type": "object"
+      },
+      "TrendRow": {
+        "properties": {
+          "cells": {
+            "items": {
+              "$ref": "#/components/schemas/TrendCell"
+            },
+            "title": "Cells",
+            "type": "array"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "metric_id": {
+            "title": "Metric Id",
+            "type": "string"
+          },
+          "null_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Null Reason"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "trend": {
+            "title": "Trend",
+            "type": "string"
+          },
+          "trend_delta_pp": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trend Delta Pp"
+          }
+        },
+        "required": [
+          "metric_id",
+          "label",
+          "status",
+          "null_reason",
+          "cells",
+          "trend",
+          "trend_delta_pp"
+        ],
+        "title": "TrendRow",
+        "type": "object"
+      },
+      "TrendsOut": {
+        "properties": {
+          "awaiting_signal": {
+            "items": {
+              "$ref": "#/components/schemas/AwaitingMetric"
+            },
+            "title": "Awaiting Signal",
+            "type": "array"
+          },
+          "coverage_from": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverage From"
+          },
+          "freshness": {
+            "$ref": "#/components/schemas/Freshness"
+          },
+          "grain": {
+            "enum": [
+              "weekly",
+              "monthly"
+            ],
+            "title": "Grain",
+            "type": "string"
+          },
+          "periods": {
+            "items": {
+              "format": "date",
+              "type": "string"
+            },
+            "title": "Periods",
+            "type": "array"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/StagePoint"
+            },
+            "title": "Points",
+            "type": "array"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/TrendRow"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "stage_grain": {
+            "enum": [
+              "daily",
+              "weekly"
+            ],
+            "title": "Stage Grain",
+            "type": "string"
+          },
+          "stages": {
+            "items": {
+              "$ref": "#/components/schemas/StageInfo"
+            },
+            "title": "Stages",
+            "type": "array"
+          },
+          "year": {
+            "title": "Year",
+            "type": "integer"
+          },
+          "years": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Years",
+            "type": "array"
+          }
+        },
+        "required": [
+          "freshness",
+          "year",
+          "years",
+          "coverage_from",
+          "awaiting_signal",
+          "grain",
+          "stage_grain",
+          "periods",
+          "rows",
+          "stages",
+          "points"
+        ],
+        "title": "TrendsOut",
         "type": "object"
       },
       "UserOut": {
@@ -6707,6 +7686,540 @@
           }
         },
         "summary": "Reference"
+      }
+    },
+    "/api/reports/adherence": {
+      "get": {
+        "operationId": "adherence_api_reports_adherence_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "year",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 2100,
+                  "minimum": 2000,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Year"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdherenceOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Adherence"
+      }
+    },
+    "/api/reports/late": {
+      "get": {
+        "operationId": "late_api_reports_late_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "year",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 2100,
+                  "minimum": 2000,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Year"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LateOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Late"
+      }
+    },
+    "/api/reports/release-rate": {
+      "get": {
+        "operationId": "release_rate_api_reports_release_rate_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "year",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 2100,
+                  "minimum": 2000,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Year"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseRateOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Release Rate"
+      }
+    },
+    "/api/reports/sla": {
+      "get": {
+        "operationId": "sla_api_reports_sla_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "year",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 2100,
+                  "minimum": 2000,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Year"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SlaOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Sla"
+      }
+    },
+    "/api/reports/summary": {
+      "get": {
+        "operationId": "summary_api_reports_summary_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "year",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 2100,
+                  "minimum": 2000,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Year"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummaryOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Summary"
+      }
+    },
+    "/api/reports/trends": {
+      "get": {
+        "operationId": "trends_api_reports_trends_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "year",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 2100,
+                  "minimum": 2000,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Year"
+            }
+          },
+          {
+            "in": "query",
+            "name": "grain",
+            "required": false,
+            "schema": {
+              "default": "weekly",
+              "enum": [
+                "weekly",
+                "monthly"
+              ],
+              "title": "Grain",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "stage_grain",
+            "required": false,
+            "schema": {
+              "default": "daily",
+              "enum": [
+                "daily",
+                "weekly"
+              ],
+              "title": "Stage Grain",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrendsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Trends"
+      }
+    },
+    "/api/reports/{tab}/export.csv": {
+      "get": {
+        "description": "The figures behind the tab. Trends exports the SLA table, or the stage series with ``part=stage``.",
+        "operationId": "export_api_reports__tab__export_csv_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tab",
+            "required": true,
+            "schema": {
+              "enum": [
+                "summary",
+                "sla",
+                "trends",
+                "late",
+                "release-rate",
+                "adherence"
+              ],
+              "title": "Tab",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "year",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 2100,
+                  "minimum": 2000,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Year"
+            }
+          },
+          {
+            "in": "query",
+            "name": "grain",
+            "required": false,
+            "schema": {
+              "default": "weekly",
+              "enum": [
+                "weekly",
+                "monthly"
+              ],
+              "title": "Grain",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "stage_grain",
+            "required": false,
+            "schema": {
+              "default": "daily",
+              "enum": [
+                "daily",
+                "weekly"
+              ],
+              "title": "Stage Grain",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "part",
+            "required": false,
+            "schema": {
+              "default": "sla",
+              "enum": [
+                "sla",
+                "stage"
+              ],
+              "title": "Part",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-demo-user",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Demo-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export"
       }
     },
     "/api/rows/{row_key}": {

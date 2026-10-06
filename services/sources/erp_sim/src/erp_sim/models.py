@@ -69,6 +69,8 @@ class Mcha(TimestampMixin, Base):
     vfdat: Mapped[date | None] = mapped_column(Date)  # expiry
     zstat: Mapped[str] = mapped_column(Text, default="", server_default="")  # '' or 'H' (hold)
     qnext: Mapped[date | None] = mapped_column(Date)  # next inspection (retest) date (F18, OQ-100)
+    zexprq: Mapped[date | None] = mapped_column(Date)  # expedite requested on (F20-FR-02)
+    zexpdd: Mapped[date | None] = mapped_column(Date)  # expedite due date (F20-FR-02)
     __table_args__ = (CheckConstraint("zstat in ('', 'H')", name="ck_mcha_zstat"),)
 
 

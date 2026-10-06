@@ -27,6 +27,7 @@ from datagen.params import Params
 from datagen.po_lines import plan_po_lines
 from datagen.quality_data import plan_quality_data
 from datagen.quirks import apply_quirks
+from datagen.report_facts import plan_report_facts
 from datagen.stories import StoryResult, build_stories
 from datagen.supplier_batches import plan_supplier_batches
 from datagen.timeline import (
@@ -65,6 +66,7 @@ def build_plan(profile: SiteProfile, params: Params, seed: int, world: World | N
     plan_supplier_batches(plan)
     plan_inbound_items(plan)
     plan_quality_data(plan)
+    plan_report_facts(plan, params)
     return plan
 
 

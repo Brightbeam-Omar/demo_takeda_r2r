@@ -7,6 +7,7 @@ from r2r_core.profile import SiteProfile
 from datagen.model import Plan
 from datagen.params import Params
 from datagen.quirks import quirk_counts
+from datagen.report_facts import adherence
 from datagen.stats import METRICS, Stats
 
 STAGE_LABELS = {
@@ -164,6 +165,23 @@ def render_report(
     ]
     gaps = counts["air_gap"]
     out += ["", f"Air gaps at demo start: {gaps} (target 3 to 5): {_mark(3 <= gaps <= 5)}."]
+    on_time, late, none = adherence(plan)
+    share = 100 * on_time / max(1, on_time + late)
+    out += ["", "## Reports history (F20)", ""]
+    out.append(
+        _table(
+            ["Figure", "Value"],
+            [
+                ["Released lots with a need-by: on time / late", f"{on_time} / {late}"],
+                ["Released lots without a need-by", none],
+                [
+                    "Needs-by adherence",
+                    f"{share:.1f}% (target band 85.0 to 89.9): {_mark(85.0 <= share < 90.0)}",
+                ],
+                ["Historic expedites (released)", len(plan.expedites)],
+            ],
+        )
+    )
     out += ["", "## Story batches", ""]
     story_rows: list[list[object]] = []
     for batch in plan.batches:

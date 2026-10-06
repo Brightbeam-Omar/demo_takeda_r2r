@@ -72,15 +72,15 @@ def test_f07_ac04_ten_sampling_completions_eight_on_time_gives_eighty_percent(
 
 
 @pytest.mark.usefixtures("demo_clock")
-def test_f07_fr02_thirteen_weeks_per_pipeline_metric_with_empty_weeks_null(
+def test_f07_fr02_f20_53_weeks_per_pipeline_metric_with_empty_weeks_null(
     tmp_path: Path, profile: SiteProfile
 ) -> None:
     run(sampling_world(), tmp_path, profile)
     rows = weekly(tmp_path)
     assert {r["metric_id"] for r in rows} == {"M3", "M6", "M7"}  # pipeline-side metrics only
     m3 = sorted((r for r in rows if r["metric_id"] == "M3"), key=lambda r: r["week_start"])
-    assert len(m3) == 13
-    assert m3[0]["week_start"] == D(2026, 7, 20)  # 12 complete weeks before the current one
+    assert len(m3) == 53
+    assert m3[0]["week_start"] == D(2025, 10, 13)  # 52 complete weeks before the current one (F20-FR-02)
     assert m3[-1]["week_start"] == MONDAY  # the current week to date
     assert all(r["week_start"].weekday() == 0 for r in m3)
     assert (m3[-1]["completed"], m3[-1]["on_time"], m3[-1]["pct"]) == (0, 0, None)
@@ -95,7 +95,7 @@ def test_f07_fr02_a_completion_after_the_snapshot_week_starts_counts_in_the_curr
     run(world, tmp_path, profile, day=D(2026, 10, 14))  # Wednesday
     assert figures(tmp_path, "M3", MONDAY)["completed"] == 0
     assert figures(tmp_path, "M3", LAST_WEEK)["completed"] == 10
-    assert len(weekly(tmp_path)) == 3 * 13
+    assert len(weekly(tmp_path)) == 3 * 53
 
 
 @pytest.mark.usefixtures("demo_clock")
@@ -129,13 +129,13 @@ def test_f07_fr02_rows_where_the_stage_is_not_finished_are_not_counted(
 
 def test_f07_fr02_the_week_list_is_iso_weeks_relative_to_the_snapshot_date() -> None:
     weeks = metric_weeks(D(2026, 10, 14))  # a Wednesday
-    assert len(weeks) == 13
+    assert len(weeks) == 53
     assert weeks[-1] == (
         MONDAY,
         D(2026, 10, 15),
     )  # current week to date: up to and including the snapshot day
     assert weeks[-2] == (LAST_WEEK, MONDAY)
-    assert weeks[0][0] == D(2026, 7, 20)
+    assert weeks[0][0] == D(2025, 10, 13)
 
 
 def test_f07_fr02_only_pipeline_side_metrics_are_computed(profile: SiteProfile) -> None:
@@ -151,7 +151,11 @@ def test_f07_fr02_every_metrics_file_is_portable(profile: SiteProfile) -> None:
     from r2r_pipeline.sql_shim import render_template
 
     files = metric_files()
-    assert [p.name for p in files] == ["10_metric_rows.sql.j2", "20_weekly_metrics.sql.j2"]
+    assert [p.name for p in files] == [
+        "10_metric_rows.sql.j2",
+        "20_weekly_metrics.sql.j2",
+        "30_monthly_metrics.sql.j2",
+    ]
     for path in files:
         rendered = render_template(path.read_text(encoding="utf-8"), metrics=pipeline_metrics(profile))
         assert check_sql(rendered, profile.site.timezone) == [], path.name

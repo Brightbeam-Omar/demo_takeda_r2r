@@ -45,7 +45,7 @@ def app_factory(app_engine: Engine) -> Iterator[sessionmaker[Session]]:
             text("TRUNCATE sync_event, watermark, audit_event, feedback, bookmark, filter_preset, override_value, comment, status_log, mirror_batch_pipeline, mirror_weekly_metrics, "
                  "mirror_weekly_metric_rows, mirror_pipeline_status, mirror_stage_reference, "
                  "mirror_metric_reference, mirror_reason_codes, mirror_deviations, mirror_inbound_checks, "
-                 "mirror_change_controls, mirror_samples RESTART IDENTITY")
+                 "mirror_change_controls, mirror_samples, mirror_monthly_metrics, mirror_pipeline_daily, mirror_releases_weekly RESTART IDENTITY")
         )  # fmt: skip
     yield make_session_factory(app_engine)
     clock.set_clock_source(None)

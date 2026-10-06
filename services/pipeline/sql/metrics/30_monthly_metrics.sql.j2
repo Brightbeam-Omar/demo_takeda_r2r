@@ -1,0 +1,37 @@
+-- One row per pipeline-side metric and calendar month, empty months included (completed = 0, pct NULL).
+-- A completion belongs to the month of its exit date (OQ-118). The SLA is the row's own entry in
+-- applicable_sla_json, as for the weekly figures.
+CREATE OR REPLACE TABLE monthly_metrics AS
+WITH metric_list AS (
+{% for metric in metrics %}
+  SELECT '{{ metric.id }}' AS metric_id
+{% if not loop.last %}
+  UNION ALL
+{% endif %}
+{% endfor %}
+),
+done AS (
+{% for metric in metrics %}
+  SELECT '{{ metric.id }}' AS metric_id, m.month_start,
+         CASE WHEN date_diff_days(s.{{ metric.stage }}_exit, s.{{ metric.stage }}_entry) <= r.sla_days
+              THEN 1 ELSE 0 END AS on_time
+  FROM snapshot s
+  JOIN row_sla r ON r.row_key = s.row_key AND r.stage_key = '{{ metric.stage }}'
+  JOIN metric_months m ON s.{{ metric.stage }}_exit >= m.month_start AND s.{{ metric.stage }}_exit < m.month_end
+  WHERE s.{{ metric.stage }}_entry IS NOT NULL
+{% if not loop.last %}
+  UNION ALL
+{% endif %}
+{% endfor %}
+),
+counts AS (
+  SELECT l.metric_id, m.month_start, COUNT(d.metric_id) AS completed, SUM(d.on_time) AS on_time
+  FROM metric_list l
+  CROSS JOIN metric_months m
+  LEFT JOIN done d ON d.metric_id = l.metric_id AND d.month_start = m.month_start
+  GROUP BY l.metric_id, m.month_start
+)
+SELECT metric_id, month_start, completed, COALESCE(on_time, 0) AS on_time,
+       CASE WHEN completed = 0 THEN NULL
+            ELSE CAST(100.0 * COALESCE(on_time, 0) / completed AS DECIMAL(5, 1)) END AS pct
+FROM counts;

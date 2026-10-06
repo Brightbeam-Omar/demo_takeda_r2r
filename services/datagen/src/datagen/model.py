@@ -136,6 +136,16 @@ class DemandPlan:
 
 
 @dataclass
+class ExpeditePlan:
+    """An expedite request on a released batch (F20-FR-02(d)): the ERP's source facts."""
+
+    matnr: str
+    charg: str
+    requested_on: date
+    due_date: date
+
+
+@dataclass
 class PoLinePlan:
     """One purchase-order line (F17): created ahead of a delivery, or still open at demo start."""
 
@@ -190,6 +200,7 @@ class Plan:
     deviations: list[DeviationPlan] = field(default_factory=list)
     change_controls: list[ChangeControlPlan] = field(default_factory=list)
     po_lines: list[PoLinePlan] = field(default_factory=list)
+    expedites: list[ExpeditePlan] = field(default_factory=list)
     need_by: dict[str, date | None] = field(
         default_factory=dict
     )  # per material: the system need-by at opening

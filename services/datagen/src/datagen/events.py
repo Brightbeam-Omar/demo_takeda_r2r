@@ -207,5 +207,13 @@ def plan_events(plan: Plan) -> list[Event]:
         if change.status != "open" and change.status_on is not None:
             body = {"cc_no": name, "status": change.status, "effective_on": change.effective_on}
             events.append(Event(change.status_on, "qms", "change_control_status", body))
+    for expedite in plan.expedites:
+        body = {
+            "matnr": expedite.matnr,
+            "charg": expedite.charg,
+            "requested_on": expedite.requested_on,
+            "due_date": expedite.due_date,
+        }
+        events.append(Event(expedite.requested_on, "erp", "expedite_requested", body))
     events.sort(key=lambda event: event.day)  # stable: planning order breaks ties within a day
     return events

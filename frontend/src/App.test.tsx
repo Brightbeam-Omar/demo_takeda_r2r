@@ -77,14 +77,21 @@ test('F15-FR-02: no Demo Controls outside DEMO_MODE, even for admin', async () =
   expect(screen.queryByRole('link', { name: 'Demo Controls' })).not.toBeInTheDocument()
 })
 
-test('F15-FR-02 / OQ-081: unbuilt pages render a titled placeholder', async () => {
+test('F20: Reports & Metrics is a built page, not a placeholder', async () => {
   stub()
   render(<App />)
   const nav = within(await screen.findByRole('navigation', { name: 'Pages' }))
   await userEvent.click(nav.getByRole('link', { name: 'Reports & Metrics' }))
-  expect(await screen.findByTestId('placeholder-page')).toHaveTextContent('Coming in F20')
+  expect(await screen.findByTestId('reports-page')).toBeInTheDocument()
+  expect(screen.queryByTestId('placeholder-page')).not.toBeInTheDocument()
+})
+
+test('F15-FR-02 / OQ-081: unbuilt pages render a titled placeholder', async () => {
+  stub()
+  render(<App />)
+  const nav = within(await screen.findByRole('navigation', { name: 'Pages' }))
   await userEvent.click(nav.getByRole('link', { name: 'SLA Configuration' }))
-  expect(screen.getByTestId('placeholder-page')).toHaveTextContent('Coming in F21')
+  expect(await screen.findByTestId('placeholder-page')).toHaveTextContent('Coming in F21')
   await userEvent.click(nav.getByRole('link', { name: 'Upload Data' }))
   expect(screen.getByTestId('placeholder-page')).toHaveTextContent('Tier 2')
 })

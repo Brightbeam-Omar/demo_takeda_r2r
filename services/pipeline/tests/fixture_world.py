@@ -118,6 +118,12 @@ class World:
         self.add("stg_zinbchk", prueflos=lot, status="open")
         return lot
 
+    def expedite(self, charg: str, requested: date, due: date, matnr: str = "RM1") -> None:
+        """The expedite-requested event: the batch's two source facts (F20-FR-02)."""
+        for row in self.rows["stg_mcha"]:
+            if (row["matnr"], row["charg"]) == (matnr, charg):
+                row.update(zexprq=requested, zexpdd=due)
+
     def reeval(self, charg: str, lot: str, start: date, matnr: str = "RM1") -> str:
         self.add("stg_qals", prueflos=lot, art="09", matnr=matnr, charg=charg, pastrterm=start)
         return lot

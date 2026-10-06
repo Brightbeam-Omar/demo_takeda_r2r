@@ -17,7 +17,14 @@ from r2r_core.profile import SiteProfile
 from r2r_pipeline.context import RunContext
 from r2r_pipeline.lake import read_delta, write_delta
 from r2r_pipeline.runlog import StepResult, step_detail, step_row
-from r2r_pipeline.snapshot import BATCH_SNAPSHOT, WEEKLY_METRIC_ROWS, WEEKLY_METRICS
+from r2r_pipeline.snapshot import (
+    BATCH_SNAPSHOT,
+    MONTHLY_METRICS,
+    PIPELINE_DAILY,
+    RELEASES_WEEKLY,
+    WEEKLY_METRIC_ROWS,
+    WEEKLY_METRICS,
+)
 
 STAMP = pa.timestamp("us", tz="UTC")
 
@@ -43,6 +50,9 @@ PUBLISH_ORDER = (
     "inbound_checks_v",
     "change_controls_v",
     "samples_v",
+    "monthly_metrics_v",
+    "pipeline_daily_v",
+    "releases_weekly_v",
     "pipeline_status_v",
 )
 OBJECTS_WITH_RUN_ID = (
@@ -54,6 +64,9 @@ OBJECTS_WITH_RUN_ID = (
     "inbound_checks_v",
     "change_controls_v",
     "samples_v",
+    "monthly_metrics_v",
+    "pipeline_daily_v",
+    "releases_weekly_v",
     "pipeline_status_v",
 )
 
@@ -347,6 +360,9 @@ def publish(ctx: RunContext) -> StepResult:
         "inbound_checks_v": build_inbound_checks(ctx, batch),
         "change_controls_v": build_change_controls(ctx),
         "samples_v": build_samples(ctx, batch),
+        "monthly_metrics_v": build_metrics(ctx, MONTHLY_METRICS),
+        "pipeline_daily_v": build_metrics(ctx, PIPELINE_DAILY),
+        "releases_weekly_v": build_metrics(ctx, RELEASES_WEEKLY),
         "pipeline_status_v": build_status(ctx, published_at, batch.num_rows),
     }
     for name in PUBLISH_ORDER:
