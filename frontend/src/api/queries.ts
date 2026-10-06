@@ -145,3 +145,13 @@ export function useExpectedDeliveries(params: URLSearchParams, enabled = true) {
     enabled,
   })
 }
+
+/** One tab of Reports & Metrics (F20-FR-06). The persona is in the key like every other read. */
+export function useReport<T>(tab: string, params: URLSearchParams) {
+  return useQuery({
+    queryKey: useKey('report', tab, params.toString()),
+    queryFn: () => apiGet<T>(`/reports/${tab}`, params),
+    refetchInterval: POLL_MS,
+    placeholderData: keepPreviousData,
+  })
+}

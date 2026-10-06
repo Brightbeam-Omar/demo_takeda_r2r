@@ -15,7 +15,6 @@ export const VIEWS: NavItem[] = [
     to: '/reports',
     label: 'Reports & Metrics',
     icon: '▤',
-    coming: 'Coming in F20',
   },
   { to: '/agents', label: 'Agents', icon: '✦', coming: 'Coming in F12' },
 ]

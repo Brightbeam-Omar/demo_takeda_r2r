@@ -527,6 +527,7 @@ def release_rate_tab(session: Session, profile: SiteProfile, year: int | None) -
             text("SELECT week_start, released_count FROM mirror_releases_weekly ORDER BY week_start")
         )
         if _in_year(r.week_start, base.year)
+        and r.week_start < _monday(today)  # the week to date is not a week
     ]
     return ReleaseRateOut(
         **base.model_dump(),

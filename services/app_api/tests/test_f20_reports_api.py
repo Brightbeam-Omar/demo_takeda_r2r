@@ -100,6 +100,7 @@ def mirror(app_factory: sessionmaker[Session], profile: SiteProfile) -> None:
     releases = [
         {"week_start": D(4, 13), "released_count": 1, "run_id": "run-1"},
         {"week_start": D(5, 4), "released_count": 1, "run_id": "run-1"},
+        {"week_start": D(10, 12), "released_count": 0, "run_id": "run-1"},  # the week to date: not charted
         {"week_start": D(12, 29, 2025), "released_count": 0, "run_id": "run-1"},
         {"week_start": D(10, 20, 2025), "released_count": 4, "run_id": "run-1"},
     ]
