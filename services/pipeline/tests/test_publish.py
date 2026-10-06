@@ -56,7 +56,7 @@ def test_f07_ac01_all_published_objects_exist_and_the_status_has_one_row(
         "batch_pipeline_v", "weekly_metrics_v", "weekly_metric_rows_v", "stage_reference_v",
         "metric_reference_v", "reason_codes_v", "deviations_v", "expected_deliveries_v", "inbound_checks_v",
         "change_controls_v", "samples_v", "monthly_metrics_v", "pipeline_daily_v", "releases_weekly_v",
-        "pipeline_status_v",
+        "pipeline_runs_v", "pipeline_run_steps_v", "pipeline_status_v",
     )  # fmt: skip
     assert all(delta_exists(tmp_path, f"published.{name}") for name in PUBLISH_ORDER)
     [status] = table(tmp_path, "pipeline_status_v")

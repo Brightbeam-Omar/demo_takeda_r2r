@@ -28,7 +28,7 @@ GROUP BY r.x
 def test_f06_ac07_the_allowed_function_set_is_the_spec_list_plus_the_macros() -> None:
     assert {
         "CASE", "COALESCE", "CAST", "MIN", "MAX", "SUM", "COUNT", "ROW_NUMBER", "LAG", "LEAD",
-        "DATE_ADD_DAYS", "DATE_DIFF_DAYS", "SITE_DATE", "CONCAT_KEY",
+        "DATE_ADD_DAYS", "DATE_DIFF_DAYS", "SITE_DATE", "CONCAT_KEY", "ROW_HASH",
     } == set(ALLOWED_FUNCTIONS)  # fmt: skip
 
 

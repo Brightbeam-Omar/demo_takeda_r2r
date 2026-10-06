@@ -14,6 +14,7 @@ from r2r_pipeline.context import RunContext
 from r2r_pipeline.lake import delta_exists, read_delta, replace_partition, write_delta
 from r2r_pipeline.metrics import compute_metrics
 from r2r_pipeline.reports import compute_reports, read_calendar
+from r2r_pipeline.rowhash import add_row_hash, count_inserted
 from r2r_pipeline.runlog import StepResult
 
 BATCH_SNAPSHOT = "intelligence.batch_snapshot"
@@ -83,7 +84,8 @@ def snapshot_aggregate(ctx: RunContext) -> StepResult:
     flat = read_delta(ctx.lake_root, "staging.batch_flat")
     stage = read_delta(ctx.lake_root, "staging.batch_stage")
     history, inserted = lock_need_by(ctx, flat)
-    snapshot = build_snapshot(ctx, flat, stage, history)
+    snapshot = add_row_hash(ctx, build_snapshot(ctx, flat, stage, history))
+    changed = count_inserted(ctx.lake_root, snapshot)  # against the last *published* run (F21-FR-01)
     replace_partition(ctx.lake_root, BATCH_SNAPSHOT, snapshot, "snapshot_date", ctx.snapshot_date)
     weekly, contributing, monthly = compute_metrics(ctx, snapshot)
     write_delta(ctx.lake_root, WEEKLY_METRICS, weekly)  # replaced wholesale each run
@@ -96,6 +98,8 @@ def snapshot_aggregate(ctx: RunContext) -> StepResult:
         rows=snapshot.num_rows,
         detail={
             "need_by_locked_new": inserted,
+            "inserted": changed,
+            "total": snapshot.num_rows,
             "weekly_metrics": weekly.num_rows,
             "metric_rows": contributing.num_rows,
             "monthly_metrics": monthly.num_rows,

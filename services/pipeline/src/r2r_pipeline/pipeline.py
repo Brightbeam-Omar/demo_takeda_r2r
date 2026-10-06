@@ -31,7 +31,7 @@ StepFunction = Callable[[RunContext], StepResult | None]
 def _extract(ctx: RunContext) -> StepResult:
     extract(ctx)
     rows = sum(read_delta(ctx.lake_root, f"staging.{name}").num_rows for name in STAGING_SCHEMAS)
-    return StepResult(rows=rows, detail={"freshness": ctx.freshness})
+    return StepResult(rows=rows, detail={"freshness": ctx.freshness, "files": len(STAGING_SCHEMAS)})
 
 
 def _transform(ctx: RunContext) -> StepResult:

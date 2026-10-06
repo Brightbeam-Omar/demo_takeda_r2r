@@ -53,7 +53,7 @@ def test_f07_fr01_the_snapshot_joins_flat_and_stage_with_run_columns(
     table = read_delta(tmp_path, "intelligence.batch_snapshot")
     assert table.num_rows == flat.num_rows == stage.num_rows == 2
     expected = [*flat.schema.names, *[n for n in stage.schema.names if n != "row_key"]]
-    assert table.schema.names == [*expected, "snapshot_date", "run_id", "system_need_by_locked"]
+    assert table.schema.names == [*expected, "snapshot_date", "run_id", "system_need_by_locked", "row_hash"]
     row = by_lot(table.to_pylist())["10000001"]
     assert (row["snapshot_date"], row["run_id"], row["stage_key"]) == (DAY1, "run-1", "receipt")
 

@@ -1,6 +1,6 @@
 """SQL macros and templating: one SQL text, two dialects (constitution P6).
 
-Transform files use a Spark-SQL-compatible subset plus four macros, expanded here per dialect:
+Transform files use a Spark-SQL-compatible subset plus five macros, expanded here per dialect:
 
 | macro | meaning |
 |---|---|
@@ -8,6 +8,7 @@ Transform files use a Spark-SQL-compatible subset plus four macros, expanded her
 | ``date_diff_days(a, b)`` | whole days from ``b`` to ``a`` (``a - b``) |
 | ``site_date(ts)`` | the site-local calendar date of a UTC timestamp (time zone from the profile) |
 | ``concat_key(a, b, ...)`` | the ``|``-joined key of its arguments |
+| ``row_hash(a, b, ...)`` | a stable content hash (MD5 hex); NULL counts as ``~`` (F21-FR-01) |
 
 Files are Jinja templates too: they receive the run's parameters (snapshot date, UD codes, ...) and never
 carry hand-written literals for them.
@@ -21,7 +22,7 @@ from typing import Any
 import jinja2
 
 DIALECTS = ("duckdb", "spark")
-MACRO_NAMES = ("date_add_days", "date_diff_days", "site_date", "concat_key")
+MACRO_NAMES = ("date_add_days", "date_diff_days", "site_date", "concat_key", "row_hash")
 
 Expander = Callable[[list[str], str], str]
 
@@ -30,18 +31,25 @@ def _concat(args: list[str], tz: str) -> str:
     return "CONCAT_WS('|', " + ", ".join(args) + ")"
 
 
+def _row_hash(args: list[str], tz: str) -> str:
+    """MD5 over the arguments as text, separated by ``|``; the same text form in both dialects."""
+    return "md5(CONCAT_WS('|', " + ", ".join(f"COALESCE(CAST({a} AS STRING), '~')" for a in args) + "))"
+
+
 _EXPANDERS: dict[str, dict[str, Expander]] = {
     "duckdb": {
         "date_add_days": lambda a, tz: f"({a[0]} + {a[1]})",
         "date_diff_days": lambda a, tz: f"date_diff('day', {a[1]}, {a[0]})",
         "site_date": lambda a, tz: f"CAST(timezone('{tz}', {a[0]}) AS DATE)",
         "concat_key": _concat,
+        "row_hash": _row_hash,
     },
     "spark": {
         "date_add_days": lambda a, tz: f"date_add({a[0]}, {a[1]})",
         "date_diff_days": lambda a, tz: f"datediff({a[0]}, {a[1]})",
         "site_date": lambda a, tz: f"CAST(from_utc_timestamp({a[0]}, '{tz}') AS DATE)",
         "concat_key": _concat,
+        "row_hash": _row_hash,
     },
 }
 _ARITY = {"date_add_days": 2, "date_diff_days": 2, "site_date": 1}
@@ -95,6 +103,8 @@ def expand_macros(sql: str, dialect: str, timezone: str) -> str:
             raise ValueError(f"{name} takes {_ARITY[name]} argument(s), got {len(args)}")
         if name == "concat_key" and len(args) < 2:
             raise ValueError("concat_key takes at least two arguments")
+        if name == "row_hash" and not args[0]:
+            raise ValueError("row_hash takes at least one argument")
         out.append(sql[position : match.start()])
         out.append(_EXPANDERS[dialect][name](args, timezone))
         position = index

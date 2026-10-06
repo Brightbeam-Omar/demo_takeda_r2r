@@ -1,6 +1,6 @@
 # F21 · Tasks
-- [ ] T1 `docs(specs)`: contract changes + decisions
-- [ ] T2 [TDD] `row_hash` shim + `pipeline_runs_v` incl. failures (FR-01, AC-01, AC-02)
+- [x] T1 `docs(specs)`: contract changes + decisions
+- [x] T2 [TDD] `row_hash` shim + `pipeline_runs_v` incl. failures (FR-01, AC-01, AC-02)
 - [ ] T3 [TDD] Worker heartbeat, attempts, objects_synced, drain pass id, 2 s wake, run-pipeline proxy (FR-04, FR-05)
 - [ ] T4 Sync Status page + per-run window + Dagster link (FR-02)
 - [ ] T5 Webhook Sync Status page: cards, event list, buttons with confirmation and roles (FR-03–05, AC-03, AC-04)
