@@ -144,3 +144,30 @@ test('F17-FR-09 / AC-05: the F10 alert-chip band is gone; late, rejected and on-
   expect(screen.queryByRole('region', { name: 'Alerts' })).not.toBeInTheDocument()
   expect(screen.getByTestId('showing-line')).toHaveTextContent('Showing: All in-flight batches')
 })
+
+test('F18-FR-07: Export Sampling Plan and Export QC Testing Queue fetch with the persona header and the Overview filters', async () => {
+  const seen: { url: string; user: string | null }[] = []
+  sessionStorage.setItem('r2r.persona', 'sam')
+  window.history.pushState({}, '', '/overview?campaign=CMP-ALPHA&stage=qc_testing&q=RM')
+  URL.createObjectURL = vi.fn(() => 'blob:x')
+  URL.revokeObjectURL = vi.fn()
+  vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
+    seen.push({ url, user: (init?.headers as Record<string, string> | undefined)?.['X-Demo-User'] ?? null })
+    if (url.startsWith('/api/export/')) return new Response('material_no\n')
+    if (url.startsWith('/api/overview')) return new Response(JSON.stringify({ freshness, flow_strip: [], on_hold_count: 0, total: 1, mode: 'snapshot', alerts: [], rows: [rowOf(1, 'green')] }))
+    if (url.startsWith('/api/metrics')) return new Response(JSON.stringify({ freshness, filtered: false, week_starts: [], metrics: [] }))
+    return new Response('nf', { status: 404 })
+  }))
+  render(<App />)
+  await screen.findAllByTestId('batch-row')
+  await userEvent.click(screen.getAllByRole('button', { name: '↓ Export Sampling Plan' })[0]!)
+  await waitFor(() => expect(seen.some((call) => call.url.startsWith('/api/export/sampling-plan.csv'))).toBe(true))
+  const plan = seen.find((call) => call.url.startsWith('/api/export/sampling-plan.csv'))!
+  expect(plan.user).toBe('sam')
+  expect(plan.url).toContain('campaign%5B%5D=CMP-ALPHA')
+  expect(plan.url).not.toContain('stage=')
+  expect(plan.url).not.toContain('q=')
+  await userEvent.click(screen.getAllByRole('button', { name: '↓ Export QC Testing Queue' })[0]!)
+  await waitFor(() => expect(seen.some((call) => call.url.startsWith('/api/export/qc-queue.csv'))).toBe(true))
+  sessionStorage.clear()
+})

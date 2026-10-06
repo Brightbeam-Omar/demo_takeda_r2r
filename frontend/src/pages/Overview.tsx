@@ -13,6 +13,7 @@ import { FilterBar } from '../components/filters/FilterBar'
 import { StageStrip, activeTotal } from '../components/pipeline/StageStrip'
 import { ExpectedDeliveriesWindow } from '../components/windows/ExpectedDeliveriesWindow'
 import { OverviewTable } from '../components/overview/OverviewTable'
+import { QueueExports } from '../components/overview/QueueExports'
 import { useToast } from '../components/common/Toasts'
 import { canEditNeedBy } from '../lib/roles'
 import { ShowingLine, TagRow } from '../components/tags/TagRow'
@@ -51,6 +52,8 @@ export function Overview() {
     [filters],
   )
   const deliveries = useExpectedDeliveries(deliveryParams)
+  // The Sampling Plan and QC Testing Queue ignore the stage cards, the column filters and the search (OQ-104).
+  const queueParams = useMemo(() => toApiParams({ ...filters, stages: [], q: '' }), [filters])
   const airGapCount = data?.alerts.find((alert) => alert.kind === 'air_gap')?.count ?? 0
   const bookmarks = useMemo(() => data?.bookmarks ?? [], [data])
   const bookmarkSet = useMemo(() => new Set(bookmarks), [bookmarks])
@@ -172,6 +175,7 @@ export function Overview() {
                 onRowKey={onRowKey}
                 search={{ value: filters.q, onChange: (q) => update({ q }) }}
                 columnsKey={`overview.${me.data?.user_key ?? 'default'}`}
+                toolbarExtra={<QueueExports params={queueParams} />}
               />
             )
           ) : (

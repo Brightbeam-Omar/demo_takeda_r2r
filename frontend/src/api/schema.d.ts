@@ -117,8 +117,62 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Export Csv */
+        /**
+         * Export Csv
+         * @description The F09 path, kept as an alias of ``/export/table.csv``.
+         */
         get: operations["export_csv_api_export_csv_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/export/qc-queue.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Qc Queue */
+        get: operations["export_qc_queue_api_export_qc_queue_csv_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/export/sampling-plan.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Sampling Plan */
+        get: operations["export_sampling_plan_api_export_sampling_plan_csv_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/export/table.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Table */
+        get: operations["export_table_api_export_table_csv_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1769,6 +1823,135 @@ export interface operations {
         };
     };
     export_csv_api_export_csv_get: {
+        parameters: {
+            query?: {
+                "type[]"?: string[] | null;
+                "class[]"?: string[] | null;
+                "campaign[]"?: string[] | null;
+                "flags[]"?: string[] | null;
+                stage?: string[] | null;
+                include_released?: boolean;
+                period?: string;
+                from?: string | null;
+                to?: string | null;
+                q?: string | null;
+                bookmarked?: boolean;
+            };
+            header?: {
+                "x-demo-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_qc_queue_api_export_qc_queue_csv_get: {
+        parameters: {
+            query?: {
+                "type[]"?: string[] | null;
+                "class[]"?: string[] | null;
+                "campaign[]"?: string[] | null;
+                "flags[]"?: string[] | null;
+                stage?: string[] | null;
+                include_released?: boolean;
+                period?: string;
+                from?: string | null;
+                to?: string | null;
+                q?: string | null;
+                bookmarked?: boolean;
+            };
+            header?: {
+                "x-demo-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_sampling_plan_api_export_sampling_plan_csv_get: {
+        parameters: {
+            query?: {
+                "type[]"?: string[] | null;
+                "class[]"?: string[] | null;
+                "campaign[]"?: string[] | null;
+                "flags[]"?: string[] | null;
+                stage?: string[] | null;
+                include_released?: boolean;
+                period?: string;
+                from?: string | null;
+                to?: string | null;
+                q?: string | null;
+                bookmarked?: boolean;
+            };
+            header?: {
+                "x-demo-user"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_table_api_export_table_csv_get: {
         parameters: {
             query?: {
                 "type[]"?: string[] | null;
