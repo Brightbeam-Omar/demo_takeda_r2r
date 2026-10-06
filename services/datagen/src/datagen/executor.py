@@ -49,6 +49,7 @@ HANDLERS: dict[tuple[str, str], tuple[type[BaseModel], EventFunction]] = {
     ("erp", "stock_unblock"): (erp_schemas.StockMoveIn, erp_events.stock_unblock),
     ("erp", "hold"): (erp_schemas.HoldIn, erp_events.hold),
     ("erp", "demand"): (erp_schemas.DemandIn, erp_events.demand),
+    ("erp", "expedite_requested"): (erp_schemas.ExpediteRequestedIn, erp_events.expedite_requested),
     ("erp", "po_line_created"): (erp_schemas.PoLineCreatedIn, erp_events.po_line_created),
     ("lims", "sample_collected"): (lims_schemas.SampleCollectedIn, lims_events.sample_collected),
     ("lims", "sample_shipped"): (lims_schemas.SampleShippedIn, lims_events.sample_shipped),

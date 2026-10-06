@@ -68,6 +68,18 @@ class Demand(_Model):
     stale_open_share: float
 
 
+class ReportFacts(_Model):
+    """F20-FR-07: the history behind the Reports & Metrics figures (needs-by adherence and expedites)."""
+
+    late_share: float  # target share of released lots with a need-by that were released after it
+    anchor_days: list[
+        int
+    ]  # a lot with no demand gets a closed line this many days after its release: [min, max]
+    late_lead_days: int  # a forced-late line falls up to this many days before the release
+    expedites: int  # historic expedited batches (each with a single, released lot)
+    expedites_missed: int  # of which released after their due date
+
+
 class DeviationParams(_Model):
     severity: dict[str, float]
     links: dict[int, float]
@@ -108,6 +120,7 @@ class Params(_Model):
     durations: Durations
     demand: Demand
     deviations: DeviationParams
+    report_facts: ReportFacts
     quirks: Quirks
     po_lines: PoLines
 

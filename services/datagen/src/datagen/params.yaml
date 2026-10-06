@@ -71,6 +71,13 @@ deviations:
   links: {1: 0.65, 2: 0.35}
   open_on_qa_release: 6      # open deviations on lots waiting in QA release (B3150 is one)
 
+report_facts:               # F20-FR-07: new rng streams only, so nothing planned before moves
+  late_share: 0.125          # released lots with a need-by that were released after it (adherence about 87.5%)
+  anchor_days: [0, 14]       # a released lot without demand gets a closed line this many days after its release
+  late_lead_days: 8          # a forced-late demand line sits up to this many days before the release
+  expedites: 4               # historic expedited batches, each released: 3 on time and 1 missed
+  expedites_missed: 1
+
 quirks:                      # F05-FR-05 (minimum is 3 of each; these are what the generator creates)
   failed_inbound_checks: 5
   rejected_uds: 6

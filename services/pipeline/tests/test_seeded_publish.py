@@ -20,6 +20,7 @@ from qms_sim.db import migrate as migrate_qms
 from r2r_core import clock
 from r2r_core.clock import FixedClock
 from r2r_core.profile import SiteProfile, load_profile
+from r2r_core.reports import ReleasedLot, expedite_on_time, needs_by_adherence
 from r2r_pipeline.context import SourceDsns
 from r2r_pipeline.lake import read_delta
 from r2r_pipeline.pipeline import run_pipeline
@@ -138,3 +139,40 @@ def test_f20_ac04_the_latest_day_of_pipeline_daily_equals_the_open_non_pending_r
     }
     assert {k: v for k, v in last.items() if v} == current
     assert sum(last.values()) == sum(current.values()) == 468
+
+
+def _released_lots(run: Run) -> list[ReleasedLot]:
+    return [
+        ReleasedLot(r["row_key"], r["ud_date"], True, r["need_by_at_release"], r["expedite_due_date"])
+        for r in read_delta(run.lake, "published.batch_pipeline_v").to_pylist()
+        if r["ud_effective"]
+    ]
+
+
+def test_f20_oq122_the_seeded_adherence_is_amber_and_every_released_lot_has_a_need_by(run: Run) -> None:
+    result = needs_by_adherence(_released_lots(run), [], 2026)
+    assert result.excluded == 0
+    assert result.pct is not None and 85 <= result.pct < 90, result
+    lots = _released_lots(run)
+    assert len(lots) == 321  # the F05 released rows; the older ones fall in earlier years
+    assert (result.on_time + result.late) == result.total == sum(1 for r in lots if r.ud_date.year == 2026)
+
+
+def test_f20_oq122_the_seeded_expedites_are_four_with_three_on_time(run: Run) -> None:
+    result = expedite_on_time(_released_lots(run), set(), 2026)
+    assert (result.on_time, result.late, result.expedited) == (3, 1, 4)
+
+
+def test_f20_oq122_the_f05_counts_and_week_41_are_unchanged(run: Run) -> None:
+    """803 lots, 650 batches, 482 open and 321 released; week 41 is M3 94, M6 84 and M7 69 (F20-FR-07)."""
+    rows = read_delta(run.lake, "published.batch_pipeline_v").to_pylist()
+    assert len(rows) == 803
+    assert len({(r["material_no"], r["batch_no"]) for r in rows}) == 650
+    assert sum(1 for r in rows if r["stage_key"] != "released") == 482
+    assert sum(1 for r in rows if r["stage_key"] == "released") == 321
+    week = {
+        r["metric_id"]: r
+        for r in read_delta(run.lake, "published.weekly_metrics_v").to_pylist()
+        if str(r["week_start"]) == "2026-10-05"
+    }
+    assert {m: round(week[m]["pct"]) for m in ("M3", "M6", "M7")} == {"M3": 94, "M6": 84, "M7": 69}
