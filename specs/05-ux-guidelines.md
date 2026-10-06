@@ -34,7 +34,7 @@ Exceptions first. Show the provenance (every number explains itself). Screen-sha
 │ ADMIN      │                                                                       │
 │  Team Dashboard · Audit Log · Schema Reference · Upload Data · Process / Campaign  │
 │  Mapping · POC — Integrations · Configuration · SLA Configuration · Sync Status ·  │
-│  Webhook Sync Status · Demo Controls (DEMO_MODE, admin only)                       │
+│  Webhook Sync Status · Demo Controls (DEMO_MODE, admin only) · Feedback            │
 │ (DEMO) Persona [Pat · Planner ▾]                                       [💬 Feedback]│
 └────────────┴───────────────────────────────────────────────────────────────────────┘
 ```
