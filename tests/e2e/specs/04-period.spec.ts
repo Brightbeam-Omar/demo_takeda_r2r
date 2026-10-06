@@ -13,5 +13,5 @@ test('F10-AC-04: This week switches the caption to "due in period" and keeps ove
   await expect(page).toHaveURL(/period=this_week/)
   await expect(page.getByTestId('flow-caption')).toContainText(/due in period/i)
   await expect(page.locator(`[data-testid=batch-row][data-row-key="${overdueKey}"]`)).toBeVisible()
-  await expect(page.getByTestId('rag-cell').filter({ hasText: 'late' }).first()).toBeVisible()
+  await expect(page.getByTestId('status-cell').filter({ hasText: 'LATE' }).first()).toBeVisible()
 })

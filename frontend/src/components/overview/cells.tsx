@@ -120,7 +120,7 @@ export function AdjustedDate({ row, canEdit, onEdit }: AdjustedProps) {
       }}
     >
       {overridden ? (
-        <span data-testid="adjusted-need-by">
+        <span data-testid="adjusted-need-by" className="italic">
           {formatDate(row.adjusted_need_by_date)} ✎
         </span>
       ) : (

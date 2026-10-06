@@ -46,6 +46,8 @@ interface Props<T> {
   headerFilters?: boolean
   rowTestId?: string
   rowClassName?: (row: T) => string
+  /** A background for the row (the exception tint). */
+  rowTint?: (row: T) => string | undefined
   /** A colour for the 3 px bar on the row's left edge. */
   rowAccent?: (row: T) => string | undefined
   onRowOpen?: (row: T) => void
@@ -95,6 +97,7 @@ export function DataTable<T>({
   headerFilters = true,
   rowTestId = 'window-row',
   rowClassName,
+  rowTint,
   rowAccent,
   onRowOpen,
   onRowKey,
@@ -215,7 +218,7 @@ export function DataTable<T>({
     setActive(index)
     scroller.current?.querySelector(`[data-index="${index}"]`)?.scrollIntoView({ block: 'nearest' })
   }
-  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+  const onKeyDown = (event: KeyboardEvent<HTMLTableElement>) => {
     // Only while the table itself has focus: typing in a filter box or pressing a button inside a row is left alone.
     if (event.target !== event.currentTarget || pageRows.length === 0) return
     const at = active ?? 0
@@ -238,20 +241,19 @@ export function DataTable<T>({
   return (
     <div className="space-y-2">
       {toolbar('top')}
-      <div
-        ref={scroller}
-        role="grid"
-        tabIndex={0}
-        aria-label={ariaLabel}
-        aria-rowcount={matches}
-        aria-activedescendant={active !== null && pageRows[active] ? `row-${rowKey(pageRows[active].original)}` : undefined}
-        className="max-h-[640px] overflow-auto rounded-card border border-slate-200 bg-white text-[13px] focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
-        onKeyDown={onKeyDown}
-        onFocus={(event) => {
-          if (event.target === event.currentTarget && active === null) setActive(0)
-        }}
-      >
-        <table className="w-max min-w-full border-collapse text-left whitespace-nowrap">
+      <div ref={scroller} className="max-h-[640px] overflow-auto rounded-card border border-slate-200 bg-white text-[13px]">
+        <table
+          role="grid"
+          tabIndex={0}
+          aria-label={ariaLabel}
+          aria-rowcount={matches}
+          aria-activedescendant={active !== null && pageRows[active] ? `row-${rowKey(pageRows[active].original)}` : undefined}
+          className="w-max min-w-full border-collapse text-left whitespace-nowrap focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent"
+          onKeyDown={onKeyDown}
+          onFocus={(event) => {
+            if (event.target === event.currentTarget && active === null) setActive(0)
+          }}
+        >
           <thead className="sticky top-0 z-[2] bg-slate-50 shadow-[0_1px_0_var(--color-slate-200)]">
             {table.getHeaderGroups().map((group) => (
               <tr key={group.id}>
@@ -263,7 +265,7 @@ export function DataTable<T>({
                       key={header.id}
                       scope="col"
                       aria-sort={sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : 'none'}
-                      className={`px-2 py-1.5 align-top ${stickyFirst && index === 0 ? `${sticky} bg-slate-50` : ''}`}
+                      className={`px-2 py-1.5 align-top min-w-[4.5rem] ${stickyFirst && index === 0 ? `${sticky} bg-slate-50` : ''}`}
                     >
                       <button
                         type="button"
@@ -276,13 +278,16 @@ export function DataTable<T>({
                         </span>
                       </button>
                       {headerFilters && (
-                        <input
-                          aria-label={`Filter ${label}`}
-                          placeholder="Filter"
-                          className="mt-1 w-full min-w-16 rounded-chip border border-slate-300 bg-white px-1.5 py-0.5 text-xs font-normal"
-                          value={(header.column.getFilterValue() as string | undefined) ?? ''}
-                          onChange={(event) => header.column.setFilterValue(event.target.value || undefined)}
-                        />
+                        // A zero-width wrapper: the box fills the column but adds nothing to its width.
+                        <div className="mt-1 w-0 min-w-full">
+                          <input
+                            aria-label={`Filter ${label}`}
+                            placeholder="Filter"
+                            className="block w-full rounded-chip border border-slate-300 bg-white px-1.5 py-0.5 text-xs font-normal"
+                            value={(header.column.getFilterValue() as string | undefined) ?? ''}
+                            onChange={(event) => header.column.setFilterValue(event.target.value || undefined)}
+                          />
+                        </div>
                       )}
                     </th>
                   )
@@ -293,6 +298,7 @@ export function DataTable<T>({
           <tbody>
             {pageRows.map((row, index) => {
               const accent = rowAccent?.(row.original)
+              const tint = rowTint?.(row.original)
               return (
                 <tr
                   key={rowKey(row.original)}
@@ -305,7 +311,8 @@ export function DataTable<T>({
                     setActive(index)
                     onRowOpen?.(row.original)
                   }}
-                  className={`group border-t border-slate-100 bg-white align-middle hover:bg-slate-50 ${onRowOpen ? 'cursor-pointer' : ''} ${
+                  style={tint ? { backgroundColor: tint } : undefined}
+                  className={`group border-t border-slate-100 align-middle ${tint ? '' : 'bg-white hover:bg-slate-50'} ${onRowOpen ? 'cursor-pointer' : ''} ${
                     active === index ? 'outline-2 -outline-offset-2 outline-accent' : ''
                   } ${rowClassName?.(row.original) ?? ''}`}
                 >

@@ -9,15 +9,15 @@ test('F10-AC-03: clicking QCL Testing filters the table, puts stage= in the URL 
   await expect(page).toHaveURL(/stage=qc_testing/)
   await expect(page.getByTestId('flow-qc_testing')).toHaveAttribute('aria-pressed', 'true')
   const count = await page.getByTestId('flow-qc_testing').locator('div').nth(2).innerText()
-  await expect(page.getByTestId('row-count')).toContainText(`${count} lots`)
-  for (const cell of await page.getByTestId('batch-row').locator('[role=cell]:nth-child(8)').allInnerTexts()) {
+  await expect(page.getByTestId('page-summary')).toContainText(`${count} lots`)
+  for (const cell of await page.getByTestId('batch-row').locator('td:nth-child(9)').allInnerTexts()) {
     expect(cell).toContain('QCL Testing')
   }
 
   await page.reload()
   await expect(page).toHaveURL(/stage=qc_testing/)
   await expect(page.getByTestId('flow-qc_testing')).toHaveAttribute('aria-pressed', 'true')
-  await expect(page.getByTestId('row-count')).toContainText(`${count} lots`)
+  await expect(page.getByTestId('page-summary')).toContainText(`${count} lots`)
 })
 
 test('F17-AC-02: Sampling + QCL Ship + QCL Testing filter the table, the card counts stay, and three chips appear', async ({ page }) => {
@@ -36,7 +36,7 @@ test('F17-AC-02: Sampling + QCL Ship + QCL Testing filter the table, the card co
   const after = await page.locator('button[data-testid^="flow-"]').evaluateAll((nodes) => nodes.map((node) => node.textContent))
   expect(after).toEqual(before)
   const counts = await Promise.all(['sampling', 'qc_ship', 'qc_testing'].map(async (s) => Number(await page.getByTestId(`flow-${s}`).locator('div').nth(2).innerText())))
-  await expect(page.getByTestId('row-count')).toContainText(`${counts.reduce((a, b) => a + b, 0)} lots`)
+  await expect(page.getByTestId('page-summary')).toContainText(`${counts.reduce((a, b) => a + b, 0)} lots`)
   await page.getByRole('button', { name: '✕ Clear 3 stages' }).click()
   await expect(page).not.toHaveURL(/stage=/)
   await expect(page.getByTestId('flow-total')).toHaveAttribute('aria-pressed', 'true')
@@ -47,7 +47,7 @@ test('F17-AC-01 / AC-08: Expected Delivery shows the open PO lines, Total Pipeli
   await expect(page.getByTestId('batch-row').first()).toBeVisible()
   await expect(page.getByTestId('flow-total')).toContainText('482')
   await expect(page.getByTestId('active-batches')).toHaveText('482 active batches')
-  await expect(page.getByTestId('row-count')).toContainText('482 lots')
+  await expect(page.getByTestId('page-summary')).toContainText('482 lots')
   const lines = Number(await page.getByTestId('expected-delivery-count').innerText())
   expect(lines).toBeGreaterThanOrEqual(60)
   expect(lines).toBeLessThanOrEqual(90)
@@ -56,7 +56,7 @@ test('F17-AC-01 / AC-08: Expected Delivery shows the open PO lines, Total Pipeli
   await expect(page.getByTestId('window-row').first()).toBeVisible()
   await page.keyboard.press('Escape')
   await page.getByTestId('flow-released').click()
-  await expect(page.getByTestId('row-count')).toContainText('321 lots')
+  await expect(page.getByTestId('page-summary')).toContainText('321 lots')
 })
 
 test('F17-AC-03: the Call Off and QCL Ship cards show their skip counts, and Pending has no card', async ({ page }) => {
@@ -70,5 +70,5 @@ test('F17-FR-10: the RELEASED tag shows the 321 released lots, like the Released
   await page.goto('/overview')
   await expect(page.getByTestId('batch-row').first()).toBeVisible()
   await page.getByTestId('tag-released').click()
-  await expect(page.getByTestId('row-count')).toContainText('321 lots')
+  await expect(page.getByTestId('page-summary')).toContainText('321 lots')
 })

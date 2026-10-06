@@ -35,14 +35,14 @@ test('F15-AC-01: the sidebar has VIEWS and ADMIN with every item and the ALPHA â
 test('F15-AC-02: Last Month applies, and a custom range needs two clicks before Apply', async ({ page }) => {
   await page.goto('/overview')
   await expect(page.getByTestId('batch-row').first()).toBeVisible()
-  const allCount = await page.getByTestId('row-count').innerText()
+  const allCount = await page.getByTestId('page-summary').innerText()
 
   await page.getByTestId('period-button').click()
   await page.getByRole('button', { name: 'Last Month' }).click()
   await expect(page).toHaveURL(/period=last_month/)
   await expect(page.getByTestId('period-button')).toContainText('Last Month')
   await expect(page.getByTestId('flow-caption')).toContainText(/due in period/i)
-  await expect(page.getByTestId('row-count')).not.toHaveText(allCount)
+  await expect(page.getByTestId('page-summary')).not.toHaveText(allCount)
 
   await page.getByTestId('period-button').click()
   await expect(page.getByRole('button', { name: 'Last Month', pressed: true })).toBeVisible()
@@ -132,7 +132,7 @@ test('F15 review: no stray "." in the stage cell, and the Feedback button never 
   await expect(row).toBeVisible()
   await page.mouse.move(0, 0)
   // The hover-only explain button must not leave an ellipsis behind: the stage cell clips, it does not truncate.
-  const overflow = await row.locator('[role=cell]').nth(7).evaluate((node) => getComputedStyle(node).textOverflow)
+  const overflow = await row.locator('td').nth(8).evaluate((node) => getComputedStyle(node).textOverflow)
   expect(overflow).toBe('clip')
 
   // Scrolled to the bottom, the page content ends above the floating button.

@@ -161,7 +161,7 @@ test('F18-FR-04: late, rejected, on-hold and air-gap rows get the tint and the r
   const held = makeRow(10, { flags: { ...flags, on_hold: true, manual_hold: true } })
   show([late, rejected, gap, held, blocked, makeRow(1)])
   const rows = screen.getAllByTestId('batch-row')
-  const tinted = rows.map((r) => r.className.includes('bg-[#FEF2F2]'))
+  const tinted = rows.map((r) => r.style.backgroundColor === 'rgb(254, 242, 242)')
   expect(tinted).toEqual([true, true, true, true, false, false])
   expect(within(rows[0]!).getAllByRole('cell')[0]!.getAttribute('style')).toContain('inset 3px 0 0')
   expect(within(rows[4]!).getAllByRole('cell')[0]!.getAttribute('style')).toBeNull()
@@ -171,7 +171,7 @@ test('F18-AC-01: no cell may truncate its text: nothing in the table is clipped 
   show([late, amber, makeRow(1)])
   const table = screen.getByRole('grid')
   expect(table.querySelectorAll('.truncate, .text-ellipsis, .overflow-hidden').length).toBe(0)
-  expect(table.querySelector('table')).toHaveClass('whitespace-nowrap')
+  expect(table).toHaveClass('whitespace-nowrap')
 })
 
 test('F18-FR-06: the count reads 1–3 of 3 lots (n batches), counting a re-evaluated batch once', () => {

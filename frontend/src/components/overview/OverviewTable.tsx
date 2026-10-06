@@ -15,6 +15,7 @@ interface Props extends Omit<OverviewColumnDeps, 'terms'> {
 }
 
 const RED = '#DC2626'
+const TINT = '#FEF2F2'
 
 /** Late, rejected, on hold or air gap: the exception groups of 03 section 5.5 (F18-FR-04). ERP-blocked is a tag only. */
 export const isException = (row: Row) => row.plan.late || row.flags.ud_rejected || row.flags.on_hold || row.flags.air_gap
@@ -46,7 +47,8 @@ export function OverviewTable({ rows, changedKeys, search, columnsKey, toolbarEx
       search={search}
       toolbarExtra={toolbarExtra}
       rowTestId="batch-row"
-      rowClassName={(row) => `${isException(row) ? 'bg-[#FEF2F2]' : ''} ${changedKeys.has(row.row_key) ? 'row-changed' : ''}`}
+      rowClassName={(row) => (changedKeys.has(row.row_key) ? 'row-changed' : '')}
+      rowTint={(row) => (isException(row) ? TINT : undefined)}
       rowAccent={(row) => (isException(row) ? RED : undefined)}
       onRowOpen={(row) => onOpenRow?.(row.row_key)}
       onRowKey={onRowKey}
