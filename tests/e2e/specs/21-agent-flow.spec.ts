@@ -44,6 +44,7 @@ test('F12-AC-05: the trace shows input, three or more tool calls across two syst
   await page.goto('/agents')
   await page.getByTestId('proposal-row').filter({ hasText: 'B5003' }).getByRole('link', { name: /TR-/ }).click()
   await expect(page).toHaveURL(/\/agents\/traces\/TR-\d+$/)
+  await expect(page.getByTestId('trace-step').first()).toBeVisible()
   const kinds = await page.getByTestId('trace-step').evaluateAll((items) => items.map((i) => i.getAttribute('data-step-type')))
   expect(kinds[0]).toBe('input')
   expect(kinds.filter((k) => k === 'tool_call').length).toBeGreaterThanOrEqual(3)
