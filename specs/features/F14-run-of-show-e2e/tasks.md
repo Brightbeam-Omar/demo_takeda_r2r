@@ -4,5 +4,5 @@
 - [x] T3 `make e2e`, `make e2e-headed` (HTML report in `artifacts/e2e/`), `make record-video` at 1440×900 (FR-02, FR-07, AC-10)
 - [x] T4 `make doctor`: `tools/doctor`, the agents `replay-check` endpoint, and the `make demo-reset` recordings guard (FR-05, FR-08, AC-05, AC-06) [TDD]
 - [x] T5 Demo script (40-minute and 12-minute versions) and its checks, then the architecture overview (FR-03, FR-04, AC-09)
-- [ ] T6 README completion and an offline test (FR-06, AC-01, AC-03)
+- [x] T6 README completion and an offline test (FR-06, AC-01, AC-03)
 - [ ] T7 Full-repo leak scan including artefacts (AC-04)

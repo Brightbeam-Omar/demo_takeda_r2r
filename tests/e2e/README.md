@@ -2,15 +2,25 @@
 
 Playwright specs for the Overview (F10-AC-01 to AC-06, AC-08), including axe and Lighthouse accessibility checks, and
 for the batch drawer and windows (F19: `08` need-by window, `09` read-only, `12` drawer, `13` status log, `17` Inbound
-and Sample Data windows). F14 adds the full run-of-show.
+and Sample Data windows), and `specs/00-run-of-show.spec.ts` (F14), the presenter's path through acts 2, 3, 5 and 6.
 
 ```bash
 make up
 make e2e                 # or: make e2e-headed
 ```
 
-`make e2e` runs `make demo-reset` first, then the specs against the running stack, so every run starts from the same
-demo-start state (the live-update spec, F10-AC-05, approves B1042's sample, and the Demo Controls spec resets again).
+Everything runs against the built frontend on http://localhost:8080 (`FRONTEND_URL` overrides it). There are two
+Playwright projects (F14, OQ-162). `run-of-show` is `00-run-of-show.spec.ts`: it needs the untouched demo-start state, in
+which it approves B1042, adjusts B2077 and runs the agent, and it must finish in under 6 minutes (the reset is not part of
+that). `specs` is every other spec. `make e2e` runs `make demo-reset`, the `run-of-show` project, a second
+`make demo-reset`, then the `specs` project, so each starts from the same demo-start state (the live-update spec,
+F10-AC-05, approves B1042's sample too, and the Demo Controls spec resets again). Reports: `artifacts/e2e/run-of-show` and
+`artifacts/e2e/specs`; a failed run keeps its screenshot and trace in `artifacts/e2e-results/`. Run one project with
+`npx playwright test --project=specs` after a reset.
+
+`make record-video` runs the run-of-show alone with `RECORD_VIDEO=1 PACE=presenter`: a 1.5 s pause after each beat, one
+continuous recording at 1440×900 in `artifacts/video/run-of-show.webm`. `node video-size.mjs <file>` prints a video's
+size and length.
 `npm run screenshot` (in this folder) writes `docs/screenshots/overview.png` at 1440×900.
 
 `npm run screenshot:windows` writes the F19 screenshots (`drawer-b4410.png` and the five `win-*.png`) to `docs/screenshots/`.

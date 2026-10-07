@@ -18,6 +18,7 @@ const SIZE = { width: 1440, height: 900 }
 // a single continuous recording (`make record-video`, F14-FR-07, OQ-164).
 let context: BrowserContext
 let page: Page
+const external: string[] = [] // requests the browser tried to make beyond this machine (F14-AC-01: offline)
 
 test.beforeAll(async ({ browser, baseURL }) => {
   const recording = process.env.RECORD_VIDEO === '1'
@@ -27,6 +28,14 @@ test.beforeAll(async ({ browser, baseURL }) => {
     viewport: SIZE,
     recordVideo: recording ? { dir: resolve(VIDEO_DIR, 'raw'), size: SIZE } : undefined,
   })
+  // The demo runs with the Wi-Fi off: anything that is not this machine is refused and counted.
+  await context.route(
+    (url) => !['localhost', '127.0.0.1', '[::1]'].includes(url.hostname),
+    (route) => {
+      external.push(route.request().url())
+      return route.abort()
+    },
+  )
   page = await context.newPage()
 })
 
@@ -193,6 +202,10 @@ test('act 6 · the harness: the agent proposes a ticket with evidence, the valid
   expect(kinds.filter((k) => k === 'tool_call').length).toBeGreaterThanOrEqual(3)
   await expect(page.getByTestId('trace-provider')).toContainText('replay')
   await beat(page)
+})
+
+test('offline · the browser asked for nothing beyond this machine', () => {
+  expect(external).toEqual([])
 })
 
 test.afterAll(() => {
