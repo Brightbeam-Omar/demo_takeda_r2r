@@ -103,8 +103,17 @@ e2e-headed: demo-reset ## Same as e2e, in a visible browser
 
 # F13-FR-05: clears the app tables, regenerates the source data with the profile seed, runs the pipeline and
 # waits for the sync. Needs the stack up (`make up`). Takes under three minutes.
+# F14-FR-08, OQ-153: a stale or empty recordings mount in the agents container would make the air-gap agent miss
+# every replay key in front of an audience, so the reset recreates that container first when the mount is empty.
 demo-reset: ## Wipe state, regenerate seed data, run the pipeline once, sync
 	@test -f .env || { echo "Missing .env. Run: cp .env.example .env"; exit 1; }
+	@seen=$$(docker compose exec -T agents sh -c 'ls /recordings/air_gap 2>/dev/null | wc -l' 2>/dev/null | tr -d ' \r'); \
+		if [ "$${seen:-0}" = "0" ]; then \
+			if ls services/agents/recordings/air_gap/*.json >/dev/null 2>&1; then \
+				echo "demo-reset: the agents container sees no recordings (stale mount); recreating it"; \
+				docker compose up -d --force-recreate --wait agents || exit 1; \
+			else echo "demo-reset: WARNING no recordings in services/agents/recordings/air_gap; run make record-agents"; fi; \
+		fi
 	@set -a; . ./.env; set +a; \
 		SCENARIO_URL=http://localhost:$${SCENARIO_HOST_PORT:-8100} uv run python -m scenario.cli reset
 
@@ -156,5 +165,7 @@ record-video: demo-reset ## Record the backup demo video (artifacts/video/)
 	else echo "record-video: ffmpeg not installed, so no .mp4 (brew install ffmpeg)"; fi
 	@cd tests/e2e && node video-size.mjs ../../artifacts/video/run-of-show.webm
 
-doctor: ## Environment checks
-	@echo "doctor: not yet implemented (F14)"
+# F14-FR-05: `make doctor` before `make up` checks the machine (Docker, memory, ports, .env, denylist); after it,
+# the stack too (health, the recordings mount, replay keys). `make doctor EXPECT_UP=1` fails when it is not running.
+doctor: ## Environment checks, each with its fix
+	@uv run python -m doctor $(if $(EXPECT_UP),--expect-up)

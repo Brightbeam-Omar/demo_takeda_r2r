@@ -14,6 +14,7 @@ from sqlalchemy import func, select
 
 from agents.air_gap import agent as air_gap_agent
 from agents.air_gap.candidates import AGENT_KEY
+from agents.air_gap.replay_check import replay_check
 from agents.auth import Principal, current_principal, forbid, require_role
 from agents.db import agent_trace, proposal
 from agents.deps import Deps
@@ -118,6 +119,33 @@ def run_air_gap(deps: DepsDep, principal: RunnerDep, body: RunBody | None = None
             },
         )
     return out
+
+
+class CandidateReplayOut(BaseModel):
+    batch_no: str
+    air_gap_hours: int
+    replays: bool
+    missing_key: str | None
+    message: str
+
+
+class ReplayCheckOut(BaseModel):
+    recordings_dir: str
+    recording_files: int
+    demo_start: bool
+    candidates: list[CandidateReplayOut]
+
+
+@router.get("/agents/air_gap/replay-check")
+def air_gap_replay_check(deps: DepsDep, principal: PrincipalDep) -> ReplayCheckOut:
+    """Would the air-gap agent replay for every current candidate? Writes nothing (F14-FR-05, OQ-160)."""
+    result = replay_check(deps.http, deps.profile, deps.settings.recordings_dir, principal.demo_header)
+    return ReplayCheckOut(
+        recordings_dir=result.recordings_dir,
+        recording_files=result.recording_files,
+        demo_start=result.demo_start,
+        candidates=[CandidateReplayOut(**vars(c)) for c in result.candidates],
+    )
 
 
 def _result(result: air_gap_agent.CandidateResult) -> RunResultOut:
