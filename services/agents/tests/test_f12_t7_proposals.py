@@ -266,3 +266,18 @@ def test_f12_oq146_trace_payloads_never_carry_the_key(
             ).all()
         )
     assert "sk-ant-test-sentinel" not in dump
+
+
+def test_f12_oq146_no_log_line_carries_the_key(
+    build_app: Build, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    """The key is in no log: a full run, an approval and an autorun poll are logged at DEBUG and searched."""
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test-sentinel-0123456789")
+    caplog.set_level("DEBUG")
+    client = build_app()
+    pid = _run(client).json()["created"][0]["proposal_id"]
+    client.post(f"/proposals/{pid}/approve", headers=ALEX)
+    client.app.state.autorun.enabled = True  # type: ignore[attr-defined]
+    client.app.state.autorun.tick()  # type: ignore[attr-defined]
+    assert caplog.records  # something was logged at all
+    assert "sk-ant-test-sentinel" not in caplog.text
