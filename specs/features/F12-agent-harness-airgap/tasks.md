@@ -4,7 +4,7 @@
 - [x] T3 [TDD] Replay provider and key derivation; `make record-agents` (FR-03, AC-09) (the `make record-agents` command itself is wired in T10, once the agent exists)
 - [x] T4 Read-only tool registry + tools (FR-04)
 - [x] T5 Generic runner loop with limits (FR-04, FR-05)
-- [ ] T6 [TDD] AirGapTicket schema + validator V1–V6 (FR-06, FR-07, AC-03, AC-04)
+- [x] T6 [TDD] AirGapTicket schema + validator V1–V6 (FR-06, FR-07, AC-03, AC-04)
 - [ ] T7 Candidates, proposal API, idempotency, approve/reject with role check (FR-08, AC-02, AC-06)
 - [ ] T8 Executor + templates (FR-09)
 - [ ] T9 UI: agents page, inbox, detail, trace viewer; Insights Proposal column and W1 proposal-status line (FR-12, FR-13, AC-05)

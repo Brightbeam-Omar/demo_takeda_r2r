@@ -75,3 +75,13 @@ def fixed_clock() -> Iterator[None]:
     clock.set_clock_source(FixedClock(DEMO_NOW))
     yield
     clock.set_clock_source(None)
+
+
+@pytest.fixture(scope="session")
+def plan() -> object:
+    """The canonical datagen plan (seed 4242): pure, built once, only read by tests."""
+    from datagen.params import load_params
+    from datagen.planner import build_plan
+    from r2r_core.profile import load_profile
+
+    return build_plan(load_profile("site_a"), load_params(), 4242)
