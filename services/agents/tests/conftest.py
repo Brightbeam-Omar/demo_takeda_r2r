@@ -46,6 +46,7 @@ def agents_engine(agents_dsn_test: str, owner_engine: Engine) -> Iterator[Engine
     """Empty agent tables, then an engine connected as ``agents_rw``."""
     with owner_engine.begin() as connection:
         connection.execute(text("TRUNCATE action_log, proposal, agent_trace, audit_event RESTART IDENTITY"))
+        connection.execute(text("ALTER SEQUENCE agent_trace_seq RESTART"))
     engine = create_engine(agents_dsn_test)
     yield engine
     engine.dispose()
