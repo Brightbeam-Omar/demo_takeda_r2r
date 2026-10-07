@@ -1,49 +1,15 @@
 """T2: running a step: actions in order, progress lines, audit, one at a time, SSE with replay [F13-FR-03, FR-07, FR-08]."""
 
 from collections.abc import Iterator
-from datetime import UTC, datetime
-from typing import Any
 
 import pytest
-from fakes import FakeDagster, World
+from fakes import Harness
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from scenario import runner as runner_module
 from scenario.api import build_router, sse
-from scenario.runner import Busy, PreconditionFailed, Run, Runner, RunRegistry, UnknownStep
-from scenario.steps import load_steps
+from scenario.runner import Busy, PreconditionFailed, Run, UnknownStep
 
-NOW = datetime(2026, 10, 12, 7, 0, tzinfo=UTC)
 TOKEN = {"X-Scenario-Token": "s3cret"}
-
-
-class Harness:
-    def __init__(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        self.world = World()
-        self.dagster = FakeDagster()
-        self.audits: list[tuple[str, str, dict[str, Any]]] = []
-        self.advanced: list[int] = []
-        monkeypatch.setattr(
-            runner_module,
-            "write_audit",
-            lambda engine, at, actor, action, details: self.audits.append((actor, action, details)),
-        )
-        monkeypatch.setattr(
-            runner_module, "advance_hours", lambda engine, hours: self.advanced.append(hours) or NOW
-        )
-        self.registry = RunRegistry()
-        self.runner = Runner(
-            load_steps(),
-            self.world.gateway(),
-            None,
-            lambda: self.dagster,
-            self.registry,
-            lambda: NOW,
-            sleep=lambda s: None,  # type: ignore[arg-type]
-        )
-
-    def run(self, step_id: str, actor: str = "admin") -> Run:
-        return self.runner.start(step_id, actor, wait=True)
 
 
 @pytest.fixture

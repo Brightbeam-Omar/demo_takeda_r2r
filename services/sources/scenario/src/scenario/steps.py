@@ -19,7 +19,16 @@ PRECONDITION_KINDS = ("stage", "air_gap", "open_deviations", "adjusted_need_by",
 DEFAULT_USER = (
     "admin"  # OQ-150: there is no `system` app user, so actions run as admin unless a step says otherwise
 )
-DEFAULT_PATH = Path(__file__).resolve().parents[2] / "scenarios" / "site_a.yaml"
+# The wheel carries the scenarios next to the package; a source checkout keeps them beside `src`.
+_HERE = Path(__file__).resolve().parent
+DEFAULT_PATH = next(
+    (
+        p
+        for p in (_HERE / "scenarios" / "site_a.yaml", _HERE.parents[1] / "scenarios" / "site_a.yaml")
+        if p.exists()
+    ),
+    _HERE / "scenarios" / "site_a.yaml",
+)
 
 _TEMPLATE = re.compile(r"\$\{([a-z_][a-z0-9_.]*)\}")
 

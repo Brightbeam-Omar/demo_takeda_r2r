@@ -23,8 +23,7 @@ def check_precondition(gateway: Gateway, precondition: Precondition) -> str | No
     """None when the check holds; otherwise the message to show."""
     kind, batch = precondition.kind, precondition.batch
     if kind == "proposals":
-        proposals = gateway.call("agents", "GET", "/proposals", user="admin")
-        actual: Any = len(proposals)
+        actual: Any = len(gateway.call("agents", "GET", "/proposals", user="admin")["rows"])
     else:
         row = app_row(gateway, batch)
         if kind == "stage":

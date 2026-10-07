@@ -93,8 +93,12 @@ e2e: ## Playwright specs against the running stack (run `make seed` first)
 e2e-headed: ## Same as e2e, in a visible browser
 	cd tests/e2e && npx playwright test --headed
 
+# F13-FR-05: clears the app tables, regenerates the source data with the profile seed, runs the pipeline and
+# waits for the sync. Needs the stack up (`make up`). Takes under three minutes.
 demo-reset: ## Wipe state, regenerate seed data, run the pipeline once, sync
-	@echo "demo-reset: not yet implemented (F13)"
+	@test -f .env || { echo "Missing .env. Run: cp .env.example .env"; exit 1; }
+	@set -a; . ./.env; set +a; \
+		SCENARIO_URL=http://localhost:$${SCENARIO_HOST_PORT:-8100} uv run python -m scenario.cli reset
 
 # Runs datagen from the host against the published Postgres port (the containers use POSTGRES_PORT=5432 on the
 # compose network; the host sees POSTGRES_HOST_PORT), then runs the pipeline so the app mirror picks the data up.
@@ -112,8 +116,14 @@ pipeline: ## Trigger one pipeline run now and wait for it
 		curl -sS --fail-with-body -X POST -H "X-Scenario-Token: $$SCENARIO_TOKEN" \
 		"http://localhost:$${SCENARIO_HOST_PORT:-8100}/pipeline/run?wait=true" && echo
 
-scenario: ## Apply a scripted scenario step: make scenario STEP=<id>
-	@echo "scenario (STEP=$(STEP)): not yet implemented (F13)"
+# F13-FR-04: prints each progress line; exits non-zero when the step is refused or fails. `make scenario STEP=list`
+# shows the steps and whether their preconditions hold.
+scenario: ## Apply a scripted scenario step: make scenario STEP=<id>  (STEP=list shows them)
+	@test -n "$(STEP)" || { echo "usage: make scenario STEP=<id>   (make scenario STEP=list shows the steps)"; exit 1; }
+	@test -f .env || { echo "Missing .env. Run: cp .env.example .env"; exit 1; }
+	@set -a; . ./.env; set +a; export SCENARIO_URL=http://localhost:$${SCENARIO_HOST_PORT:-8100}; \
+		if [ "$(STEP)" = "list" ]; then uv run python -m scenario.cli list; \
+		else uv run python -m scenario.cli run "$(STEP)"; fi
 
 # Runs the air-gap agent live for the four demo-start air gaps and writes the recordings the replay provider
 # answers from (services/agents/recordings). Needs the stack in the demo-start state (`make seed`, later

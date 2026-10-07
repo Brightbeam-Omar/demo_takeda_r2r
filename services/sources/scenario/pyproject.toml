@@ -1,7 +1,7 @@
 [project]
 name = "scenario"
 version = "0.1.0"
-description = "Scenario service: owns the demo clock (set and advance), triggers the pipeline; scenario steps arrive in F13"
+description = "Scenario service: owns the demo clock (set and advance), triggers the pipeline, runs scenario steps and the demo reset"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "r2r-core",
@@ -19,3 +19,6 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/scenario"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"scenarios" = "scenario/scenarios"

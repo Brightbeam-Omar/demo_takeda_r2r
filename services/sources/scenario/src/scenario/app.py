@@ -16,6 +16,7 @@ from scenario.clock_api import build_router, default_profile, seed_clock
 from scenario.gateway import Endpoints, Gateway
 from scenario.pipeline_api import DagsterClient
 from scenario.pipeline_api import build_router as build_pipeline_router
+from scenario.reset import Reset
 from scenario.runner import Runner, RunRegistry
 from scenario.steps import Step, load_steps
 
@@ -30,15 +31,19 @@ def create_app(
     db_engine = engine or make_engine(os.environ.get("APP_DSN") or postgres_dsn("app"))
     site = profile or default_profile()
     registry = RunRegistry()
+    web_gateway = gateway or Gateway(Endpoints.from_env())
+    dagster_client = dagster or (
+        lambda: DagsterClient(os.environ.get("DAGSTER_GRAPHQL_URL", "http://dagster-web:3001/graphql"))
+    )
     runner = Runner(
         steps if steps is not None else load_steps(),
-        gateway or Gateway(Endpoints.from_env()),
+        web_gateway,
         db_engine,
-        dagster
-        or (lambda: DagsterClient(os.environ.get("DAGSTER_GRAPHQL_URL", "http://dagster-web:3001/graphql"))),
+        dagster_client,
         registry,
         now=clock.now,
     )
+    demo_reset = Reset(db_engine, site, web_gateway, dagster_client, registry)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -54,7 +59,7 @@ def create_app(
     app.include_router(health_router("scenario"))
     app.include_router(build_router(db_engine, site))
     app.include_router(build_pipeline_router())
-    app.include_router(build_scenario_router(runner, registry))
+    app.include_router(build_scenario_router(runner, registry, lambda actor: demo_reset.start(actor)))
     return app
 
 
