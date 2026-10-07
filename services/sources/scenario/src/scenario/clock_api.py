@@ -71,6 +71,32 @@ def seed_clock(engine: Engine, profile: SiteProfile) -> None:
         )
 
 
+def advance_hours(engine: Engine, hours: int) -> datetime:
+    """Move the clock by exactly ``hours`` in one atomic statement; returns the new time."""
+    with engine.begin() as connection:
+        row = connection.execute(
+            text(
+                "UPDATE demo_clock SET now_utc = now_utc + :hours * interval '1 hour' "
+                "WHERE id = 1 RETURNING now_utc"
+            ),
+            {"hours": hours},
+        ).one_or_none()
+    if row is None:
+        raise HTTPException(status_code=503, detail="demo_clock has no row yet")
+    moment: datetime = row.now_utc
+    return moment
+
+
+def reset_clock(engine: Engine, profile: SiteProfile) -> None:
+    """Put the clock back to the profile's opening time, in place (the row is never deleted)."""
+    seed_clock(engine, profile)
+    with engine.begin() as connection:
+        connection.execute(
+            text("UPDATE demo_clock SET now_utc = :start, frozen = false WHERE id = 1"),
+            {"start": profile.demo.start_datetime.astimezone(UTC)},
+        )
+
+
 def build_router(engine: Engine, profile: SiteProfile) -> APIRouter:
     router = APIRouter(tags=["clock"])
 

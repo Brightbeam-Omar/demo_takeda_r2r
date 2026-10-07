@@ -81,22 +81,22 @@ class DagsterClient:
         data: dict[str, Any] = body["data"]
         return data
 
-    def launch(self) -> str:
+    def launch(self, job_name: str = JOB_NAME) -> str:
         found = self._query(FIND_JOB)["repositoriesOrError"]
         if found["__typename"] != "RepositoryConnection":
             raise HTTPException(
                 status_code=502, detail=f"Dagster has no repositories: {found.get('message')}"
             )
         for repository in found["nodes"]:
-            if JOB_NAME in {job["name"] for job in repository["jobs"]}:
+            if job_name in {job["name"] for job in repository["jobs"]}:
                 selector = {
                     "repositoryLocationName": repository["location"]["name"],
                     "repositoryName": repository["name"],
-                    "jobName": JOB_NAME,
+                    "jobName": job_name,
                 }
                 break
         else:
-            raise HTTPException(status_code=502, detail=f"Dagster has no job named {JOB_NAME}")
+            raise HTTPException(status_code=502, detail=f"Dagster has no job named {job_name}")
         launched = self._query(LAUNCH, {"selector": selector})["launchRun"]
         if launched["__typename"] != "LaunchRunSuccess":
             raise HTTPException(status_code=502, detail=f"Dagster did not start the run: {launched}")
@@ -109,6 +109,20 @@ class DagsterClient:
             raise HTTPException(status_code=502, detail=f"Dagster lost run {run_id}: {result.get('message')}")
         status: str = result["status"]
         return status
+
+
+def wait_for_run(
+    client: DagsterClient, run_id: str, timeout_seconds: float, sleep: Callable[[float], None] = time.sleep
+) -> str:
+    """Poll a Dagster run until it ends or the timeout passes; returns the last status seen."""
+    waited, status = 0.0, "STARTED"
+    while waited <= timeout_seconds:
+        status = client.status(run_id)
+        if status in FINISHED:
+            break
+        sleep(POLL_SECONDS)
+        waited += POLL_SECONDS
+    return status
 
 
 def build_router(
@@ -130,13 +144,7 @@ def build_router(
         run_id = client.launch()
         if not wait:
             return JSONResponse(PipelineRunOut(run_id=run_id, status="STARTED").model_dump())
-        waited, status = 0.0, "STARTED"
-        while waited <= timeout_seconds:
-            status = client.status(run_id)
-            if status in FINISHED:
-                break
-            sleep(POLL_SECONDS)
-            waited += POLL_SECONDS
+        status = wait_for_run(client, run_id, timeout_seconds, sleep)
         body = PipelineRunOut(run_id=run_id, status=status).model_dump()
         return JSONResponse(body, status_code=200 if status == "SUCCESS" else 502)
 
