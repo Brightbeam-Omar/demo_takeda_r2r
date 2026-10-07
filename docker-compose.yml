@@ -200,7 +200,8 @@ services:
       retries: 12
 
   # The React app (F10). `frontend` is the Vite dev server (hot reload needs a rebuild here, `make up` does it).
-  # `frontend-web` is the production nginx image on 8080 and starts only with `--profile prod`.
+  # `frontend-web` is the production nginx image on 8080: the one the run-of-show, the video and the doctor use, and
+  # the one to present from (OQ-159). It starts with the rest of the stack.
   frontend:
     build:
       context: .
@@ -222,7 +223,6 @@ services:
       retries: 12
 
   frontend-web:
-    profiles: ["prod"]
     build:
       context: .
       dockerfile: docker/frontend.Dockerfile
@@ -234,6 +234,11 @@ services:
     depends_on:
       app-api: {condition: service_healthy}
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
 
   # The drain worker (F08): the only application code that reads the lakehouse, which it mounts read-only.
   app-worker:

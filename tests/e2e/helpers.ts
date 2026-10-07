@@ -65,3 +65,33 @@ export function resetAgentState(): void {
     stdio: 'pipe',
   })
 }
+
+import type { Page } from '@playwright/test'
+
+/** The Dagster UI a run link opens (F14: act 3 shows the pipeline run there). */
+export const DAGSTER_URL = envVar('VITE_DAGSTER_URL', 'http://localhost:3001')
+
+/**
+ * A pause for the video, so a viewer can read the screen (OQ-164). A no-op unless `PACE=presenter`, which only
+ * `make record-video` sets, so `make e2e` runs at full speed.
+ */
+export async function beat(page: Page, ms = 1500): Promise<void> {
+  if (process.env.PACE === 'presenter') await page.waitForTimeout(ms)
+}
+
+/** Switches the persona the way a presenter does: the Persona selector in the top bar. */
+export async function asPersona(page: Page, key: 'pat' | 'quinn' | 'alex' | 'sam' | 'admin'): Promise<void> {
+  await page.getByRole('combobox', { name: 'Persona' }).selectOption(key)
+}
+
+/** Runs a Demo Controls step by its id, as an admin would, and waits for it to succeed. Returns after the last progress line. */
+export async function runStep(page: Page, id: string, timeoutMs = 120_000): Promise<void> {
+  const step = page.locator(`[data-step="${id}"]`)
+  await step.getByRole('button', { name: /^Run / }).click()
+  await page.getByTestId('run-status').and(page.locator('[data-status="succeeded"]')).waitFor({ timeout: timeoutMs })
+}
+
+/** The Overview row of a batch (the in-flight row; lot numbers come from the database). */
+export function openRow(page: Page, batch: string): Locator {
+  return page.locator(`[data-testid=batch-row][data-row-key*="|${batch}|"]`).first()
+}
