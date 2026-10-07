@@ -171,6 +171,11 @@ services:
       ERP_URL: http://erp-sim:8101
       LIMS_URL: http://lims-sim:8102
       QMS_URL: http://qms-sim:8103
+      AGENTS_RECORDINGS_DIR: /recordings
+    volumes:
+      # The recorded model answers (`make record-agents` writes them): mounted so a new recording takes effect
+      # without rebuilding the image. Read-only: the service never writes them.
+      - ./services/agents/recordings:/recordings:ro
     ports:
       - "${AGENTS_HOST_PORT:-8200}:8200"
     depends_on:
