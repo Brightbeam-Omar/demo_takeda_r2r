@@ -1,10 +1,10 @@
 import { useTerms } from '../../hooks/useTerms'
 import { showingText, tagIsOn, tagRow, toggleTag } from '../../lib/tags'
-import type { Filters } from '../../state/url-filters'
+import type { FilterPatch, Filters } from '../../state/url-filters'
 
 interface Props {
   filters: Filters
-  onChange: (patch: Partial<Filters>) => void
+  onChange: (patch: FilterPatch) => void
 }
 
 /** F17-FR-07: the `Showing:` line above the tag row. */
@@ -43,7 +43,7 @@ export function TagRow({ filters, onChange }: Props) {
             aria-pressed={on}
             data-testid={`tag-${tag.id}`}
             className={`${pill} ${on ? tag.on : tag.off}`}
-            onClick={() => onChange({ flags: toggleTag(tag, filters.flags) })}
+            onClick={() => onChange((current) => ({ flags: toggleTag(tag, current.flags) }))}
           >
             {tag.label}
           </button>
