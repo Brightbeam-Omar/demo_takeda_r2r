@@ -115,8 +115,18 @@ pipeline: ## Trigger one pipeline run now and wait for it
 scenario: ## Apply a scripted scenario step: make scenario STEP=<id>
 	@echo "scenario (STEP=$(STEP)): not yet implemented (F13)"
 
-record-agents: ## Record LLM replays (needs ANTHROPIC_API_KEY)
-	@echo "record-agents: not yet implemented (F12)"
+# Runs the air-gap agent live for the four demo-start air gaps and writes the recordings the replay provider
+# answers from (services/agents/recordings). Needs the stack in the demo-start state (`make seed`, later
+# `make demo-reset`) and ANTHROPIC_API_KEY in .env; nothing is written to the database. The key is read from the
+# environment by the process and is never printed.
+record-agents: ## Record LLM replays for the demo-start state (needs ANTHROPIC_API_KEY)
+	@test -f .env || { echo "Missing .env. Run: cp .env.example .env"; exit 1; }
+	@set -a; . ./.env; set +a; \
+		test -n "$$ANTHROPIC_API_KEY" || { echo "record-agents: ANTHROPIC_API_KEY is empty in .env"; exit 1; }; \
+		CLOCK_SOURCE=http SCENARIO_URL=http://localhost:$${SCENARIO_HOST_PORT:-8100} \
+		APP_API_URL=http://localhost:$${APP_API_HOST_PORT:-8000} ERP_URL=http://localhost:$${ERP_HOST_PORT:-8101} \
+		LIMS_URL=http://localhost:$${LIMS_HOST_PORT:-8102} QMS_URL=http://localhost:$${QMS_HOST_PORT:-8103} \
+		uv run python -m agents.record
 
 record-video: ## Record the backup demo video
 	@echo "record-video: not yet implemented (F14)"

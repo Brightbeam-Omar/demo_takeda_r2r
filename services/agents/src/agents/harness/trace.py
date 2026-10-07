@@ -41,6 +41,34 @@ class TraceSink(Protocol):
     ) -> int: ...
 
 
+class MemoryTrace:
+    """A trace kept in memory: for the recorder, which must leave no rows behind in the database."""
+
+    def __init__(self, trace_id: str = "TR-REC") -> None:
+        self.trace_id = trace_id
+        self.steps: list[dict[str, Any]] = []
+
+    def step(
+        self,
+        step_type: str,
+        payload: Mapping[str, Any],
+        *,
+        tokens_in: int | None = None,
+        tokens_out: int | None = None,
+        latency_ms: int | None = None,
+    ) -> int:
+        self.steps.append(
+            {
+                "step_type": step_type,
+                "payload": dict(payload),
+                "tokens_in": tokens_in,
+                "tokens_out": tokens_out,
+                "latency_ms": latency_ms,
+            }
+        )
+        return len(self.steps)
+
+
 def new_trace_id(engine: Engine) -> str:
     """``TR-0001``, ``TR-0002`` … from the sequence the demo reset restarts (OQ-144)."""
     with engine.begin() as connection:

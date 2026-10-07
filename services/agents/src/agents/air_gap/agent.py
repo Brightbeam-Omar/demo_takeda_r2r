@@ -28,7 +28,7 @@ from agents.harness import proposals
 from agents.harness.runner import AgentSpec, RunOutcome, run_agent
 from agents.harness.trace import Trace, new_trace_id
 from agents.prompts import load_prompt
-from agents.tools.http import ToolError
+from agents.tools.http import ReadOnlyHttp, ToolError
 from agents.tools.registry import read_only_tools
 
 PROMPT_VERSION = "v1"
@@ -58,13 +58,13 @@ class RunSummary:
         return [r for r in self.results if r.outcome == outcome]
 
 
-def build_spec(deps: Deps) -> AgentSpec:
+def build_spec(http: ReadOnlyHttp) -> AgentSpec:
     prompt = load_prompt(AGENT_KEY, PROMPT_VERSION)
     return AgentSpec(
         key=AGENT_KEY,
         prompt_version=PROMPT_VERSION,
         system=prompt.system,
-        tools=read_only_tools(deps.http),
+        tools=read_only_tools(http),
         output_tool=ToolSpec(
             name="submit_ticket",
             description="Submit the ticket. Call this exactly once, after you have read the evidence.",
@@ -125,7 +125,7 @@ def run_candidate(deps: Deps, candidate: Candidate, demo_user: str | None) -> Ca
     )
     try:
         outcome = run_agent(
-            build_spec(deps),
+            build_spec(deps.http),
             deps.gateway,
             trace,
             user_message=user_message,

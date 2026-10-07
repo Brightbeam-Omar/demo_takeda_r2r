@@ -90,7 +90,7 @@ def list_agents(deps: DepsDep, principal: PrincipalDep) -> list[AgentCard]:
             provider=deps.gateway.provider,
             model_id=model,
             prompt_version=air_gap_agent.PROMPT_VERSION,
-            tools=air_gap_agent.build_spec(deps).tools.names(),
+            tools=air_gap_agent.build_spec(deps.http).tools.names(),
             can_run=principal.role in ("qa_release", "admin"),
             last_run_at=last,
             proposals_total=int(total),
