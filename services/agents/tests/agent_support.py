@@ -108,7 +108,7 @@ def row_body(**changes: object) -> dict[str, object]:
 def source_transport(
     *, row: dict[str, object] | None = None, ud_code: str | None = None, results_recorded: str | None = None,
     deviations: list[dict[str, object]] | None = None, volatile: str = "a",
-    insights: list[dict[str, object]] | None = None,
+    insights: list[dict[str, object]] | None = None, sync_run: str = "run-1",
 ) -> httpx.MockTransport:  # fmt: skip
     """The app, LIMS, ERP and QMS behind one mock transport (B5003). ``volatile`` changes only meaningless fields."""
 
@@ -120,6 +120,11 @@ def source_transport(
             body = dict(row or row_body())
             body["freshness"] = {"contract_run_id": f"run-{volatile}", "last_success_at": volatile}
             return httpx.Response(200, json=body)
+        if path == "/api/sync/status":
+            return httpx.Response(
+                200,
+                json={"watermarks": [{"object_name": "batch_pipeline_v", "run_id": sync_run}], "events": []},
+            )
         if path == "/api/overview/insights":
             rows = insights if insights is not None else [INSIGHTS_ROW]
             return httpx.Response(200, json={"total": len(rows), "rows": rows})

@@ -9,6 +9,7 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
+from r2r_core.web import require_scenario_token
 from sqlalchemy import func, select
 
 from agents.air_gap import agent as air_gap_agent
@@ -21,6 +22,7 @@ from agents.harness import proposals
 from agents.harness.proposals import ProposalError
 
 router = APIRouter()
+autorun_router = APIRouter(prefix="/agents/autorun", dependencies=[Depends(require_scenario_token)])
 
 
 def deps_of(request: Request) -> Deps:
@@ -214,4 +216,26 @@ def get_trace(trace_id: str, deps: DepsDep, principal: PrincipalDep) -> dict[str
     }
 
 
-__all__ = ["ProposalError", "router"]
+class AutorunOut(BaseModel):
+    enabled: bool
+    paused: bool
+    cursor: str | None
+
+
+@autorun_router.post("/pause")
+def pause_autorun(request: Request) -> AutorunOut:
+    """The demo reset calls this before it wipes state (F12-FR-14); guarded with the scenario token."""
+    return AutorunOut(**vars(request.app.state.autorun.pause()))
+
+
+@autorun_router.post("/resume")
+def resume_autorun(request: Request) -> AutorunOut:
+    return AutorunOut(**vars(request.app.state.autorun.resume()))
+
+
+@autorun_router.get("")
+def autorun_state(request: Request) -> AutorunOut:
+    return AutorunOut(**vars(request.app.state.autorun.state()))
+
+
+__all__ = ["ProposalError", "autorun_router", "router"]

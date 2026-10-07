@@ -1,6 +1,8 @@
 """Agents service API (port 8200). The nginx and Vite proxies strip the ``/agents-api`` prefix."""
 
 import os
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from typing import Annotated
 
 import httpx
@@ -12,11 +14,13 @@ from r2r_core.web import health_router, install_error_handlers
 from sqlalchemy import Engine
 
 from agents.auth import Principal, current_principal
+from agents.autorun import Autorun
 from agents.db import make_engine
 from agents.deps import Deps
 from agents.gateway import build_gateway
 from agents.gateway.base import ModelGateway
 from agents.harness.proposals import ProposalError
+from agents.routes import autorun_router
 from agents.routes import router as agents_router
 from agents.settings import Settings
 from agents.tools.http import ReadOnlyHttp
@@ -38,9 +42,17 @@ def create_app(
     profile: SiteProfile | None = None,
 ) -> FastAPI:
     config = settings or Settings.from_env()
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        app.state.autorun.start()  # does nothing unless AGENTS_AUTORUN=true
+        yield
+        app.state.autorun.stop()
+
     app = FastAPI(
         title="Agents service",
         description="Runs agents that propose; a validator and a person decide (F12).",
+        lifespan=lifespan,
     )
     app.state.settings = config
     app.state.engine = engine or make_engine()
@@ -58,8 +70,10 @@ def create_app(
     async def _proposal_error(request: Request, error: ProposalError) -> JSONResponse:
         return JSONResponse(status_code=error.status_code, content={"detail": error.detail})
 
+    app.state.autorun = Autorun(app.state.deps, enabled=config.autorun)
     app.include_router(health_router("agents"))
     app.include_router(agents_router)
+    app.include_router(autorun_router)
 
     router = APIRouter()
 
