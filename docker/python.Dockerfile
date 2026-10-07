@@ -6,6 +6,9 @@ FROM python:3.12-slim
 COPY --from=ghcr.io/astral-sh/uv:0.12.23 /uv /usr/local/bin/uv
 
 ARG SERVICE_PATH=packages/r2r_core
+# Extra workspace members installed before the service (space separated). The scenario service runs the
+# data generator as a child process, so it needs the generator and the three simulators' packages.
+ARG EXTRA_PATHS=""
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -21,6 +24,7 @@ COPY config/ config/
 # The Schema Reference page (F21-FR-06) serves this generated file; `make contract-json` regenerates it.
 COPY specs/contract.json specs/contract.json
 
-# Install the shared core first, then the requested member (a no-op when they are the same).
+# Install the shared core first, then the extra members, then the requested member (a no-op when they are the same).
 RUN uv pip install ./packages/r2r_core \
+    && for path in $EXTRA_PATHS; do uv pip install "./$path"; done \
     && if [ "$SERVICE_PATH" != "packages/r2r_core" ]; then uv pip install "./$SERVICE_PATH"; fi

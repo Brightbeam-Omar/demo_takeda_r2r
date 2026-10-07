@@ -23,7 +23,7 @@ import { useJustSaved } from '../state/just-saved'
 import { useRowChanges } from '../state/row-changes'
 import { setDrawerOpen } from '../state/sidebar'
 import { useBatchView } from '../state/batch-view'
-import { EMPTY_FILTERS, activeFilterCount, toApiParams, useUrlFilters } from '../state/url-filters'
+import { EMPTY_FILTERS, activeFilterCount, toApiParams, toggled, useUrlFilters } from '../state/url-filters'
 import type { ColumnFilterRequest } from '../components/datatable/DataTable'
 
 export function Overview() {
@@ -145,7 +145,7 @@ export function Overview() {
               onOpenDeliveries={() => setOpenWindow('deliveries')}
               explainParams={toApiParams({ ...filters, stages: [] })}
               onToggleStage={(key) =>
-                update({ stages: filters.stages.includes(key) ? filters.stages.filter((stage) => stage !== key) : [...filters.stages, key] })
+                update((current) => ({ stages: toggled(current.stages, key) }))
               }
               onClearStages={() => update({ stages: [] })}
               onToggleHold={() =>

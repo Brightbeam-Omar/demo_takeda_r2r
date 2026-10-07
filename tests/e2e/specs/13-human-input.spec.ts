@@ -56,5 +56,5 @@ test('F19-FR-05: a planner (not only QC) can add a status; the drawer summary sh
   await win.getByRole('form', { name: 'Add a status update' }).getByRole('button', { name: 'Close' }).click()
   await expect(win).toBeHidden()
   await expect(drawer.getByTestId('status-summary')).toContainText(note)
-  await expect(drawer.getByTestId('status-summary')).toContainText(/\d+ entries in the log/)
+  await expect(drawer.getByTestId('status-summary')).toContainText(/\d+ (entry|entries) in the log/)
 })

@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from app_api.db import session_factory
 from app_api.logs import configure_logging
 from app_api.sync.drain import drain_once, new_pass_id
+from app_api.sync.lock import drain_slot
 
 log = logging.getLogger("app_api.worker")  # not __name__: under `python -m` that is "__main__"
 DEFAULT_INTERVAL_SECONDS = 20
@@ -48,7 +49,8 @@ def run_forever(
 
     Every wake beats the heartbeat and drains the pending events, so a manual or webhook event waits two
     seconds at most. A full pass also takes back claims that went stale (a crashed worker). A failed pass is
-    logged and the loop carries on (OQ-131).
+    logged and the loop carries on (OQ-131). While the demo reset holds the sync lock the heartbeat goes on
+    and the drain is skipped (F13-FR-05).
     """
     wait = sleep or stop.wait  # wall-clock waiting is infrastructure timing (OQ-003)
     worker = worker_id or socket.gethostname()
@@ -61,7 +63,11 @@ def run_forever(
             last_full = now
         try:
             beat(factory, worker, pass_id)
-            drain_once(factory, reader, pass_id, include_stale=full)
+            with drain_slot(factory) as allowed:
+                if allowed:
+                    drain_once(factory, reader, pass_id, include_stale=full)
+                else:
+                    log.info("drain_skipped", extra={"reason": "the demo reset is running"})
         except Exception:
             log.exception("drain_failed")
         wait(wake_seconds)

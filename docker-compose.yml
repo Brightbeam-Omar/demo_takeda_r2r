@@ -50,10 +50,17 @@ services:
     build:
       context: .
       dockerfile: docker/python.Dockerfile
-      args: {SERVICE_PATH: services/sources/scenario}
+      args:
+        SERVICE_PATH: services/sources/scenario
+        EXTRA_PATHS: services/sources/erp_sim services/sources/lims_sim services/sources/qms_sim services/datagen
     command: ["uvicorn", "scenario.app:app", "--host", "0.0.0.0", "--port", "8100"]
     environment:
       CLOCK_SOURCE: db
+      APP_API_URL: http://app-api:8000
+      ERP_URL: http://erp-sim:8101
+      LIMS_URL: http://lims-sim:8102
+      QMS_URL: http://qms-sim:8103
+      AGENTS_URL: http://agents:8200
     ports:
       - "${SCENARIO_HOST_PORT:-8100}:8100"
     depends_on:

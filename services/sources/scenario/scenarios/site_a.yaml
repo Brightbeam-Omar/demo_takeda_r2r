@@ -1,0 +1,110 @@
+# Scenario steps for the site_a demo (F13-FR-01, FR-02). Every action goes through a real API:
+# the source simulators' event endpoints, the pipeline, the application API or the agents API.
+# Identifiers the generator picks (sample, lot, deviation numbers) are looked up when the step runs.
+# Actions run as `admin` unless an action names `as_user` (OQ-150).
+steps:
+  - id: lims-approve-B1042
+    title: LIMS approves B1042
+    talk_track: "All five tests on B1042 are done; the lab approves the sample in LIMS and the batch moves to QA Release."
+    preconditions:
+      - {kind: stage, batch: B1042, equals: qc_testing, message: "B1042 is not in QC Testing, so it has already been approved in LIMS. Reset the demo to run this step again."}
+    vars:
+      sample: {resolve: sample, batch: B1042}
+    actions:
+      - {do: event, label: "LIMS: approve the sample", service: lims, path: /events/approved, body: {sample_id: "${sample.sample_id}"}}
+      - {do: run_pipeline, label: "Run the pipeline"}
+      - {do: wait_sync, label: "Wait for the app to sync"}
+
+  - id: ud-post-B5003
+    title: Post the usage decision for B5003
+    talk_track: "QA posts the usage decision in the ERP; the air gap on B5003 closes after the next sync."
+    preconditions:
+      - {kind: air_gap, batch: B5003, equals: true, message: "B5003 is no longer an air gap. Reset the demo to run this step again."}
+    vars:
+      row: {resolve: row, batch: B5003}
+    actions:
+      - {do: event, label: "ERP: accept the lot (usage decision)", service: erp, path: /events/usage-decision, body: {prueflos: "${row.inspection_lot_no}", vcode: A}}
+      - {do: run_pipeline, label: "Run the pipeline"}
+      - {do: wait_sync, label: "Wait for the app to sync"}
+
+  - id: interface-sync-B5003
+    title: Record the LIMS results in the ERP for B5003
+    talk_track: "The interface finally records the LIMS results in the ERP; the air gap clears without a usage decision."
+    preconditions:
+      - {kind: air_gap, batch: B5003, equals: true, message: "B5003 is no longer an air gap. Reset the demo to run this step again."}
+    vars:
+      row: {resolve: row, batch: B5003}
+    actions:
+      - {do: event, label: "ERP: results recorded via the interface", service: erp, path: /events/results-recorded, body: {prueflos: "${row.inspection_lot_no}"}}
+      - {do: run_pipeline, label: "Run the pipeline"}
+      - {do: wait_sync, label: "Wait for the app to sync"}
+
+  - id: open-deviation-B1042
+    title: Open a deviation on B1042
+    talk_track: "A major deviation is opened in the QMS against B1042; the batch shows a red deviation light."
+    preconditions:
+      - {kind: open_deviations, batch: B1042, equals: 0, message: "B1042 already has an open deviation. Reset the demo to run this step again."}
+    vars:
+      row: {resolve: row, batch: B1042}
+    actions:
+      - do: event
+        label: "QMS: open a major deviation"
+        service: qms
+        path: /events/deviation-opened
+        body:
+          title: Result under investigation
+          description: A test result on this batch is being investigated. Recorded at site.
+          severity: major
+          owner: QA
+          links: [{material_no: "${row.material_no}", batch_no: B1042}]
+      - {do: run_pipeline, label: "Run the pipeline"}
+      - {do: wait_sync, label: "Wait for the app to sync"}
+
+  - id: close-deviation-B3150
+    title: Close the deviation on B3150
+    talk_track: "The investigation is finished and the deviation on B3150 is closed; the batch can be released."
+    preconditions:
+      - {kind: open_deviations, batch: B3150, equals: 1, message: "B3150 has no open deviation to close. Reset the demo to run this step again."}
+    vars:
+      deviation: {resolve: deviation, batch: B3150}
+    actions:
+      - {do: event, label: "QMS: close the deviation", service: qms, path: /events/deviation-closed, body: {deviation_no: "${deviation.deviation_no}"}}
+      - {do: run_pipeline, label: "Run the pipeline"}
+      - {do: wait_sync, label: "Wait for the app to sync"}
+
+  - id: advance-day
+    title: Advance the demo clock by one day
+    talk_track: "A day passes: ages, SLA clocks and late flags move on."
+    actions:
+      - {do: clock_advance, label: "Move the demo clock forward one day", days: 1}
+      - {do: run_pipeline, label: "Run the pipeline"}
+      - {do: wait_sync, label: "Wait for the app to sync"}
+
+  - id: run-pipeline
+    title: Run the pipeline now
+    talk_track: "Refresh the published data and the app's copy of it."
+    actions:
+      - {do: run_pipeline, label: "Run the pipeline"}
+      - {do: wait_sync, label: "Wait for the app to sync"}
+
+  - id: airgap-agent
+    title: Run the air-gap agent
+    talk_track: "The agent looks at every air gap, gathers the evidence and drafts a ticket for a person to approve."
+    actions:
+      - {do: run_agent, label: "Run the air-gap agent for all candidates", agent: air_gap, as_user: alex}
+
+  - id: pull-forward-B2077
+    title: Pull B2077 forward by a week (fallback)
+    talk_track: "Fallback for act 5: the planner pulls the need-by date of B2077 forward from 3 Dec to 26 Nov."
+    preconditions:
+      - {kind: adjusted_need_by, batch: B2077, equals: false, message: "B2077 already has an adjusted need-by date. Reset the demo to run this step again."}
+    vars:
+      row: {resolve: row, batch: B2077}
+    actions:
+      - do: event
+        label: "App: set the adjusted need-by date as Pat"
+        service: app
+        method: PUT
+        path: "/api/rows/${row.row_key}/need-by"
+        as_user: pat
+        body: {adjusted_date: "2026-11-26", reason_code: CAMPAIGN_PULLED_FORWARD, expedite: false}
