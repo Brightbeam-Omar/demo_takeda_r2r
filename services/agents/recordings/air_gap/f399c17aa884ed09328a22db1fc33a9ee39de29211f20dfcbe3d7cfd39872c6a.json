@@ -1,0 +1,49 @@
+{
+  "key": "f399c17aa884ed09328a22db1fc33a9ee39de29211f20dfcbe3d7cfd39872c6a",
+  "agent_key": "air_gap",
+  "prompt_version": "v1",
+  "turn": 3,
+  "model_id": "claude-sonnet-5-5",
+  "recorded_at": "2026-10-12T07:00:00+00:00",
+  "stop_reason": "tool_use",
+  "tokens_in": 3652,
+  "tokens_out": 541,
+  "latency_ms": 3316,
+  "content": [
+    {
+      "type": "tool_use",
+      "id": "toolu_01QT1Cv8gmHe3uSETzVupAfG",
+      "name": "submit_ticket",
+      "input": {
+        "row_key": "RM10029|B1475|10000589",
+        "title": "Batch B1475: LIMS approved, no ERP usage decision",
+        "summary": "Sample S-0000517 (batch B1475, RM10029) was approved in LIMS at 2026-10-08T13:00:00Z. ERP inspection lot 10000589 has no usage decision and no results recorded. The gap has lasted 90 hours, above the 24-hour threshold. No deviations are linked to the batch. Need-by is 2027-01-17 and the row is not late. Next step: post the usage decision in the ERP.",
+        "evidence": [
+          {
+            "system": "LIMS",
+            "ref": "S-0000517",
+            "field": "approved_at",
+            "value": "2026-10-08T13:00:00Z"
+          },
+          {
+            "system": "ERP",
+            "ref": "10000589",
+            "field": "results_recorded_at",
+            "value": "none"
+          },
+          {
+            "system": "ERP",
+            "ref": "10000589",
+            "field": "ud_code",
+            "value": "none"
+          }
+        ],
+        "hours_in_gap": 90,
+        "open_deviations": [],
+        "recommended_action": "post_usage_decision",
+        "priority": "normal",
+        "recipient_role": "qa_release"
+      }
+    }
+  ]
+}

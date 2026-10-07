@@ -1,0 +1,61 @@
+{
+  "key": "e88c96b6d8ca7eebccc24751494c1f39ef327e8db48b50fc63e78b651fc0122f",
+  "agent_key": "air_gap",
+  "prompt_version": "v1",
+  "turn": 3,
+  "model_id": "claude-sonnet-5-5",
+  "recorded_at": "2026-10-12T07:00:00+00:00",
+  "stop_reason": "tool_use",
+  "tokens_in": 3716,
+  "tokens_out": 599,
+  "latency_ms": 3879,
+  "content": [
+    {
+      "type": "text",
+      "text": "Need-by 2026-10-16 is 4 days away → high."
+    },
+    {
+      "type": "tool_use",
+      "id": "toolu_01UCHr19cBKaCSrJkfLMNiGy",
+      "name": "submit_ticket",
+      "input": {
+        "row_key": "RM10241|B1518|10000640",
+        "title": "Batch B1518: LIMS approved, no ERP usage decision (open deviation)",
+        "summary": "Sample S-0000549 was approved in LIMS at 2026-10-09T17:00:00Z. ERP lot 10000640 has no usage decision and no results record. The gap has lasted 62 hours (threshold 24). Need-by is 2026-10-16. Deviation DEV-000039 (temperature excursion in storage) is linked to the batch and still open. Investigate it first, then post the usage decision.",
+        "evidence": [
+          {
+            "system": "LIMS",
+            "ref": "S-0000549",
+            "field": "approved_at",
+            "value": "2026-10-09T17:00:00Z"
+          },
+          {
+            "system": "ERP",
+            "ref": "10000640",
+            "field": "results_recorded_at",
+            "value": "none"
+          },
+          {
+            "system": "ERP",
+            "ref": "10000640",
+            "field": "ud_code",
+            "value": "none"
+          },
+          {
+            "system": "QMS",
+            "ref": "DEV-000039",
+            "field": "status",
+            "value": "open"
+          }
+        ],
+        "hours_in_gap": 62,
+        "open_deviations": [
+          "DEV-000039"
+        ],
+        "recommended_action": "investigate_deviation_first",
+        "priority": "high",
+        "recipient_role": "qa_release"
+      }
+    }
+  ]
+}
