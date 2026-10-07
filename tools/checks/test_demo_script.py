@@ -57,5 +57,14 @@ def test_f14_fr03_it_names_no_company_or_system_beyond_the_profile_terms() -> No
     assert [word for word in NOT_NAMED if re.search(rf"\b{re.escape(word)}\b", lowered)] == []
 
 
+def test_f14_review_it_has_the_tailoring_section_the_close_and_the_extra_questions() -> None:
+    assert "# Tailor it to the room" in SCRIPT
+    for topic in ["Release speed", "Tacit knowledge", "ERP upgrade", "four to six months", "capitalise"]:
+        assert topic.lower() in SCRIPT.lower(), topic
+    assert "one site" in SCRIPT and "one or two use cases" in SCRIPT
+    for question in ["How do you know the AI is accurate?", "What does it cost to run?", "Is this GxP?"]:
+        assert question in SCRIPT, question
+
+
 def test_f14_fr03_it_names_people_only_by_role() -> None:
     assert "Presenter" in SCRIPT and "SME" in SCRIPT

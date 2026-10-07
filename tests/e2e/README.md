@@ -18,8 +18,10 @@ F10-AC-05, approves B1042's sample too, and the Demo Controls spec resets again)
 `artifacts/e2e/specs`; a failed run keeps its screenshot and trace in `artifacts/e2e-results/`. Run one project with
 `npx playwright test --project=specs` after a reset.
 
-`make record-video` runs the run-of-show alone with `RECORD_VIDEO=1 PACE=presenter`: a 1.5 s pause after each beat, one
-continuous recording at 1440×900 in `artifacts/video/run-of-show.webm`. `node video-size.mjs <file>` prints a video's
+`make record-video` runs the run-of-show alone with `RECORD_VIDEO=1 PACE=presenter`: 4 to 6 s on each key screen, a
+visible pointer that glides to each element before a slow click, and a caption bar with the act and one line of what is
+happening (no voice-over). It makes one continuous recording of about 7 to 8 minutes at 1440×900 in
+`artifacts/video/run-of-show.webm`. `PACE=ci` (the default) is full speed with no overlay, as `make e2e` runs it. `node video-size.mjs <file>` prints a video's
 size and length.
 `npm run screenshot` (in this folder) writes `docs/screenshots/overview.png` at 1440×900.
 

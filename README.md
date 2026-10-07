@@ -113,7 +113,7 @@ Run `make help` for the short list.
 | `make scenario STEP=<id>` | Run a scripted scenario step through the real source systems, the pipeline and the sync, printing each progress line (F13); exits non-zero when the step is refused or fails. `make scenario STEP=list` shows the steps and whether each one can run now |
 | `make e2e` / `make e2e-headed` | `make demo-reset`, then the run-of-show (acts 2, 3, 5 and 6, under 6 minutes), a second reset, then every other Playwright spec. HTML reports in `artifacts/e2e/` (F14) |
 | `make record-agents` | Run the air-gap agent live for the four demo-start air gaps and record the model's answers into `services/agents/recordings/` (F12). Needs the stack in the demo-start state and `ANTHROPIC_API_KEY` with credit; the key is never printed |
-| `make record-video` | Demo reset, then the run-of-show at presenter pace, 1440×900, with no voice-over: `artifacts/video/run-of-show.webm` (and `.mp4` when `ffmpeg` is installed) (F14) |
+| `make record-video` | Demo reset, then the run-of-show at presenter pace (`PACE=presenter`: 4 to 6 s on each key screen, a visible pointer, slow clicks, captions; about 7 to 8 minutes), 1440×900, with no voice-over: `artifacts/video/run-of-show.webm` (and `.mp4` when `ffmpeg` is installed) (F14) |
 | `make doctor` | Environment checks, each failure with its fix: Docker, memory ≥ 12 GB, ports, `.env`, the denylist, the Dagster and app health, the agents' recordings mount and the replay keys for the 4 demo-start air gaps. `make doctor EXPECT_UP=1` also fails when the stack is not running (F14) |
 
 Integration tests (they need a running Postgres) are skipped by `make check`:

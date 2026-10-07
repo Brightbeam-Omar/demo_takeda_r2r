@@ -157,7 +157,8 @@ record-agents: ## Record LLM replays for the demo-start state (needs ANTHROPIC_A
 		LIMS_URL=http://localhost:$${LIMS_HOST_PORT:-8102} QMS_URL=http://localhost:$${QMS_HOST_PORT:-8103} \
 		uv run python -m agents.record
 
-# F14-FR-07, OQ-157, OQ-164: demo reset, then the run-of-show once at presenter pace (1.5 s after each beat), 1440x900,
+# F14-FR-07, OQ-157, OQ-164: demo reset, then the run-of-show once at presenter pace (PACE=presenter: 4 to 6 s on each key
+# screen, a visible pointer, slow clicks and captions; PACE=ci, the default, is full speed), 1440x900,
 # no voice-over. Writes artifacts/video/run-of-show.webm, and an .mp4 next to it when ffmpeg is installed.
 record-video: demo-reset ## Record the backup demo video (artifacts/video/)
 	@set -a; [ ! -f .env ] || . ./.env; set +a; cd tests/e2e && \

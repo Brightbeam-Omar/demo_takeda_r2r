@@ -10,6 +10,8 @@ The demo has two versions of the same story:
 | **Working call** | 40 minutes | Site digital delivery manager, quality and supply SMEs. Acts 1, 2, 3, 5, 6 with questions |
 | **Leadership cut** | 12 minutes | Global digital and manufacturing leaders. *Draft: SME to confirm* (see the end) |
 
+Near the end, **Tailor it to the room** has the lines for release speed, tacit knowledge, their platform, time and ownership.
+
 Act 4 (what happens when the automatic update is switched off) and acts 7 and 8 (trust and "your world") are not
 built yet. Do not promise them. If asked, say they are next.
 
@@ -33,7 +35,7 @@ on **Monday 12 Oct 2026, 08:00** and only moves when you move it.
 4. Sign-in is automatic. You start as **Pat · Planner**.
 5. Open the legacy tracker workbook in a spreadsheet application, in a separate window: `artifacts/legacy_tracker.xlsx`. If it is missing: `uv run python -m datagen legacy-workbook --out artifacts/legacy_tracker.xlsx`.
 6. Have a terminal open in the project folder, ready for the recovery commands below.
-7. Backup: the recorded run-through is `artifacts/video/run-of-show.webm` (made by `make record-video`).
+7. Backup: the recorded run-through is `artifacts/video/run-of-show.webm` (made by `make record-video`): about 7 to 8 minutes at a watchable pace, with a pointer and a caption on each step and no voice-over. Play it with your own voice-over if the live demo fails.
 
 **Do not click around beforehand.** The demo needs the opening state: B1042 not yet approved, B2077 not yet
 adjusted, no agent proposals. If you did, run `make demo-reset` again.
@@ -218,7 +220,7 @@ This is the proof that nothing on screen is faked.
 **Say**
 - "What you saw is one chain: your systems, a governed data product, a live application, audited human input, and agents that only propose."
 - "All of it is configured for a site, not coded for it: stages, SLA days, team names and terms come from a site profile."
-- "Next we would like to connect it to your data and rerun this with your real batches."
+- "Our proposal: pick **one site** and **one or two use cases**, for example the air-gap check and the Monday huddle. Prove the value on your real batches. Then scale the same layer across your other sites."
 
 **Time** 3 minutes, then questions.
 
@@ -253,6 +255,20 @@ in 30 seconds, switch to the backup video and narrate it.
 
 ---
 
+# Tailor it to the room
+
+Pick two or three of these for the close or for questions. Say them in your own words.
+
+| If the room cares about | Say |
+|---|---|
+| **Release speed** | "The air-gap agent is step one. The next step is a release-readiness agent that assembles the full evidence pack for a batch, so the QA lead reviews a finished pack instead of chasing eight systems." |
+| **Tacit knowledge** | "A lot of what makes a huddle work lives in people's heads: supplier habits, handover notes, 'we always chase that lab on Thursdays'. The next agent captures those signals and puts them next to the batch, so they survive a change of staff." |
+| **Their existing platform and ERP** | "This runs on the data platform and ERP you already have. It reads from them and publishes a data product; it does not replace them. That includes an ERP upgrade: the sources are adapters, so the layer above them carries on." |
+| **Time and risk** | "A first deployment is bounded: four to six months to a working release on one site, with a defined scope and a go or no-go at the end." |
+| **Ownership and budget** | "The orchestration layer is an asset you own and can capitalise, not a point solution you rent. Every further site and agent reuses it." |
+
+---
+
 # Questions you may get
 
 | Question | Short answer |
@@ -261,3 +277,6 @@ in 30 seconds, switch to the backup video and narrate it.
 | "Can the agent change anything?" | No. It reads. It can only write a proposal, an action log and a trace. A person approves, and approval re-checks everything. |
 | "Is any of this real data?" | No. It is generated, with a fixed seed, so the demo is the same every time. |
 | "What if the update fails?" | Not shown today. Resilience (an automatic safety check that catches a missed update) is next. |
+| "How do you know the AI is accurate?" | Today a rule validator checks every draft against the source systems before a person sees it, so a wrong draft is stopped, not trusted. The next increment is an evaluation harness that scores the agent's accuracy against known cases. |
+| "What does it cost to run?" | About 4 cents per ticket, and the cost is visible in every trace. |
+| "Is this GxP?" | The systems of record stay the systems of record. This is a coordination layer above them, outside GxP: it reads, proposes and records, and a person decides in the system of record. |
