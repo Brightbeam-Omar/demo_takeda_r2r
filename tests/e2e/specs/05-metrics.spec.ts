@@ -30,6 +30,7 @@ test('F17-AC-05: ON HOLD + EXPEDITE show rows with either, Clear tags restores e
   await page.getByTestId('tag-on_hold').click()
   await page.getByTestId('tag-expedite').click()
   await expect(page).toHaveURL(/flag=on_hold&flag=expedite/)
+  await expect(page.getByTestId('page-summary')).not.toContainText('482 lots') // the filter has been applied
   const filtered = Number((await page.getByTestId('page-summary').innerText()).match(/(\d+) lots/)?.[1])
   expect(filtered).toBeGreaterThan(0)
   expect(filtered).toBeLessThan(482)
