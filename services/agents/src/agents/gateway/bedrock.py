@@ -10,6 +10,13 @@ class BedrockGateway(ModelGateway):
         self.model_id = model_id
 
     def generate(
-        self, *, system: str, messages: list[Msg], tools: list[ToolSpec] | None, turn: int
+        self,
+        *,
+        system: str,
+        messages: list[Msg],
+        tools: list[ToolSpec] | None,
+        turn: int,
+        agent_key: str,
+        prompt_version: str,
     ) -> ModelResult:
         raise GatewayError("the bedrock provider arrives with T2-10 (AWS deployment)")

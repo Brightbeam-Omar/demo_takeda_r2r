@@ -39,7 +39,14 @@ class AnthropicGateway(ModelGateway):
         self._client = client
 
     def generate(
-        self, *, system: str, messages: list[Msg], tools: list[ToolSpec] | None, turn: int
+        self,
+        *,
+        system: str,
+        messages: list[Msg],
+        tools: list[ToolSpec] | None,
+        turn: int,
+        agent_key: str,
+        prompt_version: str,
     ) -> ModelResult:
         request: dict[str, Any] = {
             "model": self.model_id,

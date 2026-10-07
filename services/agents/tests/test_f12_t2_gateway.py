@@ -54,7 +54,13 @@ def test_f12_fr02_request_uses_the_fixed_settings_and_tool_use() -> None:
     messages = FakeMessages(_response())
     trace = ListTrace()
     result = _gateway(messages).complete(
-        system="be careful", messages=[Msg.user("hello")], tools=[TOOL], trace=trace, turn=1
+        system="be careful",
+        messages=[Msg.user("hello")],
+        tools=[TOOL],
+        trace=trace,
+        turn=1,
+        agent_key="air_gap",
+        prompt_version="v1",
     )
     request = messages.requests[0]
     assert (request["model"], request["max_tokens"]) == ("claude-sonnet-5-5", 1500)
@@ -72,7 +78,13 @@ def test_f12_fr02_request_uses_the_fixed_settings_and_tool_use() -> None:
 def test_f12_fr02_every_call_traces_request_and_response_with_tokens_and_latency() -> None:
     trace = ListTrace()
     _gateway(FakeMessages(_response())).complete(
-        system="s", messages=[Msg.user("hi")], tools=None, trace=trace, turn=1
+        system="s",
+        messages=[Msg.user("hi")],
+        tools=None,
+        trace=trace,
+        turn=1,
+        agent_key="air_gap",
+        prompt_version="v1",
     )
     request, response = trace.steps
     assert request["step_type"] == "model_request"
@@ -87,7 +99,13 @@ def test_f12_fr02_a_provider_error_is_traced_and_raised_without_details() -> Non
     trace = ListTrace()
     with pytest.raises(GatewayError, match="APIConnectionError"):
         _gateway(FakeMessages(error=boom)).complete(
-            system="s", messages=[Msg.user("hi")], tools=None, trace=trace, turn=1
+            system="s",
+            messages=[Msg.user("hi")],
+            tools=None,
+            trace=trace,
+            turn=1,
+            agent_key="air_gap",
+            prompt_version="v1",
         )
     assert [s["step_type"] for s in trace.steps] == ["model_request", "model_response"]
     assert trace.steps[1]["payload"]["error"] == "GatewayError"  # type: ignore[index]
@@ -102,7 +120,15 @@ def test_f12_fr02_missing_key_is_a_clear_error(monkeypatch: pytest.MonkeyPatch) 
 def test_f12_fr02_bedrock_is_a_stub_and_unknown_providers_are_refused() -> None:
     gateway = build_gateway(Settings.from_env({"LLM_PROVIDER": "bedrock"}))
     with pytest.raises(GatewayError, match="T2-10"):
-        gateway.complete(system="s", messages=[Msg.user("hi")], tools=None, trace=ListTrace(), turn=1)
+        gateway.complete(
+            system="s",
+            messages=[Msg.user("hi")],
+            tools=None,
+            trace=ListTrace(),
+            turn=1,
+            agent_key="air_gap",
+            prompt_version="v1",
+        )
     with pytest.raises(GatewayError, match="unknown LLM_PROVIDER"):
         build_gateway(Settings.from_env({"LLM_PROVIDER": "nope"}))
 
@@ -131,7 +157,15 @@ def test_f12_oq146_the_key_is_not_in_the_request_the_trace_or_the_error(
     )
     trace = ListTrace()
     with pytest.raises(GatewayError) as raised:
-        gateway.complete(system="s", messages=[Msg.user("hi")], tools=None, trace=trace, turn=1)
+        gateway.complete(
+            system="s",
+            messages=[Msg.user("hi")],
+            tools=None,
+            trace=trace,
+            turn=1,
+            agent_key="air_gap",
+            prompt_version="v1",
+        )
     assert SENTINEL_KEY not in str(raised.value)
     assert SENTINEL_KEY not in json.dumps(trace.steps, default=str)
     assert SENTINEL_KEY not in repr(gateway.__dict__.get("model_id"))

@@ -1,7 +1,7 @@
 # F12 · Tasks
 - [x] T1 Service skeleton, DB role/grants migration, compose service (FR-01, FR-10, AC-07)
 - [x] T2 Trace store + ModelGateway base + Anthropic provider (FR-02)
-- [ ] T3 [TDD] Replay provider and key derivation; `make record-agents` (FR-03, AC-09)
+- [x] T3 [TDD] Replay provider and key derivation; `make record-agents` (FR-03, AC-09) (the `make record-agents` command itself is wired in T10, once the agent exists)
 - [ ] T4 Read-only tool registry + tools (FR-04)
 - [ ] T5 Generic runner loop with limits (FR-04, FR-05)
 - [ ] T6 [TDD] AirGapTicket schema + validator V1–V6 (FR-06, FR-07, AC-03, AC-04)

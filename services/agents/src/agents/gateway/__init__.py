@@ -14,4 +14,8 @@ def build_gateway(settings: Settings) -> ModelGateway:
         from agents.gateway.bedrock import BedrockGateway
 
         return BedrockGateway(settings.model_id)
+    if provider == "replay":
+        from agents.gateway.replay import ReplayGateway
+
+        return ReplayGateway(settings.recordings_dir, settings.model_id)
     raise GatewayError(f"unknown LLM_PROVIDER {provider!r}")

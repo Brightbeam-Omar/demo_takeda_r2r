@@ -62,6 +62,9 @@ class ModelResult(BaseModel):
     tokens_out: int
     latency_ms: int
     model_id: str
+    replayed: bool = (
+        False  # True when the answer came from a recording (tokens and latency are the recorded ones)
+    )
 
     def tool_uses(self) -> list[ToolUseBlock]:
         return [block for block in self.content if isinstance(block, ToolUseBlock)]
@@ -79,7 +82,14 @@ class ModelGateway(ABC):
 
     @abstractmethod
     def generate(
-        self, *, system: str, messages: list[Msg], tools: list[ToolSpec] | None, turn: int
+        self,
+        *,
+        system: str,
+        messages: list[Msg],
+        tools: list[ToolSpec] | None,
+        turn: int,
+        agent_key: str,
+        prompt_version: str,
     ) -> ModelResult: ...
 
     def complete(
@@ -90,6 +100,8 @@ class ModelGateway(ABC):
         tools: list[ToolSpec] | None,
         trace: TraceSink,
         turn: int,
+        agent_key: str,
+        prompt_version: str,
     ) -> ModelResult:
         trace.step(
             "model_request",
@@ -97,6 +109,8 @@ class ModelGateway(ABC):
                 "provider": self.provider,
                 "model_id": self.model_id,
                 "turn": turn,
+                "agent_key": agent_key,
+                "prompt_version": prompt_version,
                 "max_tokens": MAX_TOKENS,
                 "system": system,
                 "messages": [m.model_dump(mode="json") for m in messages],
@@ -105,7 +119,14 @@ class ModelGateway(ABC):
         )
         started = time.perf_counter()
         try:
-            result = self.generate(system=system, messages=messages, tools=tools, turn=turn)
+            result = self.generate(
+                system=system,
+                messages=messages,
+                tools=tools,
+                turn=turn,
+                agent_key=agent_key,
+                prompt_version=prompt_version,
+            )
         except Exception as error:
             trace.step(
                 "model_response",
@@ -120,6 +141,7 @@ class ModelGateway(ABC):
                 "stop_reason": result.stop_reason,
                 "model_id": result.model_id,
                 "provider": self.provider,
+                "replayed": result.replayed,
             },
             tokens_in=result.tokens_in,
             tokens_out=result.tokens_out,

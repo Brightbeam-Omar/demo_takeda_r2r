@@ -3,6 +3,10 @@
 import os
 from collections.abc import Mapping
 from dataclasses import dataclass
+from pathlib import Path
+
+# services/agents/recordings next to this package when run from the repository; compose sets the variable.
+DEFAULT_RECORDINGS = Path(__file__).resolve().parents[2] / "recordings"
 
 
 @dataclass(frozen=True)
@@ -17,6 +21,7 @@ class Settings:
     price_out_per_1k: float
     autorun: bool
     service_user: str
+    recordings_dir: Path
 
     @classmethod
     def from_env(cls, env: Mapping[str, str] | None = None) -> "Settings":
@@ -32,4 +37,5 @@ class Settings:
             price_out_per_1k=float(source.get("LLM_PRICE_OUT_PER_1K", "0.015")),
             autorun=source.get("AGENTS_AUTORUN", "false").lower() == "true",
             service_user=source.get("AGENTS_SERVICE_USER", "admin"),
+            recordings_dir=Path(source.get("AGENTS_RECORDINGS_DIR") or DEFAULT_RECORDINGS),
         )
