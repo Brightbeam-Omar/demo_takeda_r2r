@@ -11,3 +11,4 @@
 - **Step lookups:** identifiers the generator picks (sample, lot, deviation numbers) are looked up when a step runs (`vars` in the YAML). Preconditions read the application API, so a check matches the screen (OQ-150). `wait_sync` matches the Dagster run id, which is the pipeline `run_id` every watermark carries (OQ-151, checked on the live stack).
 - **Browser access (OQ-147):** `/api/demo/*` in app-api (404 unless `DEMO_MODE`, 403 unless admin) forwards to the scenario service with the token.
 - **Extra precondition kind** `adjusted_need_by` (for `pull-forward-B2077`) and an `X-Actor-User` header on the run endpoints (the audit actor).
+- **`fetch` stream instead of `EventSource`.** The Demo Controls page must send `X-Demo-User` (the server decides admin-only), and `EventSource` cannot set headers. `api/demo.ts` reads the same `text/event-stream` with `fetch`, and on a dropped connection resumes with `?after=<last seq + 1>` (the server replays).

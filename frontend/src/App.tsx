@@ -14,6 +14,7 @@ import { SchemaReference } from './pages/admin/SchemaReference'
 import { TeamDashboard } from './pages/admin/TeamDashboard'
 import { SyncStatus } from './pages/admin/SyncStatus'
 import { WebhookStatus } from './pages/admin/WebhookStatus'
+import { DemoControls } from './pages/admin/DemoControls'
 import { Overview } from './pages/Overview'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import { Reports } from './pages/Reports'
@@ -27,7 +28,7 @@ const createQueryClient = () =>
   })
 
 // Pages that exist. Every other menu item renders a titled placeholder (F15-FR-02, OQ-081).
-const BUILT = new Set(['/overview', '/reports', '/agents', '/admin/audit', '/admin/team', '/admin/schema', '/admin/sla', '/admin/sync', '/admin/webhooks', '/admin/feedback'])
+const BUILT = new Set(['/overview', '/reports', '/agents', '/admin/audit', '/admin/team', '/admin/schema', '/admin/sla', '/admin/sync', '/admin/webhooks', '/admin/demo', '/admin/feedback'])
 const PLACEHOLDERS = [...VIEWS, ...ADMIN].filter((item) => !BUILT.has(item.to))
 
 export default function App() {
@@ -50,6 +51,7 @@ export default function App() {
               <Route path="/admin/sla" element={<SlaConfig />} />
               <Route path="/admin/sync" element={<SyncStatus />} />
               <Route path="/admin/webhooks" element={<WebhookStatus />} />
+              <Route path="/admin/demo" element={<DemoControls />} />
               <Route path="/admin/audit" element={<Audit />} />
               <Route path="/sync" element={<Navigate to="/admin/sync" replace />} />
               <Route path="/sync/webhook" element={<Navigate to="/admin/webhooks" replace />} />

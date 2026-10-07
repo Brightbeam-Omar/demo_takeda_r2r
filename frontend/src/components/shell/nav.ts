@@ -80,7 +80,6 @@ export const ADMIN: NavItem[] = [
     to: '/admin/demo',
     label: 'Demo Controls',
     icon: '▶',
-    coming: 'Coming in F13',
     demoAdminOnly: true,
   },
   { to: '/admin/feedback', label: 'Feedback', icon: '✎' },

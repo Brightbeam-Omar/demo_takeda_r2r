@@ -12,6 +12,7 @@ dependencies = [
     "sqlalchemy>=2,<2.1",  # 2.1 breaks the stack tests (F20 CI); see services/pipeline
     "alembic>=1.13",
     "psycopg[binary]>=3.2",
+    "httpx>=0.27",  # Demo Controls forward to the scenario service (F13)
 ]
 
 [build-system]

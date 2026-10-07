@@ -4,4 +4,4 @@
 - [x] T3 Tier 1 steps (FR-02, AC-02, AC-03)
 - [x] T4 [TDD] Reset orchestration and timing (FR-05, AC-01, AC-05)
 - [x] T5 Make targets (FR-04) and audit events (FR-07)
-- [ ] T6 Demo Controls UI (FR-06, AC-04)
+- [x] T6 Demo Controls UI (FR-06, AC-04)
