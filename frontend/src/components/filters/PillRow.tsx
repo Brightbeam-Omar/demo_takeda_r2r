@@ -13,15 +13,16 @@ interface Props {
   label: string
   options: PillOption[]
   selected: string[]
+  /** Sets the whole row (the All pill clears it). */
   onChange: (selected: string[]) => void
+  /** Flips one value; the caller applies it to the latest filters, so two quick clicks both count. */
+  onToggle: (value: string) => void
   /** Extra content after the pills (the campaign search and view toggle). */
   children?: ReactNode
 }
 
 /** One row of the filter panel: an "All" pill and one pill per option. Values within a row are ORed; "All" clears the row. */
-export function PillRow({ label, options, selected, onChange, children }: Props) {
-  const toggle = (value: string) =>
-    onChange(selected.includes(value) ? selected.filter((item) => item !== value) : [...selected, value])
+export function PillRow({ label, options, selected, onChange, onToggle, children }: Props) {
   return (
     <div role="group" aria-label={label} className="flex items-start gap-3">
       <span className="w-20 shrink-0 pt-1 text-sm font-semibold text-slate-500">{label}</span>
@@ -35,7 +36,7 @@ export function PillRow({ label, options, selected, onChange, children }: Props)
             type="button"
             aria-pressed={selected.includes(option.value)}
             className={pillClass(selected.includes(option.value))}
-            onClick={() => toggle(option.value)}
+            onClick={() => onToggle(option.value)}
           >
             {option.label}
             {option.count !== undefined && <span className="ml-1.5 text-xs text-slate-500">{option.count}</span>}

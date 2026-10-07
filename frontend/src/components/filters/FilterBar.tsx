@@ -1,6 +1,6 @@
 import type { Reference, Row } from '../../api/queries'
 import { useTerms } from '../../hooks/useTerms'
-import { useFilterPanel, type Filters } from '../../state/url-filters'
+import { useFilterPanel, type FilterPatch, type Filters } from '../../state/url-filters'
 import { FilterChips, filterChips } from './FilterChips'
 import { FilterPanel } from './FilterPanel'
 import { PresetsMenu } from './PresetsMenu'
@@ -12,7 +12,7 @@ interface Props {
   stageLabel: (key: string) => string
   /** The current user's bookmarked rows, whatever the filters. */
   bookmarks: string[]
-  onChange: (patch: Partial<Filters>) => void
+  onChange: (patch: FilterPatch) => void
   onClear: () => void
 }
 
@@ -44,7 +44,7 @@ export function FilterBar({ reference, rows, filters, stageLabel, bookmarks, onC
           disabled={bookmarks.length === 0 && !filters.bookmarked}
           title={bookmarks.length === 0 ? 'Star a batch to bookmark it' : undefined}
           className={`${button(filters.bookmarked)} disabled:cursor-not-allowed disabled:opacity-50`}
-          onClick={() => onChange({ bookmarked: !filters.bookmarked })}
+          onClick={() => onChange((current) => ({ bookmarked: !current.bookmarked }))}
         >
           {filters.bookmarked ? '★' : '☆'} Bookmarked
         </button>

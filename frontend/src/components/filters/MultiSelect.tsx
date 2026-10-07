@@ -10,12 +10,12 @@ interface Props {
   label: string
   options: Option[]
   selected: string[]
-  onChange: (selected: string[]) => void
+  onToggle: (value: string) => void
   searchable?: boolean
 }
 
 /** A dropdown of checkboxes; the button shows the label and how many values are picked. */
-export function MultiSelect({ label, options, selected, onChange, searchable = false }: Props) {
+export function MultiSelect({ label, options, selected, onToggle, searchable = false }: Props) {
   const [open, setOpen] = useState(false)
   const [term, setTerm] = useState('')
   const root = useRef<HTMLDivElement>(null)
@@ -30,8 +30,6 @@ export function MultiSelect({ label, options, selected, onChange, searchable = f
   }, [open])
 
   const shown = options.filter((option) => option.label.toLowerCase().includes(term.toLowerCase()))
-  const toggle = (value: string) =>
-    onChange(selected.includes(value) ? selected.filter((item) => item !== value) : [...selected, value])
 
   return (
     <div className="relative" ref={root}>
@@ -64,7 +62,7 @@ export function MultiSelect({ label, options, selected, onChange, searchable = f
                   <input
                     type="checkbox"
                     checked={selected.includes(option.value)}
-                    onChange={() => toggle(option.value)}
+                    onChange={() => onToggle(option.value)}
                   />
                   <span className="flex-1">{option.label}</span>
                   {option.count !== undefined && <span className="text-xs text-slate-500">{option.count}</span>}

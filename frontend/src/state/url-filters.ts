@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 /** Everything the Overview filters on. It lives in the URL query string so it can be shared and survives reload. */
@@ -99,28 +99,57 @@ export function activeFilterCount(filters: Filters): number {
   )
 }
 
-export function useUrlFilters() {
+/** A change to the filters: the new values, or a function of the latest filters (for toggles, which must not use stale props). */
+export type FilterPatch = Partial<Filters> | ((current: Filters) => Partial<Filters>)
+
+/** Adds the value to the list, or removes it when it is already there. */
+export const toggled = (list: string[], value: string) => (list.includes(value) ? list.filter((item) => item !== value) : [...list, value])
+
+/** The params the last click produced, until the router has rendered them (null once it has caught up). */
+let pending: { params: URLSearchParams; at: number } | null = null
+/** Safety net: a click that never reached the router must not pin the params for ever. */
+const PENDING_MS = 1000
+
+/**
+ * Rapid clicks can arrive before React re-renders, and react-router hands every updater the params of the last
+ * render. Every URL change that builds on the current params (a pill, the Filters toggle) goes through this hook,
+ * which remembers what the previous click produced, so no click is lost.
+ */
+function useLatestSearch() {
   const [search, setSearch] = useSearchParams()
-  const filters = useMemo(() => parseFilters(search), [search])
-  // Rapid clicks can arrive before React re-renders, and react-router hands every updater the params of the last
-  // render: the ref keeps the params the previous click produced, so no click is lost.
-  const latest = useRef(search)
   useEffect(() => {
-    latest.current = search
+    if (pending && pending.params.toString() === search.toString()) pending = null
   }, [search])
+  const read = useCallback(
+    () => (pending && performance.now() - pending.at < PENDING_MS ? pending.params : search),
+    [search],
+  )
+  const commit = useCallback(
+    (next: URLSearchParams) => {
+      pending = { params: next, at: performance.now() }
+      setSearch(next, { replace: true })
+    },
+    [setSearch],
+  )
+  return { search, read, commit }
+}
+
+export function useUrlFilters() {
+  const { search, read, commit } = useLatestSearch()
+  const filters = useMemo(() => parseFilters(search), [search])
   const update = useCallback(
-    (patch: Partial<Filters>) => {
-      const current = latest.current
-      const next = serializeFilters({ ...parseFilters(current), ...patch })
+    (patch: FilterPatch) => {
+      const current = read()
+      const base = parseFilters(current)
+      const next = serializeFilters({ ...base, ...(typeof patch === 'function' ? patch(base) : patch) })
       // The open drawer and the panel state are not filters, but they must survive one.
       for (const key of KEPT_PARAMS) {
         const value = current.get(key)
         if (value) next.set(key, value)
       }
-      latest.current = next
-      setSearch(next, { replace: true })
+      commit(next)
     },
-    [setSearch],
+    [read, commit],
   )
   const clearAll = useCallback(
     () => update({ types: [], classes: [], campaigns: [], flags: [], stages: [], bookmarked: false, q: '' }),
@@ -131,19 +160,15 @@ export function useUrlFilters() {
 
 /** The filter panel is open or closed (`?filters=open|closed`, F16-FR-01). Closed unless the URL says open. */
 export function useFilterPanel() {
-  const [search, setSearch] = useSearchParams()
+  const { search, read, commit } = useLatestSearch()
   const open = search.get('filters') === 'open'
   const setOpen = useCallback(
-    (next: boolean) =>
-      setSearch(
-        (current) => {
-          const params = new URLSearchParams(current)
-          params.set('filters', next ? 'open' : 'closed')
-          return params
-        },
-        { replace: true },
-      ),
-    [setSearch],
+    (next: boolean) => {
+      const params = new URLSearchParams(read())
+      params.set('filters', next ? 'open' : 'closed')
+      commit(params)
+    },
+    [read, commit],
   )
   return { open, setOpen }
 }

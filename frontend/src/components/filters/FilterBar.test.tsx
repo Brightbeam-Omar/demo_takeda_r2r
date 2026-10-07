@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { act, fireEvent, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
@@ -185,4 +185,25 @@ test('F16-AC-02: Bookmarked is greyed until the user has a bookmark, then toggle
 test('F16-FR-04: with the filter on and no bookmarks left, the button stays usable so it can be switched off', () => {
   renderAt('/overview?bookmarked=1', [])
   expect(screen.getByRole('button', { name: /^[☆★] Bookmarked$/ })).toBeEnabled()
+})
+
+test('two pills clicked before React re-renders both count (F16-AC-01)', async () => {
+  renderAt('/overview?filters=open')
+  const classes = within(screen.getByRole('group', { name: 'Class' }))
+  // Both clicks run inside one act(), so the second arrives before the first has re-rendered the pills.
+  act(() => {
+    fireEvent.click(classes.getByRole('button', { name: 'Consumable' }))
+    fireEvent.click(classes.getByRole('button', { name: 'Drug Substance' }))
+  })
+  expect(screen.getByTestId('url')).toHaveTextContent('class=consumable&class=drug_substance')
+})
+
+test('collapsing the panel right after a pill keeps the pill (F16-AC-01)', () => {
+  renderAt('/overview?filters=open')
+  act(() => {
+    fireEvent.click(within(screen.getByRole('group', { name: 'Class' })).getByRole('button', { name: 'Consumable' }))
+    fireEvent.click(screen.getByRole('button', { name: /Filters/ }))
+  })
+  expect(screen.getByTestId('url')).toHaveTextContent('class=consumable')
+  expect(screen.getByTestId('url')).toHaveTextContent('filters=closed')
 })

@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import type { Reference, Row } from '../../api/queries'
-import type { Filters } from '../../state/url-filters'
+import { toggled, type FilterPatch, type Filters } from '../../state/url-filters'
 import { CampaignPills } from './CampaignPills'
 import { PillRow } from './PillRow'
 
@@ -11,7 +11,7 @@ interface Props {
   reference: Reference | undefined
   rows: Row[]
   filters: Filters
-  onChange: (patch: Partial<Filters>) => void
+  onChange: (patch: FilterPatch) => void
 }
 
 /** The expanded panel (F16-FR-02): Type, Class and Campaign rows. Same filter semantics as before (OQ-059). */
@@ -33,6 +33,7 @@ export function FilterPanel({ reference, rows, filters, onChange }: Props) {
         options={(reference?.molecule_types ?? []).map((item) => ({ value: item.key, label: item.label }))}
         selected={filters.types}
         onChange={(types) => onChange({ types })}
+        onToggle={(value) => onChange((current) => ({ types: toggled(current.types, value) }))}
       />
       <PillRow
         label="Class"
@@ -42,11 +43,13 @@ export function FilterPanel({ reference, rows, filters, onChange }: Props) {
         ]}
         selected={filters.classes}
         onChange={(classes) => onChange({ classes })}
+        onToggle={(value) => onChange((current) => ({ classes: toggled(current.classes, value) }))}
       />
       <CampaignPills
         campaigns={(reference?.campaigns ?? []).map((value) => ({ value, label: value, count: counts.campaigns.get(value) ?? 0 }))}
         selected={filters.campaigns}
         onChange={(campaigns) => onChange({ campaigns })}
+        onToggle={(value) => onChange((current) => ({ campaigns: toggled(current.campaigns, value) }))}
       />
     </div>
   )
