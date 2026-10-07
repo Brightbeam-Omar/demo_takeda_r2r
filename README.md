@@ -37,6 +37,7 @@ Check the databases with `docker compose exec postgres psql -U r2r -d postgres -
 | `qms-sim` | 8103 | QMS simulator |
 | `dagster-web` / `dagster-daemon` | 3001 | The data product pipeline (UI at http://localhost:3001) |
 | `app-api` | 8000 | Application API: signed webhook `POST /api/sync/webhook`, `GET /api/sync/status`, admin `POST /api/sync/trigger` (F08) |
+| `agents` | 8200 | The agent harness (F12): runs the air-gap agent, validates its drafts, holds proposals for a person to approve (UI: `/agents`). Reads app-api and the three simulators over HTTP; writes only `proposal`, `action_log`, `agent_trace` and `audit_event`, as the Postgres role `agents_rw`. Its model answers come from recordings (`LLM_PROVIDER=replay`, the default) or the Anthropic API. See `services/agents/README.md` |
 | `app-worker` | n/a | Drain worker: mirrors the published contract into the `app` database every `DRAIN_INTERVAL_SECONDS`. The only reader of the lakehouse, which it mounts read-only (F08) |
 
 Every service serves OpenAPI docs at `/docs`. Reads are open; every `POST` needs the header
@@ -64,7 +65,8 @@ delivers them.
 | `make pipeline` | Trigger one pipeline run (F07); the worker mirrors it into the app within about 30 s (F08) |
 | `make scenario STEP=<id>` | Apply a scripted scenario step (F13) |
 | `make e2e` / `make e2e-headed` | Playwright run-of-show (F14) |
-| `make record-agents` / `make record-video` | Record LLM replays / backup video (F12, F14) |
+| `make record-agents` | Run the air-gap agent live for the four demo-start air gaps and record the model's answers into `services/agents/recordings/` (F12). Needs the stack in the demo-start state and `ANTHROPIC_API_KEY` with credit; the key is never printed |
+| `make record-video` | Record the backup video (F14) |
 | `make doctor` | Environment checks (F14) |
 
 Integration tests (they need a running Postgres) are skipped by `make check`:

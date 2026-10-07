@@ -16,3 +16,12 @@ make e2e                 # or: make e2e-headed
 `npm run screenshot:windows` writes the F19 screenshots (`drawer-b4410.png` and the five `win-*.png`) to `docs/screenshots/`.
 Run it right after `make seed`: B1042's sample is unapproved only until the live-update spec runs. Most F19 specs add
 Status Log entries (insert-only), so a second run shows longer histories until the next demo reset (F13).
+
+## F12: the agents
+
+`20-agents.spec.ts` needs no model (the Agents page, the Insights window and the drawer before any run).
+`21-agent-flow.spec.ts` runs the agent from the committed recordings (act 6) and is skipped, with the reason, until
+`make record-agents` has written them. Both start by emptying the agent tables through the compose Postgres, which
+is what the demo reset will do (F13). `npm run screenshots:agents` writes `agents-inbox.png`, `proposal-b5003.png`,
+`trace-b5003.png` and `insights-proposals.png` to `docs/screenshots/`; it runs the agent first, so it needs the
+recordings too.
