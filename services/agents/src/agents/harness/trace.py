@@ -9,7 +9,7 @@ from collections.abc import Mapping
 from typing import Any, Protocol
 
 from r2r_core import clock
-from sqlalchemy import Engine, insert, select, text
+from sqlalchemy import Engine, func, insert, select, text
 
 from agents.db import agent_trace
 
@@ -51,10 +51,21 @@ def new_trace_id(engine: Engine) -> str:
 class Trace:
     """Appends steps to one trace in the database."""
 
-    def __init__(self, engine: Engine, trace_id: str) -> None:
+    def __init__(self, engine: Engine, trace_id: str, start_seq: int = 0) -> None:
         self.engine = engine
         self.trace_id = trace_id
-        self._seq = 0
+        self._seq = start_seq
+
+    @classmethod
+    def resume(cls, engine: Engine, trace_id: str) -> "Trace":
+        """Continue an existing trace (the human decision is appended to the run's trace)."""
+        with engine.connect() as connection:
+            last = connection.execute(
+                select(func.coalesce(func.max(agent_trace.c.seq), 0)).where(
+                    agent_trace.c.trace_id == trace_id
+                )
+            ).scalar_one()
+        return cls(engine, trace_id, last)
 
     def step(
         self,

@@ -85,3 +85,20 @@ def plan() -> object:
     from r2r_core.profile import load_profile
 
     return build_plan(load_profile("site_a"), load_params(), 4242)
+
+
+@pytest.fixture
+def build_app(agents_engine: Engine) -> Callable[..., TestClient]:
+    """``build_app(gateway=..., transport=...)``: the service wired to fakes for the model and the sources."""
+    from agent_support import B5003Model, fake_app_api, source_transport
+    from agents.main import create_app
+    from agents.settings import Settings
+    from agents.tools.http import ReadOnlyHttp
+
+    def build(*, gateway: object | None = None, transport: object | None = None) -> TestClient:
+        settings = Settings.from_env({})
+        http = ReadOnlyHttp.from_settings(settings, transport=transport or source_transport())  # type: ignore[arg-type]
+        app = create_app(settings, agents_engine, fake_app_api(), http=http, gateway=gateway or B5003Model())  # type: ignore[arg-type]
+        return TestClient(app)
+
+    return build

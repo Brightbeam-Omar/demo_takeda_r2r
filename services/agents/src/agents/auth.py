@@ -44,25 +44,31 @@ def current_principal(request: Request, x_demo_user: Annotated[str | None, Heade
     return resolve_principal(request.app.state.app_client, x_demo_user)
 
 
+def forbid(request: Request, principal: Principal, roles: tuple[str, ...]) -> None:
+    """Refuse: write the ``forbidden`` audit row (own transaction) and raise 403."""
+    engine: Engine = request.app.state.engine
+    with engine.begin() as connection:
+        write_audit(
+            connection,
+            principal.user_key,
+            "forbidden",
+            request.path_params.get("row_key"),
+            {
+                "method": request.method,
+                "path": request.url.path,
+                "required_roles": list(roles),
+                "role": principal.role,
+            },
+        )
+    raise HTTPException(status_code=403, detail=f"requires role {' or '.join(roles)}")
+
+
 def require_role(*roles: str) -> Callable[[Request, Principal], Principal]:
     """Dependency: the person must hold one of ``roles``; otherwise 403 and a ``forbidden`` audit row."""
 
     def check(request: Request, principal: Annotated[Principal, Depends(current_principal)]) -> Principal:
         if principal.role not in roles:
-            engine: Engine = request.app.state.engine
-            with engine.begin() as connection:
-                write_audit(
-                    connection,
-                    principal.user_key,
-                    "forbidden",
-                    details={
-                        "method": request.method,
-                        "path": request.url.path,
-                        "required_roles": list(roles),
-                        "role": principal.role,
-                    },
-                )
-            raise HTTPException(status_code=403, detail=f"requires role {' or '.join(roles)}")
+            forbid(request, principal, roles)
         return principal
 
     return check

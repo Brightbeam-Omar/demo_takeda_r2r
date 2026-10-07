@@ -5,6 +5,7 @@ from typing import Any
 
 import httpx
 from agents.air_gap.schema import AirGapTicket, EvidenceItem
+from agents.gateway.base import Block, ModelGateway, ModelResult, ToolUseBlock
 
 USERS = {
     "pat": ("Pat", "planner"),
@@ -59,6 +60,16 @@ class ListTrace:
 
 
 ROW_KEY = "RM10067|B5003|10000459"
+INSIGHTS_ROW: dict[str, object] = {
+    "row_key": ROW_KEY,
+    "batch_no": "B5003",
+    "material_no": "RM10067",
+    "material_desc": "API Intermediate 009",
+    "stage_key": "qa_release",
+    "stage_label": "QA Release",
+    "air_gap_hours": 30,
+    "days_gap": 1,
+}
 
 
 def row_body(**changes: object) -> dict[str, object]:
@@ -97,6 +108,7 @@ def row_body(**changes: object) -> dict[str, object]:
 def source_transport(
     *, row: dict[str, object] | None = None, ud_code: str | None = None, results_recorded: str | None = None,
     deviations: list[dict[str, object]] | None = None, volatile: str = "a",
+    insights: list[dict[str, object]] | None = None,
 ) -> httpx.MockTransport:  # fmt: skip
     """The app, LIMS, ERP and QMS behind one mock transport (B5003). ``volatile`` changes only meaningless fields."""
 
@@ -108,6 +120,9 @@ def source_transport(
             body = dict(row or row_body())
             body["freshness"] = {"contract_run_id": f"run-{volatile}", "last_success_at": volatile}
             return httpx.Response(200, json=body)
+        if path == "/api/overview/insights":
+            rows = insights if insights is not None else [INSIGHTS_ROW]
+            return httpx.Response(200, json={"total": len(rows), "rows": rows})
         if path == "/samples/S-0000404":
             return httpx.Response(
                 200,
@@ -186,3 +201,36 @@ def ticket(**changes: Any) -> AirGapTicket:
     }
     data.update(changes)
     return AirGapTicket.model_validate(data)
+
+
+class B5003Model(ModelGateway):
+    """A model that investigates B5003 the way the prompt says: four reads, then one submission."""
+
+    provider = "scripted"
+    model_id = "scripted-model"
+
+    def __init__(self, **ticket_changes: Any) -> None:
+        self.ticket_changes = ticket_changes
+        self.calls = 0
+
+    def generate(self, *, system, messages, tools, turn, agent_key, prompt_version) -> ModelResult:  # type: ignore[no-untyped-def]
+        self.calls += 1
+        plan: dict[int, list[Block]] = {
+            1: [ToolUseBlock(id="toolu_1", name="get_row", input={"row_key": ROW_KEY})],
+            2: [
+                ToolUseBlock(id="toolu_2", name="get_lims_sample", input={"sample_id": "S-0000404"}),
+                ToolUseBlock(id="toolu_3", name="get_erp_lot", input={"prueflos": "10000459"}),
+            ],
+            3: [ToolUseBlock(id="toolu_4", name="list_deviations", input={"batch_no": "B5003"})],
+            4: [
+                ToolUseBlock(
+                    id="toolu_5",
+                    name="submit_ticket",
+                    input=ticket(**self.ticket_changes).model_dump(mode="json"),
+                )
+            ],
+        }
+        return ModelResult(
+            content=plan[turn], stop_reason="tool_use", tokens_in=1000 * turn, tokens_out=100,
+            latency_ms=50, model_id="scripted-model",
+        )  # fmt: skip

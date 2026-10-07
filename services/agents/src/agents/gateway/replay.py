@@ -167,3 +167,13 @@ def clear_recordings(directory: Path, agent_key: str) -> int:
     for file in files:
         file.unlink()
     return len(files)
+
+
+def recorded_model_id(directory: Path, agent_key: str) -> str | None:
+    """The model that made the recordings (shown on the agent card), or None when there are none."""
+    first = (
+        next(iter(sorted((directory / agent_key).glob("*.json"))), None)
+        if (directory / agent_key).is_dir()
+        else None
+    )
+    return RecordedCall.model_validate_json(first.read_text()).model_id if first else None

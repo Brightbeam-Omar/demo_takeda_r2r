@@ -5,7 +5,7 @@
 - [x] T4 Read-only tool registry + tools (FR-04)
 - [x] T5 Generic runner loop with limits (FR-04, FR-05)
 - [x] T6 [TDD] AirGapTicket schema + validator V1–V6 (FR-06, FR-07, AC-03, AC-04)
-- [ ] T7 Candidates, proposal API, idempotency, approve/reject with role check (FR-08, AC-02, AC-06)
+- [x] T7 Candidates, proposal API, idempotency, approve/reject with role check (FR-08, AC-02, AC-06)
 - [x] T8 Executor + templates (FR-09) (built before T7, because approve calls it)
 - [ ] T9 UI: agents page, inbox, detail, trace viewer; Insights Proposal column and W1 proposal-status line (FR-12, FR-13, AC-05)
 - [ ] T10 Record replays for the demo-start state (B5003) and any test fixtures. Playwright AC-01/AC-02. Manual live check AC-08
