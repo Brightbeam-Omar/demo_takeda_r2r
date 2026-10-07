@@ -388,3 +388,13 @@ test('F12-FR-13: for a planner the Run button is disabled with the read-only too
   await waitFor(() => expect(button).toHaveAttribute('title', 'Read-only role'))
   expect(button).toBeDisabled()
 })
+
+test('F14-FR-10: times in the evidence table and the summary show in site time, not as ISO', async () => {
+  const iso = { ...detail, payload: { ...detail.payload, summary: 'LIMS approved at 2026-10-08T13:00:00Z and the gap is open.' }, evidence: [{ system: 'LIMS', ref: 'S1', field: 'approved_at', value: '2026-10-08T13:00:00Z' }, ...detail.evidence.slice(1)] }
+  stub({ '/api/me': me('qa_release', 'alex'), '/api/reference': { ...reference, site_timezone: 'Europe/Dublin' }, '/agents-api/proposals/1': iso })
+  atPage('/agents/proposals/1', <ProposalPage />)
+  const rowsOfEvidence = await screen.findAllByTestId('evidence-row')
+  expect(rowsOfEvidence[0]).toHaveTextContent('8 Oct 2026 14:00')
+  expect(screen.getByText(/LIMS approved at 8 Oct 2026 14:00 and the gap is open\./)).toBeInTheDocument()
+  expect(document.body.textContent).not.toMatch(/\dT\d\d:/)
+})

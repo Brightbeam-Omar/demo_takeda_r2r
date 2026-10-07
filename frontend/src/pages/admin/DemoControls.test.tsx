@@ -89,8 +89,9 @@ test('F13-AC-04: a failed run shows the failure line in red and the status faile
   expect((await screen.findAllByTestId('progress-line')).at(-1)).toHaveAttribute('data-kind', 'failed')
 })
 
-test('F13-AC-02: a refused step shows the server message and no progress', async () => {
+test('F13-AC-02: a refused step shows the server message and no progress (the list was stale: it said met)', async () => {
   setup({
+    steps: [step('ud-post-B5003')],
     runs: { 'steps/ud-post-B5003/run': { status: 409, body: { detail: { error: 'precondition_failed', message: 'B5003 is no longer an air gap.' } } } },
   })
   await userEvent.click(await screen.findByRole('button', { name: 'Run Title of ud-post-B5003' }))
@@ -138,4 +139,20 @@ test('F13-FR-03: the stream parser keeps an unfinished frame for the next chunk'
   expect(first.events.map((event) => event.message)).toEqual(['a'])
   const second = parseFrames(first.rest + 'nd": "line", "message": "b", "elapsed_ms": 1}\n\n')
   expect(second.events.map((event) => event.message)).toEqual(['b'])
+})
+
+test('F14-FR-09: Run is disabled for an unmet step with the reason as its tooltip; unknown and met stay enabled', async () => {
+  setup({
+    steps: [
+      step('lims-approve-B1042'),
+      step('ud-post-B5003', { preconditions: 'unmet', messages: ['B5003 is no longer an air gap.'] }),
+      step('run-pipeline', { preconditions: 'unknown', messages: ['Could not check.'] }),
+    ],
+  })
+  const rows = await screen.findAllByTestId('demo-step')
+  const run = (index: number) => within(rows[index]!).getByRole('button', { name: /^Run / })
+  expect(run(0)).toBeEnabled()
+  expect(run(1)).toBeDisabled()
+  expect(within(rows[1]!).getByTestId('run-reason')).toHaveAttribute('title', 'B5003 is no longer an air gap.')
+  expect(run(2)).toBeEnabled()
 })

@@ -30,6 +30,29 @@ export function formatClock(nowUtc: string, timeZone: string): string {
   return `${get('weekday')} ${get('day')} ${get('month')} ${get('year')} ${get('hour')}:${get('minute')}`
 }
 
+/** An instant as `11 Oct 2026 02:00` in the site timezone: the presentation of stored ISO date-times (F14-FR-10). */
+export function formatSiteDateTime(iso: string, timeZone: string): string {
+  const hasOffset = /(Z|[+-]\d{2}:?\d{2})$/.test(iso)
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(new Date(hasOffset ? iso : `${iso}Z`))
+  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? ''
+  return `${get('day')} ${get('month')} ${get('year')} ${get('hour')}:${get('minute')}`
+}
+
+const ISO_DATE_TIME = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?/g
+
+/** Replaces every ISO date-time in a text with its site-time form; plain dates and other text are untouched. */
+export function withSiteTimes(text: string, timeZone: string): string {
+  return text.replace(ISO_DATE_TIME, (match) => formatSiteDateTime(match, timeZone))
+}
+
 /** Minutes between two instants (the demo clock minus the last successful run), never negative. */
 export function minutesBetween(fromIso: string, toIso: string): number {
   return Math.max(0, Math.floor((new Date(toIso).getTime() - new Date(fromIso).getTime()) / 60_000))

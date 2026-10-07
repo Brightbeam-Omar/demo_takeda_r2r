@@ -34,3 +34,17 @@ test('F15-FR-03 / OQ-080: the feed age reads minutes under 60 and floored hours 
   expect(formatFeedAge(60)).toBe('1 h')
   expect(formatFeedAge(1830)).toBe('30 h')
 })
+
+import { formatSiteDateTime, withSiteTimes } from './format'
+
+test('F14-FR-10: an ISO date-time shows as day, month, year and 24-hour time in the site timezone', () => {
+  expect(formatSiteDateTime('2026-10-11T01:00:00Z', 'Europe/Dublin')).toBe('11 Oct 2026 02:00')
+  expect(formatSiteDateTime('2026-12-03T09:30:00Z', 'Europe/Dublin')).toBe('3 Dec 2026 09:30')
+  expect(formatSiteDateTime('2026-10-11T01:00:00', 'UTC')).toBe('11 Oct 2026 01:00')
+})
+
+test('F14-FR-10: ISO date-times inside text are replaced, plain dates and other text are left alone', () => {
+  const text = 'Approved at 2026-10-08T13:00:00Z. Needed by 2026-10-12; seen 2026-10-09T09:00:00.000+00:00 too.'
+  expect(withSiteTimes(text, 'Europe/Dublin')).toBe('Approved at 8 Oct 2026 14:00. Needed by 2026-10-12; seen 9 Oct 2026 10:00 too.')
+  expect(withSiteTimes('none', 'UTC')).toBe('none')
+})

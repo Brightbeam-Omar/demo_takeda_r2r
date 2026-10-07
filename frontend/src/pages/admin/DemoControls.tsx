@@ -24,6 +24,9 @@ const LIGHT: Record<DemoStep["preconditions"], { dot: string; label: string }> =
 const RESET_MESSAGE =
   "This clears bookmarks, overrides, status logs, proposals and the audit log, regenerates the source data and runs the pipeline again. It takes about a minute.";
 
+/** `unmet` steps cannot run; `unknown` stays enabled so a failed check never blocks a fallback (OQ-154). */
+const blocked = (step: DemoStep) => step.preconditions === "unmet";
+
 const seconds = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
 
 /** Demo Controls (F13-FR-06): run a scripted step, watch its progress, reset the demo. Admin only, DEMO_MODE only. */
@@ -163,17 +166,23 @@ export function DemoControls() {
                     </div>
                   )}
                 </div>
-                <button
-                  type="button"
-                  disabled={running}
-                  aria-label={`Run ${step.title}`}
-                  className="rounded-chip bg-accent px-3 py-1.5 text-sm font-medium text-white enabled:hover:opacity-90 disabled:opacity-50"
-                  onClick={() =>
-                    void begin(step.title, () => startStep(step.id))
-                  }
+                {/* A disabled button gets no hover, so the reason sits on a wrapper (F14-FR-09). */}
+                <span
+                  data-testid="run-reason"
+                  title={blocked(step) ? step.messages[0] : undefined}
                 >
-                  Run
-                </button>
+                  <button
+                    type="button"
+                    disabled={running || blocked(step)}
+                    aria-label={`Run ${step.title}`}
+                    className="rounded-chip bg-accent px-3 py-1.5 text-sm font-medium text-white enabled:hover:opacity-90 disabled:opacity-50"
+                    onClick={() =>
+                      void begin(step.title, () => startStep(step.id))
+                    }
+                  >
+                    Run
+                  </button>
+                </span>
               </li>
             ))}
           </ul>

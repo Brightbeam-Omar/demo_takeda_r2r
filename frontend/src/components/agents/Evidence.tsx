@@ -1,4 +1,5 @@
 import type { EvidenceItem, Validator } from '../../api/agents'
+import { withSiteTimes } from '../../lib/format'
 
 const SYSTEM_TONE = { LIMS: 'bg-sky-50 text-sky-800', ERP: 'bg-violet-50 text-violet-800', QMS: 'bg-amber-50 text-amber-800' }
 
@@ -8,7 +9,7 @@ export function SystemBadge({ system }: { system: EvidenceItem['system'] }) {
 }
 
 /** The evidence the ticket cites, each item with the validator's re-read of its source (V2): "verified ✓". */
-export function EvidenceTable({ evidence, validator }: { evidence: EvidenceItem[]; validator: Validator | null }) {
+export function EvidenceTable({ evidence, validator, timezone }: { evidence: EvidenceItem[]; validator: Validator | null; timezone: string }) {
   return (
     <table className="w-full text-[13px]" data-testid="evidence-table">
       <thead>
@@ -30,7 +31,7 @@ export function EvidenceTable({ evidence, validator }: { evidence: EvidenceItem[
               </td>
               <td className="py-1.5 pr-3 font-mono">{item.ref}</td>
               <td className="py-1.5 pr-3 font-mono">{item.field}</td>
-              <td className="py-1.5 pr-3 font-mono">{item.value}</td>
+              <td className="py-1.5 pr-3 font-mono">{withSiteTimes(item.value, timezone)}</td>
               <td className="py-1.5" data-verified={check ? String(check.verified) : 'unknown'}>
                 {check ? (
                   check.verified ? (
