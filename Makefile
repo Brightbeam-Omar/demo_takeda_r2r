@@ -84,13 +84,11 @@ contract-json: ## Regenerate specs/contract.json from the published schemas and 
 check: check-python coverage-core check-frontend leakscan ## Lint, types, tests, leak scan: one verdict
 
 # --- demo placeholders (implemented by the feature named in each message) --------------------
-# Until F13 exists there is no demo reset: this runs the Playwright specs against the already-running stack,
-# so run `make seed` first (the live-update spec changes B1042, and `make seed` puts it back).
-# F13/F14 switch this target to run `make demo-reset` first.
-e2e: ## Playwright specs against the running stack (run `make seed` first)
+# Both run `make demo-reset` first, so the specs always start from the canonical demo-start state (F13).
+e2e: demo-reset ## Demo reset, then the Playwright specs against the running stack
 	cd tests/e2e && npx playwright test
 
-e2e-headed: ## Same as e2e, in a visible browser
+e2e-headed: demo-reset ## Same as e2e, in a visible browser
 	cd tests/e2e && npx playwright test --headed
 
 # F13-FR-05: clears the app tables, regenerates the source data with the profile seed, runs the pipeline and
@@ -126,8 +124,7 @@ scenario: ## Apply a scripted scenario step: make scenario STEP=<id>  (STEP=list
 		else uv run python -m scenario.cli run "$(STEP)"; fi
 
 # Runs the air-gap agent live for the four demo-start air gaps and writes the recordings the replay provider
-# answers from (services/agents/recordings). Needs the stack in the demo-start state (`make seed`, later
-# `make demo-reset`) and ANTHROPIC_API_KEY in .env; nothing is written to the database. The key is read from the
+# answers from (services/agents/recordings). Needs the stack in the demo-start state (`make demo-reset`) and ANTHROPIC_API_KEY in .env; nothing is written to the database. The key is read from the
 # environment by the process and is never printed.
 record-agents: ## Record LLM replays for the demo-start state (needs ANTHROPIC_API_KEY)
 	@test -f .env || { echo "Missing .env. Run: cp .env.example .env"; exit 1; }

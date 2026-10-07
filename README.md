@@ -46,8 +46,8 @@ database; each simulator migrates its own database when it starts.
 
 ## Commands
 
-Run `make help` for the short list. Targets marked "not yet implemented" print the feature that
-delivers them.
+Run `make help` for the short list. `make record-video` and `make doctor` are not implemented yet and print
+the feature that delivers them.
 
 | Command | What it does |
 |---|---|
@@ -60,11 +60,11 @@ delivers them.
 | `make coverage-core` | 100% branch-coverage gate on `r2r_core.sla` and `r2r_core.airgap` (part of `make check`) |
 | `make contract-json` | Regenerate `specs/contract.json`, the published contract the Schema Reference page shows (F21); `make check` fails when it is stale |
 | `uv run python -m app_api.openapi`, then `npm run gen:api` in `frontend/` | Re-export the API schema (`services/app_api/openapi.json`, a test keeps it current) and regenerate the TypeScript client types (F09) |
-| `make demo-reset` | Wipe state and rebuild the canonical opening state (F13) |
-| `make seed` | Regenerate the `site_a` source data with the profile seed (wipes the three source DBs) from the host against the running stack, then run `make pipeline` |
+| `make demo-reset` | Back to the demo-start state in under three minutes: clears bookmarks, overrides, status logs, proposals and the audit log, resets the clock, regenerates the source data with the profile seed, runs the pipeline and waits for the sync (F13). Same as the **Reset demo** button on Demo Controls |
+| `make seed` | Developer shortcut: regenerate the `site_a` source data (wipes the three source DBs) from the host, then run `make pipeline`. It does not clear the app tables: for a clean demo use `make demo-reset` |
 | `make pipeline` | Trigger one pipeline run (F07); the worker mirrors it into the app within about 30 s (F08) |
-| `make scenario STEP=<id>` | Apply a scripted scenario step (F13) |
-| `make e2e` / `make e2e-headed` | Playwright run-of-show (F14) |
+| `make scenario STEP=<id>` | Run a scripted scenario step through the real source systems, the pipeline and the sync, printing each progress line (F13); exits non-zero when the step is refused or fails. `make scenario STEP=list` shows the steps and whether each one can run now |
+| `make e2e` / `make e2e-headed` | `make demo-reset`, then the Playwright specs (the full run-of-show arrives with F14) |
 | `make record-agents` | Run the air-gap agent live for the four demo-start air gaps and record the model's answers into `services/agents/recordings/` (F12). Needs the stack in the demo-start state and `ANTHROPIC_API_KEY` with credit; the key is never printed |
 | `make record-video` | Record the backup video (F14) |
 | `make doctor` | Environment checks (F14) |

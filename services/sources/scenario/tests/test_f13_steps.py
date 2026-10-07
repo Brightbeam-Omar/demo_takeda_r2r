@@ -102,3 +102,15 @@ def test_f13_fr01_variables_are_looked_up_in_the_services() -> None:
     assert resolve_var(gateway, "d", {"resolve": "deviation", "batch": "B3150"})["deviation_no"] == "DEV-1"
     with pytest.raises(StepError, match="no open deviation"):
         resolve_var(gateway, "d", {"resolve": "deviation", "batch": "B1042"})
+
+
+def test_f13_ac03_a_released_batch_has_no_row_so_the_air_gap_checks_do_not_hold() -> None:
+    """A usage decision releases the lot; it leaves the Overview, and the step must not be offered again."""
+    world = World()
+    del world.rows["B5003"]
+    gateway = world.gateway()
+    assert check_precondition(gateway, Precondition("air_gap", "B5003", True, "gone")) == "gone"
+    assert check_precondition(gateway, Precondition("stage", "B5003", "qa_release", "gone")) == "gone"
+    assert check_precondition(gateway, Precondition("air_gap", "B5003", False, "gone")) is None
+    with pytest.raises(StepError, match="shows no row for batch B5003"):
+        resolve_var(gateway, "row", {"resolve": "row", "batch": "B5003"})

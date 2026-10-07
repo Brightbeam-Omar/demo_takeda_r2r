@@ -6,17 +6,24 @@ Variables read the source simulators, which hold the numbers the generator picke
 
 from typing import Any
 
-from scenario.gateway import CallFailed, Gateway
+from scenario.gateway import Gateway
 from scenario.steps import Precondition, StepError
 
 
-def app_row(gateway: Gateway, batch: str) -> dict[str, Any]:
-    """The Overview row of a story batch (the one with the lowest lot type if it has several lots)."""
+def find_row(gateway: Gateway, batch: str) -> dict[str, Any] | None:
+    """The Overview row of a batch (the lowest lot type if it has several). A released lot has no row."""
     answer = gateway.call("app", "GET", "/api/overview", params={"q": batch}, user="admin")
     mine: list[dict[str, Any]] = [row for row in answer["rows"] if row["batch_no"] == batch]
-    if not mine:
-        raise CallFailed(f"the app shows no row for batch {batch} (has the data been synced?)")
-    return sorted(mine, key=lambda row: row["lot_type"])[0]
+    return sorted(mine, key=lambda row: row["lot_type"])[0] if mine else None
+
+
+def app_row(gateway: Gateway, batch: str) -> dict[str, Any]:
+    row = find_row(gateway, batch)
+    if row is None:
+        raise StepError(
+            f"the app shows no row for batch {batch}: it may be released, or the data is not synced"
+        )
+    return row
 
 
 def check_precondition(gateway: Gateway, precondition: Precondition) -> str | None:
@@ -25,13 +32,13 @@ def check_precondition(gateway: Gateway, precondition: Precondition) -> str | No
     if kind == "proposals":
         actual: Any = len(gateway.call("agents", "GET", "/proposals", user="admin")["rows"])
     else:
-        row = app_row(gateway, batch)
+        row = find_row(gateway, batch)  # no row: the lot is released, so none of the row checks hold
         if kind == "stage":
-            actual = row["stage_key"]
+            actual = row["stage_key"] if row else None
         elif kind == "air_gap":
-            actual = bool(row["air_gap"])
+            actual = bool(row and row["air_gap"])
         elif kind == "adjusted_need_by":
-            actual = row["adjusted_need_by_date"] is not None
+            actual = bool(row and row["adjusted_need_by_date"] is not None)
         else:  # open_deviations
             actual = deviation_count(gateway, batch)
     return None if actual == precondition.equals else precondition.message
