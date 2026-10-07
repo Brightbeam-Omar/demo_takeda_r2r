@@ -102,12 +102,21 @@ test.each([
   expect(within(page).getByTestId('tier-tag')).toHaveTextContent(roadmap ? `Tier 2 · ${roadmap}` : 'Tier 2')
 })
 
-test('F15-FR-02 / OQ-081: an unbuilt view page still renders a titled placeholder', async () => {
+test('F15-FR-02 / OQ-081: an unbuilt page still renders a titled placeholder', async () => {
+  stub()
+  render(<App />)
+  const nav = within(await screen.findByRole('navigation', { name: 'Pages' }))
+  await userEvent.click(nav.getByRole('link', { name: 'Upload Data' }))
+  expect(await screen.findByTestId('placeholder-page')).toHaveTextContent('Tier 2')
+})
+
+test('F12-FR-12: Agents is a built page, not a placeholder', async () => {
   stub()
   render(<App />)
   const nav = within(await screen.findByRole('navigation', { name: 'Pages' }))
   await userEvent.click(nav.getByRole('link', { name: 'Agents' }))
-  expect(await screen.findByTestId('placeholder-page')).toHaveTextContent('Coming in F12')
+  expect(await screen.findByTestId('agents-page')).toBeInTheDocument()
+  expect(screen.queryByTestId('placeholder-page')).not.toBeInTheDocument()
 })
 
 test('F21-FR-06: Team Dashboard, Schema Reference and SLA Configuration are built pages', async () => {

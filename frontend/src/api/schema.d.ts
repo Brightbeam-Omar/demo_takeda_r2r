@@ -1266,6 +1266,7 @@ export interface components {
             material_desc: string | null;
             /** Material No */
             material_no: string;
+            proposal?: components["schemas"]["ProposalRef"] | null;
             /** Row Key */
             row_key: string;
             /** Stage Key */
@@ -1634,6 +1635,15 @@ export interface components {
             /** System Need By Locked */
             system_need_by_locked: string | null;
         };
+        /** ProposalRef */
+        ProposalRef: {
+            /** Id */
+            id: number;
+            /** Priority */
+            priority: string | null;
+            /** Status */
+            status: string;
+        };
         /** ReferenceOut */
         ReferenceOut: {
             /** Air Gap Threshold Hours */
@@ -1807,6 +1817,7 @@ export interface components {
             /** Override History */
             override_history: components["schemas"]["OverrideOut"][];
             plan: components["schemas"]["PlanOut"];
+            proposal?: components["schemas"]["ProposalRef"] | null;
             /** Qc Testing Entry */
             qc_testing_entry: string | null;
             /** Row Key */

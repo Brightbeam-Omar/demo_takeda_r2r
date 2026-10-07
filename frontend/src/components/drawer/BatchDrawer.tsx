@@ -6,6 +6,7 @@ import { Skeleton } from '../common/States'
 import { ExplainPopover } from '../explain/ExplainPopover'
 import { rowTags } from '../overview/cells'
 import { StageChip } from '../table/cells'
+import { ProposalLine } from '../agents/ProposalLine'
 import { DrawerSection, InboundSummary, NeedBySummary, OpenLink, QualitySummary, SamplesSummary, SourceRefs, StatusLogSummary } from './Sections'
 import { ExportTimeline, HistorySummary, MilestoneDates, OtherLots, StageTimeline } from './Timeline'
 
@@ -97,6 +98,9 @@ export function BatchDrawer({ rowKey, onOpenRow, onClose, onOpenWindow }: Props)
                   </span>
                 ))}
               />
+              <div className="mt-2 empty:hidden">
+                <ProposalLine detail={data} />
+              </div>
             </DrawerSection>
             <DrawerSection title="Milestone dates">
               <MilestoneDates detail={data} />

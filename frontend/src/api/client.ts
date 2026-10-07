@@ -5,9 +5,12 @@ export type Schemas = components['schemas']
 
 export class ApiError extends Error {
   readonly status: number
-  constructor(status: number, message: string) {
+  /** The server's `detail` when it is more than a sentence (the agents API sends an object for a replay miss). */
+  readonly detail?: unknown
+  constructor(status: number, message: string, detail?: unknown) {
     super(message)
     this.status = status
+    this.detail = detail
   }
 }
 
@@ -19,13 +22,17 @@ export function apiHeaders(): Record<string, string> {
 
 async function failure(response: Response): Promise<ApiError> {
   let detail = response.statusText
+  let raw: unknown
   try {
     const body = (await response.json()) as { detail?: unknown }
+    raw = body.detail
     if (typeof body.detail === 'string') detail = body.detail
+    else if (body.detail && typeof body.detail === 'object' && typeof (body.detail as { message?: unknown }).message === 'string')
+      detail = (body.detail as { message: string }).message
   } catch {
     // keep the status text
   }
-  return new ApiError(response.status, detail || `HTTP ${response.status}`)
+  return new ApiError(response.status, detail || `HTTP ${response.status}`, raw)
 }
 
 export async function apiGet<T>(path: string, params?: URLSearchParams): Promise<T> {

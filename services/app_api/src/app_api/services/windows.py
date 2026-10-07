@@ -10,6 +10,7 @@ from collections.abc import Mapping, Sequence
 from pydantic import BaseModel
 
 from app_api.services.compose import ADJUSTED, ComposedRow
+from app_api.services.proposals import ProposalRef
 
 HOURS_PER_DAY = 24
 
@@ -79,6 +80,7 @@ class InsightRowOut(BaseModel):
     stage_label: str
     air_gap_hours: int
     days_gap: int  # floor(hours / 24)
+    proposal: ProposalRef | None = None  # the newest agent proposal for the row (F12-FR-13)
 
 
 class InsightsOut(BaseModel):
@@ -86,7 +88,11 @@ class InsightsOut(BaseModel):
     rows: list[InsightRowOut]
 
 
-def build_insights(rows: Sequence[ComposedRow], stage_labels: Mapping[str, str]) -> InsightsOut:
+def build_insights(
+    rows: Sequence[ComposedRow],
+    stage_labels: Mapping[str, str],
+    proposals: Mapping[str, ProposalRef] | None = None,
+) -> InsightsOut:
     entries = [
         InsightRowOut(
             row_key=row.row_key,
@@ -97,6 +103,7 @@ def build_insights(rows: Sequence[ComposedRow], stage_labels: Mapping[str, str])
             stage_label=stage_labels.get(row.facts["stage_key"], row.facts["stage_key"]),
             air_gap_hours=row.air_gap_hours,
             days_gap=row.air_gap_hours // HOURS_PER_DAY,
+            proposal=(proposals or {}).get(row.row_key),
         )
         for row in air_gap_rows(rows)
     ]

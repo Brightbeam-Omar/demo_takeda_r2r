@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from r2r_core.sla import PlanResult
 
 from app_api.services.compose import ComposedRow
+from app_api.services.proposals import ProposalRef
 
 
 class Freshness(BaseModel):
@@ -272,3 +273,4 @@ class RowDetail(RowOut):
     changes: list[ChangeControlOut]
     samples: list[SampleOut]
     siblings: list[RowOut]
+    proposal: ProposalRef | None = None  # the newest agent proposal for this row (F12-FR-13)
