@@ -1,0 +1,14 @@
+{{ ticket.title }}
+
+Priority: {{ ticket.priority }}
+Batch: {{ batch_no }} (row {{ ticket.row_key }})
+Hours in the gap: {{ ticket.hours_in_gap }}
+Recommended action: {{ action_text }}
+Assigned to: {{ ticket.recipient_role }}
+
+{{ ticket.summary }}
+
+Evidence
+{% for item in ticket.evidence -%}
+- {{ item.system }} {{ item.ref }}: {{ item.field }} = {{ item.value }}
+{% endfor %}

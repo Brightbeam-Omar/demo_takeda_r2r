@@ -168,9 +168,9 @@ One row per `row_key`, built by the SQL steps `50`–`90` from `batch_flat`: `ro
 | `feedback` | `id`, `at` (demo clock), `user_key`, `page` (route path, ≤ 200 chars), `message` (1–2000 chars). Insert-only, not audited (F15, OQ-083) |
 | `bookmark` | `user_key`, `row_key`, `created_at` (demo clock). PK (`user_key`, `row_key`). Personal, not audited (F16, OQ-091) |
 | `filter_preset` | `id`, `user_key`, `name`, `query` (the filter query string, `period` stored literally), `created_at` (demo clock). Unique (`user_key`, `name`). Not audited (F16, OQ-089) |
-| `proposal` | `id`, `agent_key`, `row_key` null, `kind` (e.g. `airgap_ticket`), `payload_json`, `evidence_json`, `validator_result_json`, `status` (`pending_approval`,`rejected_by_validator`,`approved`,`rejected`,`executed`), `required_role`, `created_at`, `decided_by`, `decided_at`, `trace_id` |
+| `proposal` | `id`, `agent_key`, `row_key` null, `kind` (e.g. `airgap_ticket`), `payload_json`, `evidence_json`, `validator_result_json`, `status` (`pending_approval`,`rejected_by_validator`,`approved`,`rejected`,`executed`), `required_role`, `created_at`, `decided_by`, `decided_at`, `decision_reason` null (F12, OQ-136: the human reject reason), `trace_id`. Partial unique index on (`row_key`, `kind`) where `status` is `pending_approval`, `approved` or `executed` (one open proposal per row and kind). `kind = 'airgap_ticket'`, `agent_key = 'air_gap'` (OQ-137) |
 | `action_log` | `id`, `proposal_id`, `action_type`, `rendered_json`, `executed_at` |
-| `agent_trace` | `id`, `trace_id`, `seq`, `step_type` (`input`,`tool_call`,`tool_result`,`model_request`,`model_response`,`validation`,`decision`,`action`), `payload_json`, `tokens_in`, `tokens_out`, `latency_ms`, `at` |
+| `agent_trace` | F12 trace ids are `TR-0001`… from the sequence `agent_trace_seq` (OQ-144; the F13 reset restarts it). `id`, `trace_id`, `seq`, `step_type` (`input`,`tool_call`,`tool_result`,`model_request`,`model_response`,`validation`,`decision`,`action`), `payload_json`, `tokens_in`, `tokens_out`, `latency_ms`, `at` |
 
 Override fields are composed at read time: `operative = current override value ?? mirror value`.
 

@@ -1,0 +1,22 @@
+{
+  "key": "4a64b04f7a20dc79a42e4bc88f05310a1f5dee37220833357cb78d3402c2a58c",
+  "agent_key": "air_gap",
+  "prompt_version": "v1",
+  "turn": 2,
+  "model_id": "claude-sonnet-5-5",
+  "recorded_at": "2026-10-12T07:00:00+00:00",
+  "stop_reason": "tool_use",
+  "tokens_in": 3555,
+  "tokens_out": 58,
+  "latency_ms": 1054,
+  "content": [
+    {
+      "type": "tool_use",
+      "id": "toolu_01Ts7aq2T4nDPJdQopVQYkDj",
+      "name": "get_lims_sample",
+      "input": {
+        "sample_id": "S-0000549"
+      }
+    }
+  ]
+}

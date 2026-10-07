@@ -1,8 +1,12 @@
-import { useInsights, useReference } from '../../api/queries'
+import { Link } from 'react-router-dom'
+import { runErrorText, useRunAgent, type ProposalStatus } from '../../api/agents'
+import { useInsights, useMe, useReference } from '../../api/queries'
 import type { Insights } from '../../api/queries'
 import { useTerms } from '../../hooks/useTerms'
+import { READ_ONLY_HINT, canRunAgent } from '../../lib/roles'
+import { ProposalPill } from '../agents/ProposalPill'
 import { EmptyState, ErrorState, Skeleton } from '../common/States'
-import { DataTable, type Column } from '../common/DataTable'
+import { DataTable, type Column } from '../datatable/DataTable'
 import { Modal } from '../common/Modal'
 
 type Entry = Insights['rows'][number]
@@ -34,6 +38,42 @@ interface Props {
   params: URLSearchParams
 }
 
+/** Runs the air-gap agent for every air-gap batch without an open proposal (F12-FR-13, OQ-141). */
+function RunButton() {
+  const me = useMe()
+  const run = useRunAgent()
+  const allowed = canRunAgent(me.data?.role)
+  const failure = run.isError ? runErrorText(run.error) : null
+  const created = run.data?.created.length ?? 0
+  return (
+    <div className="mb-3 flex flex-wrap items-center justify-between gap-3" data-testid="insights-run">
+      <div className="text-sm" aria-live="polite">
+        {failure ? (
+          <p role="alert" className="text-red-800" data-testid="run-error">
+            {failure.message} {failure.hint}
+            {failure.key ? <span className="ml-1 font-mono text-xs">({failure.key.slice(0, 12)}…)</span> : null}
+          </p>
+        ) : run.data ? (
+          <p className="text-slate-600" data-testid="run-result">
+            {created > 0
+              ? `${created} ${created === 1 ? 'proposal' : 'proposals'} created.`
+              : 'Nothing new to propose: every batch already has an open proposal.'}
+          </p>
+        ) : null}
+      </div>
+      <button
+        type="button"
+        disabled={!allowed || run.isPending}
+        title={allowed ? undefined : READ_ONLY_HINT}
+        className="rounded-chip bg-accent px-3 py-1.5 text-sm font-medium text-white enabled:hover:opacity-90 disabled:opacity-40"
+        onClick={() => run.mutate(undefined)}
+      >
+        {run.isPending ? 'Running…' : 'Run air-gap agent'}
+      </button>
+    </div>
+  )
+}
+
 export function InsightsWindow({ open, onClose, params }: Props) {
   const terms = useTerms()
   const reference = useReference()
@@ -55,6 +95,19 @@ export function InsightsWindow({ open, onClose, params }: Props) {
     },
     { id: 'stage', header: 'Stage', cell: (r) => r.stage_label, text: (r) => r.stage_label },
     { id: 'gap', header: 'Days Gap', cell: (r) => <GapChip days={r.days_gap} />, text: (r) => `${r.days_gap}d`, sortValue: (r) => r.days_gap },
+    {
+      id: 'proposal',
+      header: 'Proposal',
+      text: (r) => (r.proposal ? r.proposal.status : 'none'),
+      cell: (r) =>
+        r.proposal ? (
+          <Link to={`/agents/proposals/${r.proposal.id}`} data-testid="proposal-link" aria-label={`Open proposal ${r.proposal.id} for ${r.batch_no}`}>
+            <ProposalPill status={r.proposal.status as ProposalStatus} />
+          </Link>
+        ) : (
+          <span className="text-slate-400">—</span>
+        ),
+    },
   ]
   return (
     <Modal
@@ -70,7 +123,18 @@ export function InsightsWindow({ open, onClose, params }: Props) {
       ) : insights.data.rows.length === 0 ? (
         <EmptyState>{`No ${terms.insights_banner} in this period.`}</EmptyState>
       ) : (
-        <DataTable rows={insights.data.rows} columns={columns} exportName="insights" rowKey={(r) => r.row_key} />
+        <>
+          <RunButton />
+          <DataTable
+            rows={insights.data.rows}
+            columns={columns}
+            exportName="insights"
+            rowKey={(r) => r.row_key}
+            unit={['batch', 'batches']}
+            columnsKey="insights"
+            rowTestId="window-row"
+          />
+        </>
       )}
     </Modal>
   )

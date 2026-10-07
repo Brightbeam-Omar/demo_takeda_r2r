@@ -40,3 +40,28 @@ import type { Locator } from '@playwright/test'
 export async function clickRow(row: Locator): Promise<void> {
   await row.locator('td').nth(1).click()
 }
+
+import { execFileSync } from 'node:child_process'
+import { existsSync, readdirSync } from 'node:fs'
+
+/** True once `make record-agents` has written recordings for the air-gap agent (F12-FR-03). */
+export function hasRecordings(): boolean {
+  const folder = resolve(REPO_ROOT, 'services/agents/recordings/air_gap')
+  return existsSync(folder) && readdirSync(folder).some((name) => name.endsWith('.json'))
+}
+
+/**
+ * What the demo reset will do to the agent tables (F13, OQ-144), until F13 exists: one TRUNCATE and a restarted
+ * trace sequence, through the compose Postgres, so a spec starts from "no proposals".
+ */
+export function resetAgentState(): void {
+  const compose = ['compose', ...(process.env.COMPOSE_PROJECT_NAME ? ['-p', process.env.COMPOSE_PROJECT_NAME] : [])]
+  const sql =
+    "TRUNCATE action_log, proposal, agent_trace RESTART IDENTITY; ALTER SEQUENCE agent_trace_seq RESTART; " +
+    "DELETE FROM audit_event WHERE action IN ('agent_run','proposal_created','proposal_approved','proposal_executed'," +
+    "'proposal_rejected','proposal_rejected_by_validator','forbidden');"
+  execFileSync('docker', [...compose, 'exec', '-T', 'postgres', 'psql', '-U', envVar('POSTGRES_USER', 'r2r'), '-d', 'app', '-c', sql], {
+    cwd: REPO_ROOT,
+    stdio: 'pipe',
+  })
+}

@@ -1,0 +1,15 @@
+Hello QA Release Team,
+
+{{ ticket.summary }}
+
+Batch {{ batch_no }} has been {{ ticket.hours_in_gap }} hours in the gap between the LIMS and the ERP.
+Recommended action: {{ action_text }}.
+
+Evidence checked against the source systems:
+{% for item in ticket.evidence -%}
+- {{ item.system }} {{ item.ref }}: {{ item.field }} = {{ item.value }}
+{% endfor %}
+Ticket {{ ticket_no }} was approved by {{ approved_by }} on {{ approved_on }}.
+Open it in R2R Intelligence: {{ link }}
+
+Drafted by the air-gap agent, checked by the validator, approved by a person.

@@ -1541,6 +1541,16 @@
             "title": "Material No",
             "type": "string"
           },
+          "proposal": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProposalRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "row_key": {
             "title": "Row Key",
             "type": "string"
@@ -2807,6 +2817,36 @@
         "title": "PreviewOut",
         "type": "object"
       },
+      "ProposalRef": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Priority"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "priority"
+        ],
+        "title": "ProposalRef",
+        "type": "object"
+      },
       "ReferenceOut": {
         "properties": {
           "air_gap_threshold_hours": {
@@ -3385,6 +3425,16 @@
           },
           "plan": {
             "$ref": "#/components/schemas/PlanOut"
+          },
+          "proposal": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProposalRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "qc_testing_entry": {
             "anyOf": [

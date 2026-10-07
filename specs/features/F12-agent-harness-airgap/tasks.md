@@ -1,12 +1,12 @@
 # F12 · Tasks
-- [ ] T1 Service skeleton, DB role/grants migration, compose service (FR-01, FR-10, AC-07)
-- [ ] T2 Trace store + ModelGateway base + Anthropic provider (FR-02)
-- [ ] T3 [TDD] Replay provider and key derivation; `make record-agents` (FR-03, AC-09)
-- [ ] T4 Read-only tool registry + tools (FR-04)
-- [ ] T5 Generic runner loop with limits (FR-04, FR-05)
-- [ ] T6 [TDD] AirGapTicket schema + validator V1–V6 (FR-06, FR-07, AC-03, AC-04)
-- [ ] T7 Candidates, proposal API, idempotency, approve/reject with role check (FR-08, AC-02, AC-06)
-- [ ] T8 Executor + templates (FR-09)
-- [ ] T9 UI: agents page, inbox, detail, trace viewer; Insights Proposal column and W1 proposal-status line (FR-12, FR-13, AC-05)
-- [ ] T10 Record replays for the demo-start state (B5003) and any test fixtures. Playwright AC-01/AC-02. Manual live check AC-08
-- [ ] T11 Optional autorun (FR-11)
+- [x] T1 Service skeleton, DB role/grants migration, compose service (FR-01, FR-10, AC-07)
+- [x] T2 Trace store + ModelGateway base + Anthropic provider (FR-02)
+- [x] T3 [TDD] Replay provider and key derivation; `make record-agents` (FR-03, AC-09) (the `make record-agents` command itself is wired in T10, once the agent exists)
+- [x] T4 Read-only tool registry + tools (FR-04)
+- [x] T5 Generic runner loop with limits (FR-04, FR-05)
+- [x] T6 [TDD] AirGapTicket schema + validator V1–V6 (FR-06, FR-07, AC-03, AC-04)
+- [x] T7 Candidates, proposal API, idempotency, approve/reject with role check (FR-08, AC-02, AC-06)
+- [x] T8 Executor + templates (FR-09) (built before T7, because approve calls it)
+- [x] T9 UI: agents page, inbox, detail, trace viewer; Insights Proposal column and W1 proposal-status line (FR-12, FR-13, AC-05)
+- [x] T10 Record replays for the demo-start state (B5003) and any test fixtures. Playwright AC-01/AC-02. Manual live check AC-08
+- [x] T11 Optional autorun (FR-11)

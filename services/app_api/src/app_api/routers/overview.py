@@ -13,10 +13,11 @@ from app_api.auth import current_user
 from app_api.db import get_session
 from app_api.deps import get_profile
 from app_api.models import AppUser
+from app_api.services import proposals
 from app_api.services.bookmarks import bookmarked_keys
 from app_api.services.overview import FLAG_NAMES, Filters, InvalidFilter, OverviewOut, build_overview, select
 from app_api.services.store import load_composed
-from app_api.services.windows import AdjustedOut, InsightsOut, build_adjusted, build_insights
+from app_api.services.windows import AdjustedOut, InsightsOut, air_gap_rows, build_adjusted, build_insights
 
 router = APIRouter(dependencies=[Depends(current_user)])
 
@@ -111,4 +112,6 @@ def insights(
         rows = select(composed.rows, filters, composed.today, with_stage=False)
     except InvalidFilter as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
-    return build_insights(rows, {stage.key: stage.label for stage in profile.stages})
+    labels = {stage.key: stage.label for stage in profile.stages}
+    latest = proposals.latest_by_row(session, [row.row_key for row in air_gap_rows(rows)])
+    return build_insights(rows, labels, latest)

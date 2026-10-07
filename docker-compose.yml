@@ -1,7 +1,6 @@
 # R2R Intelligence Demo: local stack. Variables are read from .env (`cp .env.example .env`).
 # Host ports can be overridden (POSTGRES_HOST_PORT, SCENARIO_HOST_PORT, ERP_HOST_PORT, LIMS_HOST_PORT,
 # QMS_HOST_PORT, DAGSTER_HOST_PORT, APP_API_HOST_PORT, FRONTEND_HOST_PORT, FRONTEND_WEB_HOST_PORT, LAKEHOUSE_HOST_DIR): `make stack-test` uses other ports and its own project so the demo stack is never touched.
-# Later features add services (agents).
 
 # Bind mount for the Delta lakehouse. Dagster mounts it read-write (`*lakehouse`); the app-worker, the only
 # application reader, mounts the same directory read-only (`*lakehouse-ro`, F08-FR-06).
@@ -152,6 +151,43 @@ services:
       scenario: {condition: service_healthy}
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  # The agent harness (F12). It writes only proposal, action_log, agent_trace and audit_event, as the restricted
+  # Postgres role `agents_rw`; it reads app-api and the three simulators over HTTP and mounts no lakehouse.
+  agents:
+    <<: *python-service
+    image: r2r-agents
+    build:
+      context: .
+      dockerfile: docker/python.Dockerfile
+      args: {SERVICE_PATH: services/agents}
+    command: ["uvicorn", "agents.main:app", "--host", "0.0.0.0", "--port", "8200"]
+    environment:
+      CLOCK_SOURCE: http
+      APP_API_URL: http://app-api:8000
+      ERP_URL: http://erp-sim:8101
+      LIMS_URL: http://lims-sim:8102
+      QMS_URL: http://qms-sim:8103
+      AGENTS_RECORDINGS_DIR: /recordings
+    volumes:
+      # The recorded model answers (`make record-agents` writes them): mounted so a new recording takes effect
+      # without rebuilding the image. Read-only: the service never writes them.
+      - ./services/agents/recordings:/recordings:ro
+    ports:
+      - "${AGENTS_HOST_PORT:-8200}:8200"
+    depends_on:
+      postgres: {condition: service_healthy}
+      db-migrate: {condition: service_completed_successfully}
+      scenario: {condition: service_healthy}
+      app-api: {condition: service_healthy}
+      erp-sim: {condition: service_healthy}
+      lims-sim: {condition: service_healthy}
+      qms-sim: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8200/health', timeout=3)"]
       interval: 5s
       timeout: 5s
       retries: 12

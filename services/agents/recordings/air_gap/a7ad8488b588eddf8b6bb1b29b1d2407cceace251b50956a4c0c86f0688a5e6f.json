@@ -1,0 +1,38 @@
+{
+  "key": "a7ad8488b588eddf8b6bb1b29b1d2407cceace251b50956a4c0c86f0688a5e6f",
+  "agent_key": "air_gap",
+  "prompt_version": "v1",
+  "turn": 1,
+  "model_id": "claude-sonnet-5-5",
+  "recorded_at": "2026-10-12T07:00:00+00:00",
+  "stop_reason": "tool_use",
+  "tokens_in": 2931,
+  "tokens_out": 164,
+  "latency_ms": 1987,
+  "content": [
+    {
+      "type": "tool_use",
+      "id": "toolu_011qGtStHyFHumdmVZCJ7wEh",
+      "name": "get_row",
+      "input": {
+        "row_key": "RM10067|B5003|10000459"
+      }
+    },
+    {
+      "type": "tool_use",
+      "id": "toolu_01BdYvTwZkDHSWMSKTJa5xaV",
+      "name": "get_erp_lot",
+      "input": {
+        "prueflos": "10000459"
+      }
+    },
+    {
+      "type": "tool_use",
+      "id": "toolu_017HaH1YoX1RGrsiSEJYrovh",
+      "name": "list_deviations",
+      "input": {
+        "batch_no": "B5003"
+      }
+    }
+  ]
+}

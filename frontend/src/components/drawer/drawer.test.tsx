@@ -198,3 +198,27 @@ test('F19-FR-07 / OQ-116: the drawer is a non-modal panel whose history sections
   await userEvent.keyboard('{Escape}')
   expect(onClose).toHaveBeenCalledTimes(2)
 })
+
+test('F12-FR-13: the drawer summary shows the proposal-status line with a link, once a proposal exists', async () => {
+  stubDrawerApi(detailOf({ air_gap: true, proposal: { id: 9, status: 'pending_approval', priority: 'high' } }))
+  renderWithProviders(
+    <MemoryRouter>
+      <BatchDrawer rowKey="RM1|B4410|795" onOpenRow={vi.fn()} onClose={vi.fn()} onOpenWindow={vi.fn()} />
+    </MemoryRouter>,
+  )
+  const line = await screen.findByTestId('proposal-line')
+  expect(line).toHaveTextContent('Pending approval')
+  expect(within(line).getByRole('link', { name: 'View ↗' })).toHaveAttribute('href', '/agents/proposals/9')
+  expect(within(screen.getByTestId('batch-drawer')).getByRole('heading', { name: 'Batch history' })).toBeInTheDocument()
+})
+
+test('F12-FR-13: a batch that is not an air gap and has no proposal shows no proposal line', async () => {
+  stubDrawerApi(detailOf({ air_gap: false, proposal: null }))
+  renderWithProviders(
+    <MemoryRouter>
+      <BatchDrawer rowKey="RM1|B4410|795" onOpenRow={vi.fn()} onClose={vi.fn()} onOpenWindow={vi.fn()} />
+    </MemoryRouter>,
+  )
+  await screen.findByTestId('stage-timeline')
+  expect(screen.queryByTestId('proposal-line')).not.toBeInTheDocument()
+})

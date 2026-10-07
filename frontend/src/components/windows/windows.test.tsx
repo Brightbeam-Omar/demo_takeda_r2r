@@ -103,7 +103,7 @@ test('F16-FR-09 / AC-05: the insights window title, explanation, worst-first ord
   expect(await screen.findByRole('heading', { name: 'LIMS–ERP Insights — 4 affected batches' })).toBeInTheDocument()
   await screen.findAllByTestId('window-row')
   expect(await screen.findByText('Batches where LIMS is approved but ERP has not received the result. Flagged after 24+ hours — each day erodes the QA Release SLA. Sorted worst-first.')).toBeInTheDocument()
-  expect(screen.getAllByRole('columnheader').map((h) => h.textContent?.replace(/[▲▼]/g, ''))).toEqual(['Batch', 'Material', 'Stage', 'Days Gap'])
+  expect(screen.getAllByRole('columnheader').map((h) => h.textContent?.replace(/[▲▼]/g, ''))).toEqual(['Batch', 'Material', 'Stage', 'Days Gap', 'Proposal'])
   const rows = screen.getAllByTestId('window-row')
   expect(rows.map((r) => r.textContent)).toEqual([
     expect.stringContaining('B5001'), expect.stringContaining('B5002'), expect.stringContaining('B5004'), expect.stringContaining('B5003'),

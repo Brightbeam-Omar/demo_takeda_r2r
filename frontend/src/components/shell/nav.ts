@@ -20,7 +20,7 @@ export const VIEWS: NavItem[] = [
     label: 'Reports & Metrics',
     icon: '▤',
   },
-  { to: '/agents', label: 'Agents', icon: '✦', coming: 'Coming in F12' },
+  { to: '/agents', label: 'Agents', icon: '✦' },
 ]
 
 export const ADMIN: NavItem[] = [
@@ -100,5 +100,6 @@ const TITLES: Record<string, string> = {
 export function pageTitle(pathname: string): string {
   const exact = TITLES[pathname]
   if (exact) return exact
+  if (pathname.startsWith('/agents/')) return 'Agents'
   return [...VIEWS, ...ADMIN].find((item) => item.to === pathname)?.label ?? 'R2R Overview'
 }

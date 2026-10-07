@@ -13,7 +13,8 @@
     "screenshot:stages": "node screenshot-stages.mjs",
     "screenshot:table": "node screenshot-table.mjs",
     "screenshot:windows": "node screenshot-windows.mjs",
-    "screenshots:admin": "node screenshot-admin.mjs"
+    "screenshots:admin": "node screenshot-admin.mjs",
+    "screenshots:agents": "node screenshot-agents.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

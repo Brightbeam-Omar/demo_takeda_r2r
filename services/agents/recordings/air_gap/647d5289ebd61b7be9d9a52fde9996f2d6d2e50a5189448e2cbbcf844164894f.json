@@ -1,0 +1,53 @@
+{
+  "key": "647d5289ebd61b7be9d9a52fde9996f2d6d2e50a5189448e2cbbcf844164894f",
+  "agent_key": "air_gap",
+  "prompt_version": "v1",
+  "turn": 3,
+  "model_id": "claude-sonnet-5-5",
+  "recorded_at": "2026-10-12T07:00:00+00:00",
+  "stop_reason": "tool_use",
+  "tokens_in": 3653,
+  "tokens_out": 542,
+  "latency_ms": 3276,
+  "content": [
+    {
+      "type": "text",
+      "text": "Need-by 2026-11-02 is 21 days away, not late → normal."
+    },
+    {
+      "type": "tool_use",
+      "id": "toolu_01UqDd83Phwjo6ZtcZmM2QoX",
+      "name": "submit_ticket",
+      "input": {
+        "row_key": "RM10169|B1363|10000461",
+        "title": "Batch B1363: LIMS approved, no ERP usage decision",
+        "summary": "LIMS sample S-0000463 was approved at 2026-10-09T09:00:00Z. ERP inspection lot 10000461 has no usage decision and no results record. The gap has lasted 70 hours. No quality deviations are linked to B1363. Next step: post the usage decision in the ERP. Need-by is 2026-11-02 and the row is not late.",
+        "evidence": [
+          {
+            "system": "LIMS",
+            "ref": "S-0000463",
+            "field": "approved_at",
+            "value": "2026-10-09T09:00:00Z"
+          },
+          {
+            "system": "ERP",
+            "ref": "10000461",
+            "field": "results_recorded_at",
+            "value": "none"
+          },
+          {
+            "system": "ERP",
+            "ref": "10000461",
+            "field": "ud_code",
+            "value": "none"
+          }
+        ],
+        "hours_in_gap": 70,
+        "open_deviations": [],
+        "recommended_action": "post_usage_decision",
+        "priority": "normal",
+        "recipient_role": "qa_release"
+      }
+    }
+  ]
+}

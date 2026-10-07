@@ -26,7 +26,7 @@ from app_api.schemas import (
     SampleOut,
     StatusLogOut,
 )
-from app_api.services import overrides, status_log
+from app_api.services import overrides, proposals, status_log
 from app_api.services.compose import ADJUSTED, EXPEDITE, CurrentOverride, compose_row
 from app_api.services.store import load_composed
 
@@ -192,6 +192,7 @@ def get_row(
         changes=[ChangeControlOut(**c) for c in changes],
         samples=[SampleOut(**x) for x in samples],
         siblings=siblings,
+        proposal=proposals.latest_by_row(session, [row_key]).get(row_key),
     )
 
 

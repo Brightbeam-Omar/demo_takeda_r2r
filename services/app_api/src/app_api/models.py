@@ -229,11 +229,20 @@ class Proposal(Base):
     created_at: Mapped[datetime] = mapped_column(STAMP)
     decided_by: Mapped[str | None] = mapped_column(Text)
     decided_at: Mapped[datetime | None] = mapped_column(STAMP)
+    decision_reason: Mapped[str | None] = mapped_column(Text)  # F12: the human reject reason (OQ-136)
     trace_id: Mapped[str | None] = mapped_column(Text, index=True)
     __table_args__ = (
         CheckConstraint(
             "status IN ('pending_approval','rejected_by_validator','approved','rejected','executed')",
             name="ck_proposal_status",
+        ),
+        # One open proposal per row and kind (F12-FR-08, OQ-137).
+        Index(
+            "uq_proposal_open",
+            "row_key",
+            "kind",
+            unique=True,
+            postgresql_where=text("status IN ('pending_approval','approved','executed')"),
         ),
     )
 
