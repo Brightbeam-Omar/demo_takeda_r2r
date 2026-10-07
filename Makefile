@@ -69,8 +69,11 @@ check-frontend:
 
 # Scans the git file set, then commit messages on unpushed commits (skipped without an upstream).
 # Warns and passes when no denylist is configured, except in CI (see tools/leakscan).
+# F14-AC-04: artifacts/ is gitignored, so the git file set misses it; it is scanned explicitly when it exists
+# (the legacy workbook, the e2e reports, the video's folder).
 leakscan:
 	uv run python -m leakscan
+	@if [ -d artifacts ]; then uv run python -m leakscan artifacts; fi
 	@if git rev-parse --abbrev-ref '@{u}' >/dev/null 2>&1; then \
 		uv run python -m leakscan --commits '@{u}..HEAD'; \
 	else \
