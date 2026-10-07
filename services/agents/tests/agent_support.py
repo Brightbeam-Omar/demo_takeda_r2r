@@ -1,8 +1,10 @@
 """Test doubles shared by the agents tests."""
 
 import json
+from typing import Any
 
 import httpx
+from agents.air_gap.schema import AirGapTicket, EvidenceItem
 
 USERS = {
     "pat": ("Pat", "planner"),
@@ -153,3 +155,34 @@ def source_transport(
         return httpx.Response(404, json={"detail": "unknown"})
 
     return httpx.MockTransport(handler)
+
+
+OPEN_DEVIATION = {
+    "deviation_no": "DEV-000039", "title": "Temperature excursion in storage", "severity": "minor",
+    "status": "open", "opened_on": "2026-09-01", "closed_on": None,
+}  # fmt: skip
+
+
+def evidence() -> list[EvidenceItem]:
+    return [
+        EvidenceItem(system="LIMS", ref="S-0000404", field="approved_at", value="2026-10-11T01:00:00Z"),
+        EvidenceItem(system="ERP", ref="10000459", field="results_recorded_at", value="none"),
+        EvidenceItem(system="ERP", ref="10000459", field="ud_code", value="none"),
+    ]
+
+
+def ticket(**changes: Any) -> AirGapTicket:
+    data: dict[str, Any] = {
+        "row_key": ROW_KEY,
+        "title": "Batch B5003: LIMS approved, no ERP usage decision",
+        "summary": "LIMS approved sample S-0000404 for batch B5003 30 hours ago. The ERP has no usage decision "
+        "and no results record for lot 10000459. Post the usage decision.",
+        "evidence": evidence(),
+        "hours_in_gap": 30,
+        "open_deviations": [],
+        "recommended_action": "post_usage_decision",
+        "priority": "high",
+        "recipient_role": "qa_release",
+    }
+    data.update(changes)
+    return AirGapTicket.model_validate(data)
