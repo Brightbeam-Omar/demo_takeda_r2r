@@ -40,7 +40,7 @@ Claude Code updates `in_progress` and `review`. Only the human sets `done`.
 | F20 | Reports & Metrics page (6 tabs) | F19 | 1 | done |
 | F21 | Sync Status, Webhook Sync Status & Admin pages | F20 | 1 | done |
 | F12 | Agent harness & Air-gap agent | F09 (API), F21 (UI) | 1 | done |
-| F13 | Scenario engine & demo reset | F07, F09, F10, F12 | 1 | ready |
+| F13 | Scenario engine & demo reset | F07, F09, F10, F12 | 1 | in_progress |
 | F14 | Run-of-show E2E, README, rehearsal kit | all Tier 1 | 1 | ready |
 | T2-01 | 3PL feed, delivery entry, metrics M1/M2/M4/M5 | Tier 1 (UI parts: F21) | 2 | draft |
 | T2-02 | Safety poll self-heal, ops console, alerts | Tier 1 | 2 | draft |
