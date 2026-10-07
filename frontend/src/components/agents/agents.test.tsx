@@ -397,4 +397,7 @@ test('F14-FR-10: times in the evidence table and the summary show in site time, 
   expect(rowsOfEvidence[0]).toHaveTextContent('8 Oct 2026 14:00')
   expect(screen.getByText(/LIMS approved at 8 Oct 2026 14:00 and the gap is open\./)).toBeInTheDocument()
   expect(document.body.textContent).not.toMatch(/\dT\d\d:/)
+  // display only: the fetched proposal keeps its stored ISO values
+  expect(iso.evidence[0]!.value).toBe('2026-10-08T13:00:00Z')
+  expect(iso.payload.summary).toContain('2026-10-08T13:00:00Z')
 })
