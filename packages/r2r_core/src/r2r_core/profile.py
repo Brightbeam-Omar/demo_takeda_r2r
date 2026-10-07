@@ -130,6 +130,16 @@ class AirGapConfig(_Model):
     threshold_hours: NonNegativeInt
 
 
+class AirGapAgentConfig(_Model):
+    """F12 (OQ-140): validator rule V5 marks a ticket high priority inside this many days of the need-by date."""
+
+    high_priority_days: NonNegativeInt
+
+
+class AgentsConfig(_Model):
+    air_gap: AirGapAgentConfig
+
+
 class ReleaseOnCoa(_Model):
     """F18-FR-10: the single release deadline, in days from the cycle start, when Release on COA is set."""
 
@@ -238,6 +248,7 @@ class SiteProfile(_Model):
     metric_rag: MetricRag
     rag: RagConfig
     air_gap: AirGapConfig
+    agents: AgentsConfig
     molecule_types: Annotated[list[Labelled], BeforeValidator(_labelled)]
     material_classes: Annotated[list[Labelled], BeforeValidator(_labelled)]
     full_spec_pairs: list[FullSpecPair]

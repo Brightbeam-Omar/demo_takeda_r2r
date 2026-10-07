@@ -34,6 +34,7 @@ metrics:  # see §7
 metric_rag: {green_min_pct: 90, amber_min_pct: 80}
 rag:        {amber_days_remaining_lt: 3}
 air_gap:    {threshold_hours: 24}
+agents:     {air_gap: {high_priority_days: 14}}   # F12: the air-gap agent's validator rule V5
 molecule_types: [small_molecule, large_molecule, peptide]     # string or {key, label}; normalised to {key, label} (label defaults to the title-cased key)
 material_classes: [drug_substance, consumable]               # same shape
 full_spec_pairs: [{material: RM10031, supplier: SUP007}]   # material+supplier needing full-spec testing

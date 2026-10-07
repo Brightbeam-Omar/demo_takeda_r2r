@@ -320,3 +320,15 @@ def test_f20_followup_release_thresholds_must_be_ordered_and_positive() -> None:
     data["targets"]["release_rag"] = {"green_min_pct": 95, "amber_min_pct": 0}
     with pytest.raises(ProfileError, match="amber_min_pct"):
         parse_profile(data)
+
+
+def test_f12_fr07_air_gap_agent_priority_window_is_in_the_profile() -> None:
+    """F12-FR-07 (V5, OQ-140): the 14-day window is a profile value, not a constant in code."""
+    assert load_profile("site_a").agents.air_gap.high_priority_days == 14
+
+
+def test_f12_fr07_priority_window_is_required() -> None:
+    data = _raw()
+    del data["agents"]
+    with pytest.raises(ProfileError, match="agents"):
+        parse_profile(data)
