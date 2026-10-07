@@ -230,6 +230,33 @@ def _insert_proposal(http: ReadOnlyHttp, row_key: str) -> int:
     return int(row[0])
 
 
+# --- needs the recordings: first, because the tests below change the demo data (a usage decision, a deviation) --------------------------------------------------------------------------
+
+
+@needs_recordings
+def test_f12_ac01_run_creates_a_pending_proposal_for_b5003_that_passes_v1_to_v6_from_the_recordings(
+    seeded: None, http: ReadOnlyHttp
+) -> None:
+    _reset_agent_state()
+    response = httpx.post(f"{AGENTS}/agents/air_gap/run", headers=ALEX, json={}, timeout=120)
+    assert response.status_code == 200, response.text
+    created = {c["row_key"]: c for c in response.json()["created"]}
+    assert len(created) == 4 and all(c["status"] == "pending_approval" for c in created.values())
+    b5003 = created[_row_key(http, "B5003")]
+    detail = _get(f"{AGENTS}/proposals/{b5003['proposal_id']}", ALEX)
+    assert detail["validator"]["passed"] is True and detail["batch_no"] == "B5003"
+    trace = _get(f"{AGENTS}/traces/{b5003['trace_id']}", ALEX)
+    kinds = [s["step_type"] for s in trace["steps"]]
+    assert kinds[0] == "input" and kinds[-3:] == ["validation", "decision", "action"]
+    calls = [s for s in trace["steps"] if s["step_type"] == "tool_call"]
+    assert len(calls) >= 3 and len({s["payload"]["system"] for s in calls}) >= 2  # F12-AC-05
+    assert trace["replayed"] is True
+    again = httpx.post(f"{AGENTS}/agents/air_gap/run", headers=ALEX, json={}, timeout=60).json()  # F12-AC-06
+    assert again["created"] == [] and len(again["skipped"]) == 4
+    assert _get(f"{AGENTS}/proposals", ALEX)["counts"]["pending_approval"] == 4
+    _reset_agent_state()
+
+
 # --- no model needed -------------------------------------------------------------------------------
 
 
@@ -380,30 +407,3 @@ def test_f12_fr14_pause_and_resume_need_the_token_and_report_state(seeded: None)
     assert paused["paused"] is True
     resumed = httpx.post(f"{AGENTS}/agents/autorun/resume", headers=TOKEN, timeout=10).json()
     assert resumed["paused"] is False and resumed["cursor"]
-
-
-# --- needs the recordings --------------------------------------------------------------------------
-
-
-@needs_recordings
-def test_f12_ac01_run_creates_a_pending_proposal_for_b5003_that_passes_v1_to_v6_from_the_recordings(
-    seeded: None, http: ReadOnlyHttp
-) -> None:
-    _reset_agent_state()
-    response = httpx.post(f"{AGENTS}/agents/air_gap/run", headers=ALEX, json={}, timeout=120)
-    assert response.status_code == 200, response.text
-    created = {c["row_key"]: c for c in response.json()["created"]}
-    assert len(created) == 4 and all(c["status"] == "pending_approval" for c in created.values())
-    b5003 = created[_row_key(http, "B5003")]
-    detail = _get(f"{AGENTS}/proposals/{b5003['proposal_id']}", ALEX)
-    assert detail["validator"]["passed"] is True and detail["batch_no"] == "B5003"
-    trace = _get(f"{AGENTS}/traces/{b5003['trace_id']}", ALEX)
-    kinds = [s["step_type"] for s in trace["steps"]]
-    assert kinds[0] == "input" and kinds[-3:] == ["validation", "decision", "action"]
-    calls = [s for s in trace["steps"] if s["step_type"] == "tool_call"]
-    assert len(calls) >= 3 and len({s["payload"]["system"] for s in calls}) >= 2  # F12-AC-05
-    assert trace["replayed"] is True
-    again = httpx.post(f"{AGENTS}/agents/air_gap/run", headers=ALEX, json={}, timeout=60).json()  # F12-AC-06
-    assert again["created"] == [] and len(again["skipped"]) == 4
-    assert _get(f"{AGENTS}/proposals", ALEX)["counts"]["pending_approval"] == 4
-    _reset_agent_state()
