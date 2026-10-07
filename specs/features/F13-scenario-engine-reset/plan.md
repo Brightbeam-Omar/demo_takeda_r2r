@@ -12,3 +12,6 @@
 - **Browser access (OQ-147):** `/api/demo/*` in app-api (404 unless `DEMO_MODE`, 403 unless admin) forwards to the scenario service with the token.
 - **Extra precondition kind** `adjusted_need_by` (for `pull-forward-B2077`) and an `X-Actor-User` header on the run endpoints (the audit actor).
 - **`fetch` stream instead of `EventSource`.** The Demo Controls page must send `X-Demo-User` (the server decides admin-only), and `EventSource` cannot set headers. `api/demo.ts` reads the same `text/event-stream` with `fetch`, and on a dropped connection resumes with `?after=<last seq + 1>` (the server replays).
+- **One run at a time (OQ-150):** a second step, or a reset during a step, is refused with 409 `busy`.
+- **"Sync done" (FR-05, FR-08):** the wait ends when every watermark is at the pipeline run id and no sync event is pending or claimed. That is stricter than one event being `done`, and matches OQ-151.
+- **Wait timeouts count their one-second polls** rather than reading a monotonic clock, so a slow status call can stretch the 120 s a little. Infrastructure time only, and it keeps the waits testable without real sleeping.
