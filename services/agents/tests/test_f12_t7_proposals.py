@@ -281,3 +281,14 @@ def test_f12_oq146_no_log_line_carries_the_key(
     client.app.state.autorun.tick()  # type: ignore[attr-defined]
     assert caplog.records  # something was logged at all
     assert "sk-ant-test-sentinel" not in caplog.text
+
+
+def test_f12_oq143_approving_writes_no_status_log_entry(build_app: Build, owner_engine: Engine) -> None:
+    """OQ-143: the ticket is in the audit log and action_log; the status log is a person's judgement, untouched."""
+    client = build_app()
+    with owner_engine.connect() as connection:
+        before = connection.execute(text("SELECT count(*) FROM status_log")).scalar_one()
+    pid = _run(client).json()["created"][0]["proposal_id"]
+    assert client.post(f"/proposals/{pid}/approve", headers=ALEX).json()["status"] == "executed"
+    with owner_engine.connect() as connection:
+        assert connection.execute(text("SELECT count(*) FROM status_log")).scalar_one() == before

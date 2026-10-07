@@ -229,3 +229,11 @@ def test_f12_oq140_the_identifier_patterns_match_every_generated_id(plan: Any) -
     assert SAMPLE_PATTERN.fullmatch(f"S-{404:07d}") and LOT_PATTERN.fullmatch(f"1{459:07d}")
     assert DEVIATION_PATTERN.fullmatch(f"DEV-{39:06d}")
     assert not re.search(LOT_PATTERN, "49" + "00000422")  # goods-movement numbers are not lots
+
+
+def test_f12_oq140_v3_uses_the_shared_air_gap_function() -> None:
+    """V3 reuses r2r_core.airgap, the function the pipeline's flag uses, not a second implementation."""
+    import agents.air_gap.validator as validator
+    import r2r_core.airgap as shared
+
+    assert validator.air_gap is shared.air_gap
