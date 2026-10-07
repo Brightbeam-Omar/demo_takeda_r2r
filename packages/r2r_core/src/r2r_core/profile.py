@@ -131,7 +131,7 @@ class AirGapConfig(_Model):
 
 
 class AirGapAgentConfig(_Model):
-    """F12 (OQ-140): validator rule V5 marks a ticket high priority inside this many days of the need-by date."""
+    """F12 (OQ-140): validator rule V5 marks a ticket high priority this many days before the need-by date."""
 
     high_priority_days: NonNegativeInt
 

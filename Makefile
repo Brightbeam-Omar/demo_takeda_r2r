@@ -52,7 +52,7 @@ STACK_PROJECT := r2r_stacktest
 stack-test: ## Start an isolated copy of the stack, run the acceptance tests against it, tear it down
 	@test -f .env || cp .env.example .env
 	@export COMPOSE_PROJECT_NAME=$(STACK_PROJECT) POSTGRES_HOST_PORT=15432 SCENARIO_HOST_PORT=18100 \
-		ERP_HOST_PORT=18101 LIMS_HOST_PORT=18102 QMS_HOST_PORT=18103 DAGSTER_HOST_PORT=13001 APP_API_HOST_PORT=18000 FRONTEND_HOST_PORT=15173 \
+		ERP_HOST_PORT=18101 LIMS_HOST_PORT=18102 QMS_HOST_PORT=18103 AGENTS_HOST_PORT=18200 DAGSTER_HOST_PORT=13001 APP_API_HOST_PORT=18000 FRONTEND_HOST_PORT=15173 \
 		LAKEHOUSE_HOST_DIR=$(CURDIR)/.stacktest-lakehouse; \
 	trap 'docker compose -p $(STACK_PROJECT) down -v --remove-orphans' EXIT; \
 	docker compose -p $(STACK_PROJECT) up -d --build --wait && uv run pytest -m stack tests/stack
