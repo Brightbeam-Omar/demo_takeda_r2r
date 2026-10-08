@@ -37,7 +37,7 @@ test('F13-AC-02: lims-approve-B1042 moves B1042 to QA Release, and Run is then d
   const step = page.locator('[data-step="lims-approve-B1042"]')
   await expect(step.getByTestId('precondition-light')).toHaveAttribute('data-state', 'met')
   await step.getByRole('button', { name: /^Run / }).click()
-  await expect(page.getByTestId('progress-line').filter({ hasText: '[1/3] LIMS: approve the sample' })).toBeVisible()
+  await expect(page.getByTestId('progress-line').filter({ hasText: '[1/4] LIMS: approve the sample' })).toBeVisible()
   await expect(status(page)).toHaveAttribute('data-status', 'succeeded', { timeout: 90_000 })
   await expect(step.getByTestId('precondition-light')).toHaveAttribute('data-state', 'unmet')
 

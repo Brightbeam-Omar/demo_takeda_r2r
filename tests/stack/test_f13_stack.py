@@ -230,7 +230,7 @@ def test_f13_ac02_approving_b1042_moves_it_to_qa_release_and_a_second_run_is_ref
     events = _step("lims-approve-B1042")
     assert time.perf_counter() - began < 90
     assert _row("B1042")["stage_key"] == "qa_release"
-    assert any("[1/3] LIMS: approve the sample" in e["message"] for e in events)
+    assert any("[1/4] LIMS: approve the sample" in e["message"] for e in events)
 
     status, body, _ = _run("/scenario/steps/lims-approve-B1042/run")
     assert status == 409
