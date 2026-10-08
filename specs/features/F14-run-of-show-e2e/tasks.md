@@ -6,3 +6,11 @@
 - [x] T5 Demo script (40-minute and 12-minute versions) and its checks, then the architecture overview (FR-03, FR-04, AC-09)
 - [x] T6 README completion and an offline test (FR-06, AC-01, AC-03)
 - [x] T7 Full-repo leak scan including artefacts (AC-04)
+- [ ] T8 Hardening (OQ-166 to OQ-173): B1042 results recorded and the stack test (FR-11, AC-11) [TDD]
+- [ ] T9 Graceful replay misses (FR-12, AC-12) [TDD]
+- [ ] T10 Demo Controls groups and the B5003 preconditions; B2077 fallback idempotency (FR-13, FR-14, AC-13, AC-14) [TDD]
+- [ ] T11 Demo view defaults: default columns, presets after reset, hidden placeholders (FR-15, FR-16, AC-15, AC-16) [TDD]
+- [ ] T12 Provider chip (FR-17, AC-17)
+- [ ] T13 Re-recording rule and the CI replay check (FR-18, AC-18)
+- [ ] T14 Run-of-show and script updates for T8 to T13, full verification, video
+
