@@ -5,6 +5,13 @@ site:
 demo:
   start_datetime: "2026-10-12T08:00:00+01:00"   # canonical opening: a Monday morning
   seed: 4242
+  # F14 (OQ-170, OQ-171): the demo view. Only DEMO_MODE applies these.
+  default_columns: [material, batch, stage, system_need_by, adjusted, sla_deadline, days, status, expected, inbound, deviation]
+  presets:   # saved filters every persona starts with; a reset puts them back
+    - {name: "Late batches", query: "flag=late"}
+    - {name: "Air gaps", query: "flag=air_gap"}
+    - {name: "On hold or expedite", query: "flag=on_hold&flag=expedite"}
+  hide_placeholders: true   # hide Upload Data, Process / Campaign Mapping, POC — Integrations, Configuration
 stages:            # sort order = list order; key is stable and used in code/data
   - {key: pending,     label: "Pending",      sla_days: 0,  team: "Logistics",     action: "Awaiting goods receipt", show_card: false}
   - {key: receipt,     label: "Receipt",      sla_days: 10, team: "Warehouse",     action: "Complete inbound check"}

@@ -167,3 +167,14 @@ test('F18-FR-01: the first column is sticky so the rest can scroll sideways', ()
   show()
   expect(screen.getAllByRole('cell')[0]).toHaveClass('sticky')
 })
+
+test('F14-FR-15: a default column set (the demo view) shows only those columns, and the user choice still wins', async () => {
+  const first = show({ columnsKey: 'overview.demo', defaultVisible: ['name', 'extra'] })
+  expect(screen.getAllByRole('columnheader').map((h) => h.textContent?.replace(/[▲▼]/g, ''))).toEqual(['Name', 'Extra'])
+  expect(sessionStorage.getItem('r2r.columns.overview.demo')).toBeNull() // a default is not stored as a choice
+  await userEvent.click(screen.getAllByRole('button', { name: /Columns/ })[0]!)
+  await userEvent.click(within(screen.getByRole('group', { name: 'Columns' })).getByRole('checkbox', { name: 'Days' }))
+  first.unmount()
+  show({ columnsKey: 'overview.demo', defaultVisible: ['name', 'extra'] })
+  expect(screen.getByRole('columnheader', { name: /Days/ })).toBeInTheDocument()
+})

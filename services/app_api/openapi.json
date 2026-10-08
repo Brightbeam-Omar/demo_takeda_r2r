@@ -941,6 +941,28 @@
         "title": "DeliveryOut",
         "type": "object"
       },
+      "DemoViewOut": {
+        "description": "How the demo looks (F14-FR-15, FR-16). Empty and off unless ``DEMO_MODE`` is on.",
+        "properties": {
+          "default_columns": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Default Columns",
+            "type": "array"
+          },
+          "hide_placeholders": {
+            "title": "Hide Placeholders",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "default_columns",
+          "hide_placeholders"
+        ],
+        "title": "DemoViewOut",
+        "type": "object"
+      },
       "DeviationOut": {
         "properties": {
           "causal_factor": {
@@ -2870,6 +2892,9 @@
             "title": "Classes",
             "type": "array"
           },
+          "demo": {
+            "$ref": "#/components/schemas/DemoViewOut"
+          },
           "flags": {
             "items": {
               "type": "string"
@@ -2986,7 +3011,8 @@
           "terms",
           "release_badge",
           "profile_file",
-          "air_gap_threshold_hours"
+          "air_gap_threshold_hours",
+          "demo"
         ],
         "title": "ReferenceOut",
         "type": "object"

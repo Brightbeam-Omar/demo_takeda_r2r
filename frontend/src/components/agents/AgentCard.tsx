@@ -1,3 +1,4 @@
+import { ProviderChip } from './ProviderChip'
 import { runErrorText, useRunAgent, type AgentCardData } from '../../api/agents'
 import { formatClock } from '../../lib/format'
 import { READ_ONLY_HINT } from '../../lib/roles'
@@ -38,8 +39,7 @@ export function AgentCard({ agent, timezone }: Props) {
         <div>
           <dt className="text-[11px] font-semibold tracking-wide text-ink-2 uppercase">Model</dt>
           <dd className="mt-0.5 flex items-center gap-1.5" data-testid="agent-model">
-            <span className="font-mono">{agent.model_id}</span>
-            <span className="rounded-chip border border-hairline px-1.5 text-[10px] font-semibold uppercase">{agent.provider}</span>
+            <ProviderChip provider={agent.provider} modelId={agent.model_id} />
           </dd>
         </div>
         <div>

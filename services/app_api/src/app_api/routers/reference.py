@@ -9,7 +9,7 @@ from r2r_core.profile import SiteProfile
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app_api.auth import current_user
+from app_api.auth import current_user, demo_mode
 from app_api.db import get_session
 from app_api.deps import get_profile, profile_file
 from app_api.services.overview import FLAG_NAMES, PERIODS
@@ -18,6 +18,13 @@ from app_api.services.stage_events import metric_events, metric_window
 DEFAULT_RELEASE_BADGE = "ALPHA – LOCAL"
 
 router = APIRouter(dependencies=[Depends(current_user)])
+
+
+class DemoViewOut(BaseModel):
+    """How the demo looks (F14-FR-15, FR-16). Empty and off unless ``DEMO_MODE`` is on."""
+
+    default_columns: list[str]
+    hide_placeholders: bool
 
 
 class ReferenceOut(BaseModel):
@@ -38,6 +45,7 @@ class ReferenceOut(BaseModel):
     release_badge: str
     profile_file: str
     air_gap_threshold_hours: int
+    demo: DemoViewOut
 
 
 def _rows(session: Session, sql: str) -> list[dict[str, Any]]:
@@ -86,5 +94,9 @@ def reference(
         terms=profile.terms.model_dump(),
         air_gap_threshold_hours=profile.air_gap.threshold_hours,
         profile_file=profile_file(),
+        demo=DemoViewOut(
+            default_columns=list(profile.demo.default_columns) if demo_mode() else [],
+            hide_placeholders=profile.demo.hide_placeholders and demo_mode(),
+        ),
         release_badge=os.environ.get("RELEASE_BADGE", "").strip() or DEFAULT_RELEASE_BADGE,
     )
