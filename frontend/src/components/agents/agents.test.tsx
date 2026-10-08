@@ -401,3 +401,30 @@ test('F14-FR-10: times in the evidence table and the summary show in site time, 
   expect(iso.evidence[0]!.value).toBe('2026-10-08T13:00:00Z')
   expect(iso.payload.summary).toContain('2026-10-08T13:00:00Z')
 })
+
+test('F14-FR-12: a candidate with no recording gets its own row message and the run still creates the others', async () => {
+  stub({
+    '/api/overview/insights': insights,
+    '/api/reference': reference,
+    '/api/me': me('qa_release', 'alex'),
+    '/agents-api/agents/air_gap/run': {
+      created: [{ row_key: 'k9', outcome: 'created', proposal_id: 8, status: 'pending_approval', trace_id: 'TR-0002', message: '', replay_miss: null }],
+      skipped: [],
+      errors: [{ row_key: 'k2', outcome: 'error', proposal_id: null, status: null, trace_id: 'TR-0001', message: 'No recording for B5003: record it or run live', replay_miss: { key: 'k', hint: 'h' } }],
+    },
+  })
+  const rowsOf = () => screen.findAllByTestId('window-row')
+  renderWithProviders(
+    <MemoryRouter>
+      <InsightsWindow open onClose={vi.fn()} params={new URLSearchParams()} />
+    </MemoryRouter>,
+  )
+  await rowsOf()
+  const button = await screen.findByRole('button', { name: 'Run air-gap agent' })
+  await waitFor(() => expect(button).toBeEnabled())
+  await userEvent.click(button)
+  expect(await screen.findByTestId('run-result')).toHaveTextContent('1 proposal created. 1 could not run: see its row.')
+  const rows = await rowsOf()
+  expect(within(rows[1]!).getByTestId('row-error')).toHaveTextContent('No recording for B5003: record it or run live')
+  expect(screen.queryByTestId('run-error')).not.toBeInTheDocument()
+})

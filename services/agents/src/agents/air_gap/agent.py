@@ -146,7 +146,7 @@ def run_candidate(deps: Deps, candidate: Candidate, demo_user: str | None) -> Ca
             candidate.row_key,
             "error",
             trace_id=trace.trace_id,
-            message=str(miss),
+            message=f"No recording for {candidate.batch_no}: record it or run live",
             replay_miss={"key": miss.key, "hint": miss.hint},
         )
     except (GatewayError, ToolError) as error:

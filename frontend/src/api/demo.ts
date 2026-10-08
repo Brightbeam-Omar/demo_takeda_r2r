@@ -5,6 +5,8 @@ export interface DemoStep {
   id: string
   title: string
   talk_track: string
+  /** Act 3, Act 5, Act 6, After act 6 or Extras, in script order (F14-FR-13). */
+  group: string
   preconditions: 'met' | 'unmet' | 'unknown'
   messages: string[]
   actions: string[]

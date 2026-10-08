@@ -27,12 +27,13 @@ def test_f13_fr01_actions_run_in_order_with_a_progress_line_each(harness: Harnes
     assert run.status == "succeeded"
     kinds = [event["kind"] for event in run.events]
     assert kinds[0] == "start" and kinds[-1] == "done"
-    assert kinds.count("action_start") == 3 and kinds.count("action_done") == 3
+    assert kinds.count("action_start") == 4 and kinds.count("action_done") == 4
     lines = messages(run)
-    assert lines.index("[1/3] LIMS: approve the sample") < lines.index("[2/3] Run the pipeline")
-    assert lines.index("[2/3] Run the pipeline") < lines.index("[3/3] Wait for the app to sync")
-    assert harness.world.paths()[:3] == [
-        "GET app/api/overview", "GET lims/samples", "POST lims/events/approved"
+    assert lines.index("[1/4] LIMS: approve the sample") < lines.index("[3/4] Run the pipeline")
+    assert lines.index("[3/4] Run the pipeline") < lines.index("[4/4] Wait for the app to sync")
+    assert harness.world.paths()[:5] == [
+        "GET app/api/overview", "GET lims/samples", "GET app/api/overview",
+        "POST lims/events/approved", "POST erp/events/results-recorded",
     ]  # fmt: skip
 
 
@@ -226,3 +227,60 @@ def test_f13_fr03_a_run_while_another_is_active_is_a_409_busy(client: TestClient
     harness.registry.begin("reset", "demo", "admin")
     response = client.post("/scenario/steps/run-pipeline/run", headers=TOKEN)
     assert response.status_code == 409 and response.json()["detail"]["error"] == "busy"
+
+
+def test_f14_fr11_b1042_results_are_recorded_in_the_erp_two_demo_hours_after_the_approval(
+    harness: Harness,
+) -> None:
+    """OQ-166: the interface records the LIMS results, so B1042 can never become an air gap."""
+    harness.run("lims-approve-B1042")
+    recorded = next(call for call in harness.world.calls if call[2] == "/events/results-recorded")
+    assert recorded[3] == {"prueflos": "100", "at": "2026-10-12T09:00:00+00:00"}  # NOW 07:00 + 2 h
+    assert harness.advanced == []  # the clock did not move, so no replay key moves
+
+
+def test_f14_fr13_the_b5003_steps_wait_for_a_decision_on_a_pending_proposal(harness: Harness) -> None:
+    """OQ-168: an open B5003 proposal blocks the two steps that would remove the air gap under act 6."""
+    harness.world.proposals = [{"row_key": "RM1|B5003|100", "status": "pending_approval"}]
+    for step in ("ud-post-B5003", "interface-sync-B5003"):
+        listed = {s["id"]: s for s in harness.runner.listing()}[step]
+        assert listed["preconditions"] == "unmet" and "waiting for a decision" in listed["messages"][0]
+        with pytest.raises(PreconditionFailed):
+            harness.runner.start(step, "admin", wait=True)
+    harness.world.proposals = [{"row_key": "RM1|B5003|100", "status": "executed"}]
+    assert harness.run("ud-post-B5003").status == "succeeded"
+
+
+def test_f14_fr13_the_listing_carries_the_groups_in_script_order(harness: Harness) -> None:
+    listed = harness.runner.listing()
+    groups = [step["group"] for step in listed]
+    order = ["Act 3", "Act 5", "Act 6", "After act 6", "Extras"]
+    assert sorted(set(groups), key=order.index) == order
+    assert groups == sorted(groups, key=order.index)  # never out of order
+    by_id = {step["id"]: step["group"] for step in listed}
+    assert by_id["ud-post-B5003"] == by_id["interface-sync-B5003"] == "After act 6"
+
+
+def test_f14_fr14_pull_forward_is_refused_when_b2077_is_already_adjusted_and_writes_nothing(
+    harness: Harness,
+) -> None:
+    """OQ-169: the act 5 fallback is safe to press twice."""
+    harness.world.rows["B2077"]["adjusted_need_by_date"] = "2026-11-26"
+    listed = {s["id"]: s for s in harness.runner.listing()}["pull-forward-B2077"]
+    assert listed["preconditions"] == "unmet" and "already adjusted" in listed["messages"][0]
+    with pytest.raises(PreconditionFailed):
+        harness.runner.start("pull-forward-B2077", "admin", wait=True)
+    assert not [call for call in harness.world.calls if call[1] == "PUT"]  # nothing written
+
+
+def test_f14_fr12_a_run_with_one_missing_recording_still_succeeds_and_names_it(harness: Harness) -> None:
+    harness.world.agent_answer = {
+        "created": [{}, {}, {}],
+        "skipped": [],
+        "errors": [{"message": "No recording for B1042: record it or run live"}],
+    }
+    run = harness.run("airgap-agent")
+    assert run.status == "succeeded"
+    assert any("3 proposal(s) created" in m and "No recording for B1042" in m for m in messages(run))
+    harness.world.agent_answer = {"created": [], "skipped": [], "errors": [{"message": "No recording for B1042: x"}]}
+    assert harness.run("airgap-agent").status == "failed"

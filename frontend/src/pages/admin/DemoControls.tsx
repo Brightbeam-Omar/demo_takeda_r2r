@@ -27,6 +27,19 @@ const RESET_MESSAGE =
 /** `unmet` steps cannot run; `unknown` stays enabled so a failed check never blocks a fallback (OQ-154). */
 const blocked = (step: DemoStep) => step.preconditions === "unmet";
 
+/** The steps under their group headings, in the order the scenario file lists them (F14-FR-13). */
+const groupSteps = (
+  steps: DemoStep[],
+): { name: string; steps: DemoStep[] }[] => {
+  const groups: { name: string; steps: DemoStep[] }[] = [];
+  for (const step of steps) {
+    const found = groups.find((group) => group.name === step.group);
+    if (found) found.steps.push(step);
+    else groups.push({ name: step.group, steps: [step] });
+  }
+  return groups;
+};
+
 const seconds = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
 
 /** Demo Controls (F13-FR-06): run a scripted step, watch its progress, reset the demo. Admin only, DEMO_MODE only. */
@@ -136,56 +149,70 @@ export function DemoControls() {
               onRetry={() => void steps.refetch()}
             />
           )}
-          <ul
-            className="divide-y divide-hairline rounded-card border border-hairline bg-white"
-            aria-label="Scenario steps"
-          >
-            {(steps.data ?? []).map((step) => (
-              <li
-                key={step.id}
-                data-testid="demo-step"
-                data-step={step.id}
-                className="flex items-start gap-4 p-4"
+          {groupSteps(steps.data ?? []).map((group) => (
+            <section
+              key={group.name}
+              data-testid="demo-group"
+              data-group={group.name}
+              aria-label={group.name}
+            >
+              <h2 className="mb-1.5 text-xs font-semibold tracking-wide text-ink-2 uppercase">
+                {group.name}
+              </h2>
+              <ul
+                className="divide-y divide-hairline rounded-card border border-hairline bg-white"
+                aria-label={`Scenario steps: ${group.name}`}
               >
-                <span
-                  role="img"
-                  aria-label={`${LIGHT[step.preconditions].label}${step.messages[0] ? `: ${step.messages[0]}` : ""}`}
-                  title={step.messages[0] ?? LIGHT[step.preconditions].label}
-                  data-testid="precondition-light"
-                  data-state={step.preconditions}
-                  className={`mt-1.5 h-3 w-3 shrink-0 rounded-full ${LIGHT[step.preconditions].dot}`}
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="font-medium text-ink">{step.title}</div>
-                  <div className="text-sm italic text-ink-2">
-                    {step.talk_track}
-                  </div>
-                  {step.preconditions !== "met" && step.messages[0] && (
-                    <div className="mt-1 text-xs text-amber-700">
-                      {step.messages[0]}
-                    </div>
-                  )}
-                </div>
-                {/* A disabled button gets no hover, so the reason sits on a wrapper (F14-FR-09). */}
-                <span
-                  data-testid="run-reason"
-                  title={blocked(step) ? step.messages[0] : undefined}
-                >
-                  <button
-                    type="button"
-                    disabled={running || blocked(step)}
-                    aria-label={`Run ${step.title}`}
-                    className="rounded-chip bg-accent px-3 py-1.5 text-sm font-medium text-white enabled:hover:opacity-90 disabled:opacity-50"
-                    onClick={() =>
-                      void begin(step.title, () => startStep(step.id))
-                    }
+                {group.steps.map((step) => (
+                  <li
+                    key={step.id}
+                    data-testid="demo-step"
+                    data-step={step.id}
+                    className="flex items-start gap-4 p-4"
                   >
-                    Run
-                  </button>
-                </span>
-              </li>
-            ))}
-          </ul>
+                    <span
+                      role="img"
+                      aria-label={`${LIGHT[step.preconditions].label}${step.messages[0] ? `: ${step.messages[0]}` : ""}`}
+                      title={
+                        step.messages[0] ?? LIGHT[step.preconditions].label
+                      }
+                      data-testid="precondition-light"
+                      data-state={step.preconditions}
+                      className={`mt-1.5 h-3 w-3 shrink-0 rounded-full ${LIGHT[step.preconditions].dot}`}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium text-ink">{step.title}</div>
+                      <div className="text-sm italic text-ink-2">
+                        {step.talk_track}
+                      </div>
+                      {step.preconditions !== "met" && step.messages[0] && (
+                        <div className="mt-1 text-xs text-amber-700">
+                          {step.messages[0]}
+                        </div>
+                      )}
+                    </div>
+                    {/* A disabled button gets no hover, so the reason sits on a wrapper (F14-FR-09). */}
+                    <span
+                      data-testid="run-reason"
+                      title={blocked(step) ? step.messages[0] : undefined}
+                    >
+                      <button
+                        type="button"
+                        disabled={running || blocked(step)}
+                        aria-label={`Run ${step.title}`}
+                        className="rounded-chip bg-accent px-3 py-1.5 text-sm font-medium text-white enabled:hover:opacity-90 disabled:opacity-50"
+                        onClick={() =>
+                          void begin(step.title, () => startStep(step.id))
+                        }
+                      >
+                        Run
+                      </button>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
         </div>
 
         <section aria-label="Progress" className="space-y-2 lg:sticky lg:top-0">

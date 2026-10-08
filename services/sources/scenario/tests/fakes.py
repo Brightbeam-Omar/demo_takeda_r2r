@@ -50,6 +50,8 @@ class World:
         )
         self.synced = True  # False: the watermarks stay on an older run, so wait_sync times out
         self.deviations = {"B3150": [{"deviation_no": "DEV-1", "closed_on": None}], "B1042": []}
+        self.proposals: list[dict[str, Any]] = []  # what GET /proposals lists
+        self.agent_answer: dict[str, Any] = {"created": [{}, {}, {}, {}], "skipped": [], "errors": []}
         self.fail: dict[str, int] = {}  # path -> HTTP status to answer with
         self.timeline: list[str] = []  # what happened, in order (shared with the other fakes of a test)
 
@@ -68,7 +70,7 @@ class World:
                 return httpx.Response(200, json={"rows": rows, "batch_count": len(rows)})
             return httpx.Response(200, json={"rows": [self.rows[batch]] if batch in self.rows else []})
         if path == "/proposals":
-            return httpx.Response(200, json={"counts": {}, "rows": []})
+            return httpx.Response(200, json={"counts": {}, "rows": self.proposals})
         if path == "/api/sync/status":
             latest = self.follow.launched_ids[-1] if self.follow and self.follow.launched_ids else self.run_id
             at = latest if self.synced else "older"
@@ -79,7 +81,7 @@ class World:
         if path == "/deviations":
             return httpx.Response(200, json=self.deviations.get(request.url.params["batch_no"], []))
         if path == "/agents/air_gap/run":
-            return httpx.Response(200, json={"created": [{}, {}, {}, {}], "skipped": [], "errors": []})
+            return httpx.Response(200, json=self.agent_answer)
         return httpx.Response(200, json={"ok": True})
 
     def gateway(self) -> Gateway:

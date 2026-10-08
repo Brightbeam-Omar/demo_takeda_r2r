@@ -9,7 +9,7 @@ import { DemoControls } from './DemoControls'
 afterEach(() => vi.unstubAllGlobals())
 
 const step = (id: string, values: Record<string, unknown> = {}) => ({
-  id, title: `Title of ${id}`, talk_track: `Say this about ${id}`, preconditions: 'met', messages: [], actions: ['one'], ...values,
+  id, title: `Title of ${id}`, talk_track: `Say this about ${id}`, group: 'Extras', preconditions: 'met', messages: [], actions: ['one'], ...values,
 }) // fmt: skip
 
 const frame = (seq: number, kind: string, message: string) => `id: ${seq}\ndata: ${JSON.stringify({ seq, kind, message, elapsed_ms: seq * 1500 })}\n\n`
@@ -155,4 +155,20 @@ test('F14-FR-09: Run is disabled for an unmet step with the reason as its toolti
   expect(run(1)).toBeDisabled()
   expect(within(rows[1]!).getByTestId('run-reason')).toHaveAttribute('title', 'B5003 is no longer an air gap.')
   expect(run(2)).toBeEnabled()
+})
+
+test('F14-FR-13: the steps sit under their act headings, in the order the scenario lists them', async () => {
+  setup({
+    steps: [
+      step('lims-approve-B1042', { group: 'Act 3' }),
+      step('pull-forward-B2077', { group: 'Act 5' }),
+      step('airgap-agent', { group: 'Act 6' }),
+      step('ud-post-B5003', { group: 'After act 6' }),
+      step('advance-day'),
+    ],
+  })
+  const groups = await screen.findAllByTestId('demo-group')
+  expect(groups.map((group) => group.getAttribute('data-group'))).toEqual(['Act 3', 'Act 5', 'Act 6', 'After act 6', 'Extras'])
+  expect(within(groups[3]!).getByText('Title of ud-post-B5003')).toBeInTheDocument()
+  expect(within(groups[3]!).getByRole('heading', { name: 'After act 6' })).toBeInTheDocument()
 })

@@ -4,6 +4,8 @@ Preconditions read the application API, so a check matches what the presenter se
 Variables read the source simulators, which hold the numbers the generator picked.
 """
 
+from collections.abc import Callable
+from datetime import datetime, timedelta
 from typing import Any
 
 from scenario.gateway import Gateway
@@ -31,6 +33,9 @@ def check_precondition(gateway: Gateway, precondition: Precondition) -> str | No
     kind, batch = precondition.kind, precondition.batch
     if kind == "proposals":
         actual: Any = len(gateway.call("agents", "GET", "/proposals", user="admin")["rows"])
+    elif kind == "no_pending_proposal":  # OQ-168: no proposal for this batch is waiting for a decision
+        rows = gateway.call("agents", "GET", "/proposals", user="admin")["rows"]
+        actual = not any(f"|{batch}|" in row["row_key"] and row["status"] == "pending_approval" for row in rows)
     else:
         row = find_row(gateway, batch)  # no row: the lot is released, so none of the row checks hold
         if kind == "stage":
@@ -53,9 +58,15 @@ def open_deviations(gateway: Gateway, batch: str) -> list[dict[str, Any]]:
     return [deviation for deviation in found if deviation.get("closed_on") is None]
 
 
-def resolve_var(gateway: Gateway, name: str, spec: dict[str, Any]) -> Any:
-    """One ``vars`` entry of a step: ``{resolve: row|sample|deviation, batch: B1042}``."""
+def resolve_var(
+    gateway: Gateway, name: str, spec: dict[str, Any], now: Callable[[], datetime] | None = None
+) -> Any:
+    """One ``vars`` entry of a step: ``{resolve: row|sample|deviation, batch: B1042}`` or the clock."""
     kind, batch = spec.get("resolve"), spec.get("batch", "")
+    if kind == "clock":  # `{resolve: clock, plus_hours: 2}`: the demo now plus some hours, as ISO with its offset
+        if now is None:
+            raise StepError(f"{name}: no clock to read")
+        return (now() + timedelta(hours=float(spec.get("plus_hours", 0)))).isoformat()
     if kind == "row":
         return app_row(gateway, batch)
     if kind == "sample":  # the sample LIMS has not approved or rejected yet

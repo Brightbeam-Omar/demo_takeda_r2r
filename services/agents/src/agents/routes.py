@@ -107,8 +107,10 @@ def run_air_gap(deps: DepsDep, principal: RunnerDep, body: RunBody | None = None
         skipped=[_result(r) for r in summary.of("skipped")],
         errors=[_result(r) for r in summary.of("error")],
     )
-    if out.errors and not out.created:
-        first = out.errors[0]
+    # A recording that is missing for one candidate is a row message, never a failed run (F14-FR-12, OQ-167).
+    hard = [e for e in out.errors if not e.replay_miss]
+    if hard and not out.created and len(hard) == len(out.errors):
+        first = hard[0]
         raise HTTPException(
             status_code=409,
             detail={
