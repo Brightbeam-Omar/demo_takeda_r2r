@@ -4,9 +4,11 @@ import { expect, test } from '@playwright/test'
 import { REPO_ROOT } from '../helpers'
 
 const VIEWS = ['Overview', 'Reports & Metrics', 'Agents']
+// The demo hides the four Tier 2 placeholders (F14-FR-16, profile demo.hide_placeholders).
+const PLACEHOLDERS = ['Upload Data', 'Process / Campaign Mapping', 'POC — Integrations', 'Configuration']
 const ADMIN = [
-  'Team Dashboard', 'Audit Log', 'Schema Reference', 'Upload Data', 'Process / Campaign Mapping',
-  'POC — Integrations', 'Configuration', 'SLA Configuration', 'Sync Status', 'Webhook Sync Status', 'Feedback',
+  'Team Dashboard', 'Audit Log', 'Schema Reference', 'SLA Configuration', 'Sync Status', 'Webhook Sync Status',
+  'Feedback',
 ]
 
 test('F15-AC-01: the sidebar has VIEWS and ADMIN with every item and the ALPHA – LOCAL badge', async ({ page }) => {
@@ -16,6 +18,7 @@ test('F15-AC-01: the sidebar has VIEWS and ADMIN with every item and the ALPHA �
   await expect(sidebar.getByText('VIEWS', { exact: true })).toBeVisible()
   await expect(sidebar.getByText('ADMIN', { exact: true })).toBeVisible()
   for (const label of [...VIEWS, ...ADMIN]) await expect(sidebar.getByRole('link', { name: label, exact: true })).toBeVisible()
+  for (const label of PLACEHOLDERS) await expect(sidebar.getByRole('link', { name: label, exact: true })).toHaveCount(0)
   await expect(page.getByTestId('release-badge')).toHaveText('ALPHA – LOCAL')
   await expect(sidebar.getByText('Phase 1: Trusted Data')).toBeVisible()
   // Demo Controls: DEMO_MODE and admin only
@@ -30,6 +33,16 @@ test('F15-AC-01: the sidebar has VIEWS and ADMIN with every item and the ALPHA �
   await page.getByRole('combobox', { name: 'Persona' }).selectOption('admin')
   await expect(sidebar.getByRole('link', { name: 'Demo Controls' })).toBeVisible()
   await page.getByRole('combobox', { name: 'Persona' }).selectOption('pat')
+})
+
+test('F14-FR-16: with the flag off the four Tier 2 placeholders are in the menu', async ({ page }) => {
+  await page.route('**/api/reference', async (route) => {
+    const response = await route.fetch()
+    const body = await response.json()
+    await route.fulfill({ response, json: { ...body, demo: { ...body.demo, hide_placeholders: false } } })
+  })
+  await page.goto('/overview')
+  for (const label of PLACEHOLDERS) await expect(page.getByTestId('sidebar').getByRole('link', { name: label, exact: true })).toBeVisible()
 })
 
 test('F15-AC-02: Last Month applies, and a custom range needs two clicks before Apply', async ({ page }) => {

@@ -55,7 +55,8 @@ Switch with the **Persona** box at the bottom of the left menu.
 ### Recovery moves at a glance
 
 Every scripted step can be run from **Demo Controls** (as Admin, in the left menu under ADMIN) or from the terminal
-as `make scenario STEP=<id>`. A step whose button is greyed out has already run; hover to read why.
+as `make scenario STEP=<id>`. The steps are grouped in script order: **Act 3**, **Act 5**, **Act 6**, **After act 6**
+and **Extras**. A step whose button is greyed out cannot run now; hover to read why (usually it has already run).
 
 | If this fails live | Use this step | Terminal |
 |---|---|---|
@@ -109,9 +110,11 @@ If the agent says "No recording for key": run `docker compose up -d --force-recr
 3. Point at the red band **LIMS–SAP Insights (4 batches)**. This is the exceptions-first view.
 4. Point at the **Pipeline by stage** cards: the count per stage, the SLA days and "late" in red.
 5. Point at the **Week 41 R2R metrics** row: M3 Sampling On-Time, M6 Testing On-Time, M7 QA Release On-Time. Cards that say "Awaiting signal" depend on data feeds that come later.
-6. Click the **LATE** tag above the table. The table narrows to late batches. Click **ALL** to clear it.
-7. Switch the **Persona** (bottom left) to **Sam · Viewer**. Point at the pencil in the Adjusted Need-By column: it is greyed out. Hover it: "Read-only role".
-8. Switch back to **Pat · Planner**. The pencil works again.
+6. Point at the table: it is trimmed to what reads on a screen share. Material, Batch, the Inbound and Deviation dots, Stage, System Needs-By, Adjusted Date, SLA Deadline, Days In Stage, Status and Expected Completion. (The **Columns** button adds more.) The left menu shows only what is built; the placeholders for later phases are hidden.
+7. Click **Presets**: **Late batches**, **Air gaps** and **On hold or expedite** are ready for every persona. Press Escape.
+8. Click the **LATE** tag above the table. The table narrows to late batches. Click **ALL** to clear it.
+9. Switch the **Persona** (bottom left) to **Sam · Viewer**. Point at the pencil in the Adjusted Date column: it is greyed out. Hover it: "Read-only role".
+10. Switch back to **Pat · Planner**. The pencil works again.
 
 **Say**
 - "The first thing you see is what needs attention: four batches where the lab has approved but the ERP has not caught up."
@@ -131,14 +134,15 @@ This is the proof that nothing on screen is faked.
 
 **Clicks**
 1. On Overview, type **B1042** in the search box. The row shows **QCL Testing**.
-2. Switch the persona to **Admin**. In the left menu under ADMIN, click **Demo Controls**.
+2. Switch the persona to **Admin**. In the left menu under ADMIN, click **Demo Controls**. The steps are grouped by act; you are in the **Act 3** group.
 3. Find **LIMS approves B1042**. Read its one-line talk track aloud. Click **Run**.
-4. Watch the **Progress** panel on the right: *LIMS: approve the sample*, *Run the pipeline*, *Wait for the app to sync*. About 30 seconds. The Run button now greys out; hover it to read why ("already been approved").
-5. Click **Webhook Sync Status** in the menu. The newest row reads **done**: "the data product told the app something changed, and the app picked it up".
-6. Click **Sync Status**. The newest run says **OK**. Click the run link at the end of its row to show the pipeline run in the run viewer, then come back.
-7. Go to **Overview** and search **B1042** again. It now says **QA Release**, highlighted.
-8. Clear the search. On the **M3 Sampling On-Time** card, click the **ⓘ**. Read the popover: the rule, the week, the contributing batches. Press Escape.
-9. Hover any table row and click the **ⓘ** by its stage. It names the rule that put the batch in that stage ("Rule R-…"). Press Escape.
+4. Watch the **Progress** panel on the right: *LIMS: approve the sample*, *ERP: the interface records the LIMS results*, *Run the pipeline*, *Wait for the app to sync*. About 30 to 60 seconds. The Run button now greys out; hover it to read why ("already been approved"). Say: "the lab approves, and the interface records the result in the ERP, the way it normally does. So B1042 is not an air gap."
+5. Go to **Overview**: the red band still says **LIMS–SAP Insights (4 batches)**: B1042 did not join the air gaps.
+6. Click **Webhook Sync Status** in the menu. The newest row reads **done**: "the data product told the app something changed, and the app picked it up".
+7. Click **Sync Status**. The newest run says **OK**. Click the run link at the end of its row to show the pipeline run in the run viewer, then come back.
+8. Go to **Overview** and search **B1042** again. It now says **QA Release**, highlighted.
+9. Clear the search. On the **M3 Sampling On-Time** card, click the **ⓘ**. Read the popover: the rule, the week, the contributing batches. Press Escape.
+10. Hover any table row and click the **ⓘ** by its stage. It names the rule that put the batch in that stage ("Rule R-…"). Press Escape.
 
 **Say**
 - "I am playing the laboratory: I approve one sample in the lab system."
@@ -153,7 +157,7 @@ This is the proof that nothing on screen is faked.
 **Time** 10 minutes: 4 for the step and its progress, 3 for the sync pages, 3 for the ⓘ popovers.
 
 **If it goes wrong**
-- Run is greyed out before you click it: the step already ran. Skip to click 7 and say "I did this earlier".
+- Run is greyed out before you click it: the step already ran. Skip to click 8 and say "I did this earlier".
 - The click does nothing: terminal `make scenario STEP=lims-approve-B1042`, then continue at click 5.
 - B1042 has not moved after 90 seconds: Demo Controls, **Run the pipeline now** (`run-pipeline`).
 - Optional extra if you have time or are asked "can it handle a quality event?": run `open-deviation-B1042` and show the red deviation light on B1042.
@@ -183,7 +187,7 @@ This is the proof that nothing on screen is faked.
 
 **If it goes wrong**
 - The window will not save or the field misbehaves: Demo Controls (as Admin), **Pull B2077 forward by a week (fallback)** (`pull-forward-B2077`), or `make scenario STEP=pull-forward-B2077`. It makes the same edit as Pat. Then go to click 7.
-- Its button is greyed out: the edit already exists. Go straight to click 7.
+- Its button is greyed out and says "B2077 is already adjusted": the edit exists. Nothing is written if you press it again. Go straight to click 7.
 
 ## Act 6 · The agent (8 min)
 
@@ -192,7 +196,7 @@ This is the proof that nothing on screen is faked.
 2. On Overview click **View all 4 →** on the red **LIMS–SAP Insights** band. The Insights window lists the four batches.
 3. Click **Run air-gap agent**. A line says "4 proposals created". Each row now shows **Pending approval**.
 4. On the **B5003** row click its proposal link. The proposal opens.
-5. Point at the draft summary, then the **Evidence** table: every line is from the lab or ERP, with a **verified ✓**. The times read like "11 Oct 2026 02:00", in site time.
+5. Point at the chip beside the title: **Replay · recorded from** the model's name. It says whether the answers were recorded or live (a live run reads **Live · model**). The same chip is on the **Agents** page. Then the draft summary and the **Evidence** table: every line is from the lab or ERP, with a **verified ✓**. The times read like "11 Oct 2026 02:00", in site time.
 6. Point at the **Validator checklist**: V1 to V6, all passed.
 7. Switch the persona to **Pat · Planner**: **Approve** is greyed out. Switch back to **Alex**.
 8. Click **Approve**. A ticket and an email appear: "Sent to outbox (demo)", nothing leaves the building.
@@ -211,9 +215,10 @@ This is the proof that nothing on screen is faked.
 **Time** 8 minutes: 2 to run it, 3 on the proposal and evidence, 1 on approval and roles, 2 on the trace.
 
 **If it goes wrong**
+- One row shows "No recording for B…: record it or run live": that batch has no recording, but the others still got their proposals. Carry on with B5003. Afterwards run `make demo-reset && make record-agents` before the next demo.
 - **Run air-gap agent** fails or says "No recording for key": Demo Controls, **Run the air-gap agent** (`airgap-agent`). Still failing: `docker compose up -d --force-recreate agents`, wait ten seconds, try again.
 - Proposals already exist (someone ran it): open B5003's proposal from the **Agents** page in the menu.
-- Optional follow-up for questions: after approval, run `ud-post-B5003` to post the usage decision in the ERP: B5003 drops out of the Insights band. `interface-sync-B5003` shows the other way a gap closes (the interface finally delivers the lab results).
+- Optional follow-up for questions, in the **After act 6** group of Demo Controls: `ud-post-B5003` posts the usage decision in the ERP and B5003 drops out of the Insights band. `interface-sync-B5003` shows the other way a gap closes (the interface finally delivers the lab results). Both are greyed out while the B5003 proposal is waiting for a decision, so they cannot spoil act 6; approve or reject it first.
 
 ## Close (3 min)
 
@@ -236,8 +241,8 @@ audience cares about before the first use.
 | Min | Beat | From the 40-minute script | What to leave out |
 |---|---|---|---|
 | 1 | The problem | Act 1, only the first two clicks and the three opening sentences | Typing in the cell |
-| 3 | Monday morning | Act 2 clicks 1 to 5 and the persona switch (7, 8) | The tags, the metric detail |
-| 3 | One approval, end to end | Act 3 clicks 1 to 4, 7 and 8 (the **ⓘ** on M3) | Webhook and Sync Status pages, row ⓘ |
+| 3 | Monday morning | Act 2 clicks 1 to 6 and the persona switch (9, 10) | Presets, the tags, the metric detail |
+| 3 | One approval, end to end | Act 3 clicks 1 to 5, 8 and 9 (the **ⓘ** on M3) | Webhook and Sync Status pages, row ⓘ |
 | 4 | The agent | Act 6 clicks 1 to 6, 8 and 9 | The Pat-cannot-approve moment |
 | 1 | Close | The three sentences of the close | Questions: offer a follow-up call |
 

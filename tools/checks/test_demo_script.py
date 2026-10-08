@@ -66,5 +66,11 @@ def test_f14_review_it_has_the_tailoring_section_the_close_and_the_extra_questio
         assert question in SCRIPT, question
 
 
+def test_f14_hardening_the_script_covers_the_demo_view_the_groups_and_the_provider_chip() -> None:
+    for text in ["Act 3**, **Act 5**, **Act 6**", "After act 6", "Presets", "Replay · recorded from", "B1042 is not an air gap",
+                 "No recording for B", "already adjusted"]:
+        assert text in SCRIPT, text
+
+
 def test_f14_fr03_it_names_people_only_by_role() -> None:
     assert "Presenter" in SCRIPT and "SME" in SCRIPT

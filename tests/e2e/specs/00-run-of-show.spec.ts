@@ -71,6 +71,22 @@ test('act 2 · Monday morning: exceptions first, and the persona decides what yo
   await pointAt(page, banner)
   await beat(page)
 
+  // F14-FR-15, FR-16: the demo view is readable on a screen share: ten columns and the dots, no Tier 2 placeholders.
+  await say(page, act, 'The table is trimmed to what reads on a screen share: stage, dates, status and the plan date.')
+  const headers = (await page.getByRole('columnheader').allInnerTexts()).map((text) => text.replace(/[▲▼]/g, '').trim().toLowerCase())
+  expect(headers).toEqual([
+    'material', 'batch', 'inbound', 'deviation', 'stage', 'system needs-by', 'adjusted date', 'sla deadline',
+    'days in stage', 'status', 'expected completion',
+  ]) // fmt: skip
+  for (const placeholder of ['Upload Data', 'Process / Campaign Mapping', 'POC — Integrations', 'Configuration']) {
+    await expect(page.getByRole('link', { name: placeholder, exact: true })).toHaveCount(0)
+  }
+  await tap(page, page.getByRole('button', { name: /Presets/ }))
+  const menu = page.getByRole('menu')
+  for (const preset of ['Late batches', 'Air gaps', 'On hold or expedite']) await expect(menu).toContainText(preset)
+  await beat(page, 4_000)
+  await page.keyboard.press('Escape')
+
   await say(page, act, 'Every count and percentage is derived from the systems of record, not typed in.')
   await pointAt(page, page.getByTestId('metric-M3'))
   await beat(page)
@@ -104,6 +120,9 @@ test('act 3 · under the hood: one LIMS approval travels the real path to the sc
   await say(page, act, 'Now play the laboratory: Admin opens Demo Controls.')
   await asPersona(page, 'admin')
   await tap(page, page.getByRole('link', { name: 'Demo Controls' }))
+  await expect(page.getByTestId('demo-group')).toHaveCount(5)
+  const groups = await page.getByTestId('demo-group').evaluateAll((items) => items.map((i) => i.getAttribute('data-group')))
+  expect(groups).toEqual(['Act 3', 'Act 5', 'Act 6', 'After act 6', 'Extras']) // F14-FR-13: in script order
   const step = page.locator('[data-step="lims-approve-B1042"]')
   await expect(step.getByTestId('precondition-light')).toHaveAttribute('data-state', 'met')
   await pointAt(page, step)
@@ -122,6 +141,11 @@ test('act 3 · under the hood: one LIMS approval travels the real path to the sc
   await expect(step.getByRole('button', { name: /^Run / })).toBeDisabled()
   await expect(step.getByTestId('run-reason')).toHaveAttribute('title', /already been approved in LIMS/)
   await pointAt(page, step.getByTestId('run-reason'))
+  await beat(page)
+
+  // F14-FR-11: the interface recorded the results in the ERP, so B1042 did not become an air gap.
+  await page.goto('/overview')
+  await expect(page.getByTestId('insights-banner')).toContainText('LIMS–SAP Insights (4 batches)')
   await beat(page)
 
   // The hops, one by one: the webhook row, then the pipeline run in Dagster.
@@ -234,6 +258,7 @@ test('act 6 · the harness: the agent proposes a ticket with evidence, the valid
   await expect(page.getByRole('heading', { name: /Air-gap ticket for B5003/ })).toBeVisible()
   await beat(page)
   await say(page, act, 'Every piece of evidence is re-read from its source and ticked as verified.')
+  await expect(page.getByTestId('provider-chip')).toHaveText('Replay · recorded from claude-sonnet-5-5') // F14-FR-17
   await expect(page.getByTestId('evidence-table')).toBeVisible()
   await expect(page.getByTestId('evidence-row').locator('[data-verified]').first()).toHaveAttribute('data-verified', 'true')
   // F14-FR-10: times read as site time, never as ISO text.
