@@ -52,7 +52,7 @@ STACK_PROJECT := r2r_stacktest
 stack-test: ## Start an isolated copy of the stack, run the acceptance tests against it, tear it down
 	@test -f .env || cp .env.example .env
 	@export COMPOSE_PROJECT_NAME=$(STACK_PROJECT) POSTGRES_HOST_PORT=15432 SCENARIO_HOST_PORT=18100 \
-		ERP_HOST_PORT=18101 LIMS_HOST_PORT=18102 QMS_HOST_PORT=18103 AGENTS_HOST_PORT=18200 DAGSTER_HOST_PORT=13001 APP_API_HOST_PORT=18000 FRONTEND_HOST_PORT=15173 \
+		ERP_HOST_PORT=18101 LIMS_HOST_PORT=18102 QMS_HOST_PORT=18103 AGENTS_HOST_PORT=18200 DAGSTER_HOST_PORT=13001 APP_API_HOST_PORT=18000 FRONTEND_HOST_PORT=15173 FRONTEND_WEB_HOST_PORT=18080 \
 		LAKEHOUSE_HOST_DIR=$(CURDIR)/.stacktest-lakehouse; \
 	trap 'docker compose -p $(STACK_PROJECT) down -v --remove-orphans' EXIT; \
 	docker compose -p $(STACK_PROJECT) up -d --build --wait && uv run pytest -m stack tests/stack
@@ -69,8 +69,11 @@ check-frontend:
 
 # Scans the git file set, then commit messages on unpushed commits (skipped without an upstream).
 # Warns and passes when no denylist is configured, except in CI (see tools/leakscan).
+# F14-AC-04: artifacts/ is gitignored, so the git file set misses it; it is scanned explicitly when it exists
+# (the legacy workbook, the e2e reports, the video's folder).
 leakscan:
 	uv run python -m leakscan
+	@if [ -d artifacts ]; then uv run python -m leakscan artifacts; fi
 	@if git rev-parse --abbrev-ref '@{u}' >/dev/null 2>&1; then \
 		uv run python -m leakscan --commits '@{u}..HEAD'; \
 	else \
@@ -84,17 +87,36 @@ contract-json: ## Regenerate specs/contract.json from the published schemas and 
 check: check-python coverage-core check-frontend leakscan ## Lint, types, tests, leak scan: one verdict
 
 # --- demo placeholders (implemented by the feature named in each message) --------------------
-# Both run `make demo-reset` first, so the specs always start from the canonical demo-start state (F13).
-e2e: demo-reset ## Demo reset, then the Playwright specs against the running stack
-	cd tests/e2e && npx playwright test
+# F14-FR-02, OQ-162: demo reset, then the run-of-show (acts 2, 3, 5, 6, which need the untouched demo-start state),
+# then a second reset and every other spec. HTML reports go to artifacts/e2e/run-of-show and artifacts/e2e/specs.
+# `make e2e-headed` is the same in a visible browser. Runs against the built frontend on 8080 (FRONTEND_URL overrides).
+define PLAYWRIGHT
+@set -a; [ ! -f .env ] || . ./.env; set +a; cd tests/e2e && \
+	E2E_REPORT_DIR=../../artifacts/e2e/run-of-show npx playwright test --project=run-of-show $(1)
+$(MAKE) demo-reset
+@set -a; [ ! -f .env ] || . ./.env; set +a; cd tests/e2e && \
+	E2E_REPORT_DIR=../../artifacts/e2e/specs npx playwright test --project=specs $(1)
+endef
+
+e2e: demo-reset ## Demo reset, then the run-of-show and the other Playwright specs against the running stack
+	$(call PLAYWRIGHT,)
 
 e2e-headed: demo-reset ## Same as e2e, in a visible browser
-	cd tests/e2e && npx playwright test --headed
+	$(call PLAYWRIGHT,--headed)
 
 # F13-FR-05: clears the app tables, regenerates the source data with the profile seed, runs the pipeline and
 # waits for the sync. Needs the stack up (`make up`). Takes under three minutes.
+# F14-FR-08, OQ-153: a stale or empty recordings mount in the agents container would make the air-gap agent miss
+# every replay key in front of an audience, so the reset recreates that container first when the mount is empty.
 demo-reset: ## Wipe state, regenerate seed data, run the pipeline once, sync
 	@test -f .env || { echo "Missing .env. Run: cp .env.example .env"; exit 1; }
+	@seen=$$(docker compose exec -T agents sh -c 'ls /recordings/air_gap 2>/dev/null | wc -l' 2>/dev/null | tr -d ' \r'); \
+		if [ "$${seen:-0}" = "0" ]; then \
+			if ls services/agents/recordings/air_gap/*.json >/dev/null 2>&1; then \
+				echo "demo-reset: the agents container sees no recordings (stale mount); recreating it"; \
+				docker compose up -d --force-recreate --wait agents || exit 1; \
+			else echo "demo-reset: WARNING no recordings in services/agents/recordings/air_gap; run make record-agents"; fi; \
+		fi
 	@set -a; . ./.env; set +a; \
 		SCENARIO_URL=http://localhost:$${SCENARIO_HOST_PORT:-8100} uv run python -m scenario.cli reset
 
@@ -135,8 +157,19 @@ record-agents: ## Record LLM replays for the demo-start state (needs ANTHROPIC_A
 		LIMS_URL=http://localhost:$${LIMS_HOST_PORT:-8102} QMS_URL=http://localhost:$${QMS_HOST_PORT:-8103} \
 		uv run python -m agents.record
 
-record-video: ## Record the backup demo video
-	@echo "record-video: not yet implemented (F14)"
+# F14-FR-07, OQ-157, OQ-164: demo reset, then the run-of-show once at presenter pace (PACE=presenter: 4 to 6 s on each key
+# screen, a visible pointer, slow clicks and captions; PACE=ci, the default, is full speed), 1440x900,
+# no voice-over. Writes artifacts/video/run-of-show.webm, and an .mp4 next to it when ffmpeg is installed.
+record-video: demo-reset ## Record the backup demo video (artifacts/video/)
+	@set -a; [ ! -f .env ] || . ./.env; set +a; cd tests/e2e && \
+		RECORD_VIDEO=1 PACE=presenter E2E_REPORT_DIR=../../artifacts/e2e/video npx playwright test --project=run-of-show
+	@if command -v ffmpeg >/dev/null 2>&1; then \
+		ffmpeg -y -loglevel error -i artifacts/video/run-of-show.webm -c:v libx264 -pix_fmt yuv420p artifacts/video/run-of-show.mp4 \
+		&& echo "record-video: wrote artifacts/video/run-of-show.mp4"; \
+	else echo "record-video: ffmpeg not installed, so no .mp4 (brew install ffmpeg)"; fi
+	@cd tests/e2e && node video-size.mjs ../../artifacts/video/run-of-show.webm
 
-doctor: ## Environment checks
-	@echo "doctor: not yet implemented (F14)"
+# F14-FR-05: `make doctor` before `make up` checks the machine (Docker, memory, ports, .env, denylist); after it,
+# the stack too (health, the recordings mount, replay keys). `make doctor EXPECT_UP=1` fails when it is not running.
+doctor: ## Environment checks, each with its fix
+	@uv run python -m doctor $(if $(EXPECT_UP),--expect-up)

@@ -31,18 +31,20 @@ test('F13-AC-04: Reset demo asks first, then shows the progress live and leaves 
   await expect(last).toContainText('0 proposals')
 })
 
-test('F13-AC-02: lims-approve-B1042 moves B1042 to QA Release, and a second run says why it cannot', async ({ page }) => {
+test('F13-AC-02: lims-approve-B1042 moves B1042 to QA Release, and Run is then disabled with the reason', async ({ page }) => {
   await asAdmin(page)
   await page.goto('/admin/demo')
   const step = page.locator('[data-step="lims-approve-B1042"]')
   await expect(step.getByTestId('precondition-light')).toHaveAttribute('data-state', 'met')
   await step.getByRole('button', { name: /^Run / }).click()
-  await expect(page.getByTestId('progress-line').filter({ hasText: '[1/3] LIMS: approve the sample' })).toBeVisible()
+  await expect(page.getByTestId('progress-line').filter({ hasText: '[1/4] LIMS: approve the sample' })).toBeVisible()
   await expect(status(page)).toHaveAttribute('data-status', 'succeeded', { timeout: 90_000 })
   await expect(step.getByTestId('precondition-light')).toHaveAttribute('data-state', 'unmet')
 
-  await step.getByRole('button', { name: /^Run / }).click()
-  await expect(page.getByTestId('step-refused')).toContainText('already been approved in LIMS')
+  // F14-FR-09: it cannot be run again, so the button is disabled and the reason is its tooltip. (The server's
+  // own refusal, F13-AC-02, is covered by the stack test and by the panel's unit test.)
+  await expect(step.getByRole('button', { name: /^Run / })).toBeDisabled()
+  await expect(step.getByTestId('run-reason')).toHaveAttribute('title', /already been approved in LIMS/)
 
   await page.goto('/overview?q=B1042')
   await expect(page.getByTestId('batch-row').filter({ hasText: 'B1042' })).toContainText('QA Release')

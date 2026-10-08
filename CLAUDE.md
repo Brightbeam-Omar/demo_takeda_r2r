@@ -88,4 +88,5 @@ r2r-demo/
 - **The application never writes to the lakehouse or source systems.** Agents write only to `proposal`, `action_log`, `agent_trace` and `audit_event`.
 - **All "now" comes from the demo clock** (`r2r_core.clock.now()`), never `datetime.now()`. A lint rule enforces this (F01).
 - Secrets come only from `.env` (gitignored). `.env.example` documents every variable.
+- **Re-record after data or tool changes.** Any change to datagen, the published contract or the agent tools (anything the air-gap agent reads or the model sees) is followed, in the same PR, by `make demo-reset && make record-agents && make doctor EXPECT_UP=1`. The recordings are keyed on what the agent saw; CI fails when the replay keys of the 4 demo-start air gaps are missing after a reset.
 - Prefer boring, readable code over cleverness. This is a demo that people will read on screen.

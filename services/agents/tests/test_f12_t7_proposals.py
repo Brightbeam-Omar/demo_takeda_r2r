@@ -185,19 +185,51 @@ def test_f12_fr07_a_draft_that_fails_the_validator_is_stored_as_rejected_by_vali
     assert [r["id"] for r in only["rows"]] == [1] and only["counts"]["pending_approval"] == 1
 
 
-def test_f12_ac09_a_replay_miss_is_a_clear_409_with_the_hint_and_a_trace(
+def test_f12_ac09_a_replay_miss_is_a_row_message_with_the_hint_and_a_trace(
     build_app: Build, tmp_path: Any
 ) -> None:
+    """F14-FR-12 (OQ-167) changes F12-AC-09: the run answers 200 and the miss is on its row, not a failed run."""
     client = build_app(gateway=ReplayGateway(tmp_path))
     response = _run(client)
-    assert response.status_code == 409
-    detail = response.json()["detail"]
-    assert detail["error"] == "replay_miss"
-    assert "make record-agents" in detail["message"] and detail["replay_miss"]["key"] in detail["message"]
-    assert "demo-start" in detail["replay_miss"]["hint"]
+    assert response.status_code == 200
+    (error,) = response.json()["errors"]
+    assert error["message"] == "No recording for B5003: record it or run live"
+    assert "demo-start" in error["replay_miss"]["hint"] and len(error["replay_miss"]["key"]) == 64
     trace = client.get("/traces/TR-0001", headers=ALEX).json()
     assert trace["steps"][-1]["payload"]["outcome"] == "replay_miss"
     assert client.get("/proposals", headers=ALEX).json()["rows"] == []  # nothing half-created
+
+
+def test_f14_fr12_one_missing_recording_does_not_stop_the_other_candidates(
+    build_app: Build, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """OQ-167: B1042 has no recording; B5003 still gets its proposal, and the run is a 200."""
+    from agents.air_gap import agent as air_gap_agent
+    from agents.air_gap.candidates import Candidate
+    from agents.gateway.replay import ReplayMiss
+
+    class MissesOne(B5003Model):
+        def generate(self, *, system, messages, tools, turn, agent_key, prompt_version):  # type: ignore[no-untyped-def]
+            if "B1042" in str(messages[0].model_dump()):
+                raise ReplayMiss("k" * 64, agent_key, turn)
+            return super().generate(
+                system=system, messages=messages, tools=tools, turn=turn,
+                agent_key=agent_key, prompt_version=prompt_version,
+            )  # fmt: skip
+
+    real = air_gap_agent.air_gap_rows
+    monkeypatch.setattr(
+        air_gap_agent,
+        "air_gap_rows",
+        lambda http, user: [*real(http, user), Candidate("RM1|B1042|100", "B1042", "RM1", 25)],
+    )
+    client = build_app(gateway=MissesOne())
+    response = _run(client)
+    assert response.status_code == 200
+    body = response.json()
+    assert [r["status"] for r in body["created"]] == ["pending_approval"]
+    assert [e["message"] for e in body["errors"]] == ["No recording for B1042: record it or run live"]
+    assert len(client.get("/proposals", headers=ALEX).json()["rows"]) == 1
 
 
 def test_f12_oq145_a_run_with_no_valid_ticket_is_a_visible_rejected_proposal(build_app: Build) -> None:

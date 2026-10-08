@@ -377,7 +377,9 @@ def test_f12_ac04_a_usage_decision_before_approval_makes_approve_fail_v1_with_ai
     _reset_agent_state()
 
 
-def test_f12_ac09_a_replay_miss_is_a_409_with_the_hint_not_a_crash(seeded: None, http: ReadOnlyHttp) -> None:
+def test_f12_ac09_a_replay_miss_is_a_row_message_with_the_hint_not_a_crash(
+    seeded: None, http: ReadOnlyHttp
+) -> None:
     """A changed fact (a new open deviation) makes the situation differ from every recording."""
     _reset_agent_state()
     key = _row_key(http, "B1518")
@@ -391,11 +393,12 @@ def test_f12_ac09_a_replay_miss_is_a_409_with_the_hint_not_a_crash(seeded: None,
     assert opened.status_code in (200, 201), opened.text
     _pipeline_and_sync()
     response = httpx.post(f"{AGENTS}/agents/air_gap/run", headers=ALEX, json={"row_key": key}, timeout=60)
-    assert response.status_code == 409, response.text
-    detail = response.json()["detail"]
-    assert detail["error"] == "replay_miss" and "make record-agents" in detail["message"]
-    assert detail["replay_miss"]["key"] in detail["message"] and "demo-start" in detail["replay_miss"]["hint"]
-    trace = _get(f"{AGENTS}/traces/{detail['errors'][0]['trace_id']}", ALEX)
+    # F14-FR-12 (OQ-167): a miss is a message on the row, and the run itself answers 200
+    assert response.status_code == 200, response.text
+    (error,) = response.json()["errors"]
+    assert error["message"] == "No recording for B1518: record it or run live"
+    assert "demo-start" in error["replay_miss"]["hint"] and len(error["replay_miss"]["key"]) == 64
+    trace = _get(f"{AGENTS}/traces/{error['trace_id']}", ALEX)
     assert trace["steps"][-1]["payload"]["outcome"] == "replay_miss"
     assert _get(f"{AGENTS}/proposals", ALEX)["rows"] == []
     _reset_agent_state()

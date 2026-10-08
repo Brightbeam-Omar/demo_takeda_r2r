@@ -11,7 +11,7 @@ test('F12-FR-12 a: the Agents page shows the card with model, prompt version and
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Agents')
   const card = page.getByTestId('agent-card')
   await expect(card).toContainText('Air-gap agent')
-  await expect(page.getByTestId('agent-model')).toContainText('replay')
+  await expect(page.getByTestId('agent-model')).toContainText('Replay · recorded from')
   await expect(page.getByTestId('agent-prompt')).toHaveText('v1')
   await expect(card).toContainText('get_erp_lot')
   await expect(page.getByTestId('agent-last-run')).toHaveText('Not run yet')

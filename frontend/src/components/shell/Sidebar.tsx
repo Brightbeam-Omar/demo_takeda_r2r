@@ -44,7 +44,10 @@ export function Sidebar() {
   const users = useUsers()
   const reference = useReference()
   const demoMode = users.data !== undefined // /api/users answers only in DEMO_MODE (F10-FR-02)
-  const admin = ADMIN.filter((item) => !item.demoAdminOnly || (demoMode && me.data?.role === 'admin'))
+  const hidePlaceholders = reference.data?.demo?.hide_placeholders === true // F14-FR-16: only ever true in DEMO_MODE
+  const admin = ADMIN.filter(
+    (item) => (!item.demoAdminOnly || (demoMode && me.data?.role === 'admin')) && !(hidePlaceholders && item.coming),
+  )
 
   return (
     <aside

@@ -193,6 +193,7 @@ export function Overview() {
                 onToggleBookmark={onToggleBookmark}
                 onRowKey={onRowKey}
                 actions={actions}
+                defaultColumns={reference.data?.demo?.default_columns}
                 search={{ value: filters.q, onChange: (q) => update({ q }) }}
                 columnsKey={`overview.${me.data?.user_key ?? 'default'}`}
                 toolbarExtra={<QueueExports params={queueParams} />}

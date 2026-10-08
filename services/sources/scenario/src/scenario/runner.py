@@ -156,6 +156,7 @@ class Runner:
                     "id": step.id,
                     "title": step.title,
                     "talk_track": step.talk_track,
+                    "group": step.group,
                     "preconditions": status,
                     "messages": messages,
                     "actions": [action.label for action in step.actions],
@@ -195,7 +196,7 @@ class Runner:
         context = Context()
         try:
             for name, spec in step.vars.items():
-                context.variables[name] = resolve_var(self.gateway, name, spec)
+                context.variables[name] = resolve_var(self.gateway, name, spec, self.now)
             for number, action in enumerate(step.actions, start=1):
                 run.emit("action_start", f"[{number}/{len(step.actions)}] {action.label}", action=number)
                 detail = self._do(run, action, context)
@@ -266,7 +267,11 @@ class Runner:
     def _agent(self, params: dict[str, Any]) -> str:
         user = params.get("as_user", DEFAULT_USER)
         answer = self.gateway.call("agents", "POST", "/agents/air_gap/run", body={}, user=user)
-        return f"{len(answer['created'])} proposal(s) created, {len(answer['skipped'])} skipped (as {user})"
+        created, skipped, errors = answer["created"], answer["skipped"], answer.get("errors", [])
+        if errors and not created:
+            raise CallFailed("; ".join(error["message"] for error in errors))
+        note = f", {len(errors)} could not run ({'; '.join(e['message'] for e in errors)})" if errors else ""
+        return f"{len(created)} proposal(s) created, {len(skipped)} skipped{note} (as {user})"
 
 
 def wait_for_sync(

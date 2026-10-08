@@ -23,13 +23,14 @@ def test_f13_fr02_the_shipped_scenario_has_every_tier_1_step() -> None:
 def test_f13_fr02_the_two_b5003_steps_are_alternatives() -> None:
     by_id = {step.id: step for step in load_steps()}
     for step_id in ("ud-post-B5003", "interface-sync-B5003"):
-        (check,) = by_id[step_id].preconditions
-        assert (check.kind, check.batch, check.equals) == ("air_gap", "B5003", True)
+        gap, pending = by_id[step_id].preconditions
+        assert (gap.kind, gap.batch, gap.equals) == ("air_gap", "B5003", True)
+        assert (pending.kind, pending.batch, pending.equals) == ("no_pending_proposal", "B5003", True)
 
 
 def test_f13_fr01_actions_are_declared_in_order() -> None:
     kinds = [action.kind for action in {s.id: s for s in load_steps()}["lims-approve-B1042"].actions]
-    assert kinds == ["event", "run_pipeline", "wait_sync"]
+    assert kinds == ["event", "event", "run_pipeline", "wait_sync"]
 
 
 @pytest.mark.parametrize(

@@ -1,2 +1,7 @@
 # Allow-list for false positives: <repo-relative path>:<sha256 hex of the lowercased matched text>
 # Committed on purpose; hashes do not reveal terms. No globs. See tools/leakscan/src/leakscan/allow.py.
+# The Playwright HTML reports embed their traces as one long base64 text; a short denylist term can match inside it by chance.
+# The matched text is not a word anywhere in the report. One entry per report folder `make e2e` and `make record-video` write (F14-AC-04).
+artifacts/e2e/run-of-show/index.html:032173147a08eac3c55880de1705a9e5ae44d6fedc5f0e37502a2e29a91e548b
+artifacts/e2e/specs/index.html:032173147a08eac3c55880de1705a9e5ae44d6fedc5f0e37502a2e29a91e548b
+artifacts/e2e/video/index.html:032173147a08eac3c55880de1705a9e5ae44d6fedc5f0e37502a2e29a91e548b

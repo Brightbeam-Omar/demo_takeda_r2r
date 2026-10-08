@@ -876,3 +876,101 @@ Add entries as: `## OQ-NNN · <feature> · <date>` then context, question, optio
 ## OQ-147 to OQ-151 · decisions · 2026-10-07
 **Decision:** Accepted as proposed, with these changes. **OQ-150:** the default `as_user` for step actions is `admin` (there is no `system` app user, F19). `pull-forward-B2077` runs as `pat` and `airgap-agent` as `alex`. Audit `actor_user_key` is the clicking admin, or `system` for `make scenario` runs (as allowed since OQ-054). **OQ-147:** the token never reaches the browser; `/api/demo/*` is 404 unless `DEMO_MODE`, 403 unless admin; run-then-subscribe SSE with replay of earlier events. **OQ-148:** explicit table list plus a test against `information_schema`, `seed_after_reset()`, `demo_clock` updated in place, the worker skips passes during reset. **OQ-151:** confirm in F07 before relying on it.
 **OQ-151 check (2026-10-07, live stack):** the pipeline `run_id` is the Dagster run id (`context.py`, `dagster_defs.py`), every run gets a new one (two runs in a row with no source change gave two ids), and all 17 watermarks and the newest `sync_event` carry it. There is no separate `contract_run_id`: `POST /pipeline/run` already returns the id that `wait_sync` has to match, so F07 needs no change.
+
+## OQ-152 · F14 · 2026-10-07
+**Context:** F14-FR-05 lists the `make doctor` checks. The F12 recordings are mounted into the `agents` container read-only at `/recordings` (`docker-compose.yml`). A bind mount on Docker Desktop can go stale or come up empty after a restart, and the replay provider then misses every key, which would show in front of an audience as "No recording for key …". Replay keys depend on the whole prompt and tool results (OQ-139), so a file in the folder does not prove the four demo-start air gaps will replay.
+**Question:** What does `make doctor` check beyond FR-05?
+**Proposal (product owner's instruction, 2026-10-07):** `make doctor` adds: (a) the `agents` container's `/recordings` mount is non-empty; (b) replay keys exist for the four demo-start air gaps; (c) Docker memory ≥ 12 GB; (d) the stack's host ports are free (or held by this project's own containers); (e) `.env` present; (f) the leak denylist present; (g) the Dagster and app health endpoints answer. Every failing check prints its fix, for example `docker compose up -d --force-recreate agents` for (a) and (b), `make demo-reset` when the state is not the demo-start state, `cp .env.example .env` for (e), and the denylist instructions for (f). The exit code is non-zero when any check fails.
+**Decision:** Accepted as instructed (2026-10-07). How (b) and (c) are measured is OQ-160.
+
+## OQ-153 · F14 · 2026-10-07
+**Context:** The stale-mount problem of OQ-152 must not reach the audience, and `make demo-reset` is what the presenter runs last before a call.
+**Question:** Should the reset repair it?
+**Proposal (product owner's instruction, 2026-10-07):** `make demo-reset` first checks that `/recordings/air_gap` in the `agents` container holds at least one file. If it is empty it runs `docker compose up -d --force-recreate agents`, waits for the container to be healthy, and prints that it did so. The check is in the `make` target (before the scenario service reset), so the API reset (`POST /scenario/reset`, F13) is unchanged.
+**Decision:** Accepted as instructed (2026-10-07).
+
+## OQ-154 · F14 · 2026-10-07
+**Context:** F13-FR-06 gives each Demo Controls step a precondition light and a Run button that is enabled whenever no step is running. A presenter can click Run on a step whose precondition is unmet and get a refusal (409) mid-demo. Steps report `preconditions: met | unmet | unknown` (`DemoControls.tsx`).
+**Question:** Should Run be disabled when a precondition is unmet?
+**Proposal (product owner's instruction, 2026-10-07):** Run is disabled when a step's preconditions are `unmet`, and the reason (the step's first message, for example "B1042 is not in QC Testing, so it has already been approved in LIMS. Reset the demo to run this step again.") is the button's tooltip and its accessible description. `unknown` stays enabled, so a failed check can never block a fallback step. The server still refuses an unmet step (F13-AC-02 is unchanged). While a step is running every Run stays disabled, as now.
+**Decision:** Accepted as instructed (2026-10-07). The `unknown` rule is my addition; say if you want it disabled too.
+
+## OQ-155 · F14 · 2026-10-07
+**Context:** Timestamps in the proposal evidence table (`ProposalPage.tsx`, `EvidenceTable`) and in the agent summary text (`payload.summary`) show as raw ISO, for example `2026-10-08T13:00:00Z`; the recordings contain such values. `formatClock` gives `Mon 12 Oct 2026 08:00` with a weekday, which is the top-bar style, not the requested one.
+**Question:** How are they shown, and what changes in storage?
+**Proposal (product owner's instruction, 2026-10-07):** A new display helper `formatSiteDateTime(iso, timeZone)` gives `11 Oct 2026 02:00` in the site timezone (profile `timezone`, as `formatClock` does). It is applied to evidence `value` cells that are ISO date-times and to ISO date-time tokens inside the agent summary text. Stored values (the proposal row, the evidence, the trace, the recordings) are unchanged and the replay keys with them. Plain dates (`2026-10-08`) are untouched.
+**Decision:** Accepted as instructed (2026-10-07). Rewriting tokens inside free text is display only; the trace page keeps raw values, which suits a technical audience.
+
+## OQ-156 · F14 · 2026-10-07
+**Context:** F14-FR-03 asks for `docs/demo-script.md`. The product owner adds: for the presenter and the SME, plain language; per act exact clicks, talk track, "why it matters to the customer" line, timings, recovery moves (which Demo Controls step to use if a live click fails); both the 40-minute working-call version and the 12-minute leadership cut; no real company or system named except the profile terms the UI shows.
+**Question:** What shape does the script take?
+**Proposal (product owner's instruction, 2026-10-07):** One document with a short "before you start" checklist, then the 40-minute version act by act (acts 1, 2, 3, 5, 6; act 4 is Tier 2 and is not scripted), then the 12-minute cut as a table of which beats to keep. Every act has the same five headings: Clicks, Say, Why it matters, Time, If it goes wrong. Recovery moves name the Demo Controls step (`pull-forward-B2077`, `airgap-agent`, `run-pipeline`, `advance-day`, `lims-approve-B1042`) and the `make scenario STEP=<id>` equivalent. A test in `tools/checks` runs the leak scanner over the file and checks that every step id it names exists in `site_a.yaml`.
+**Decision:** Accepted as instructed (2026-10-07). Open points: OQ-158 (names), OQ-163 (the 12-minute cut).
+
+## OQ-157 · F14 · 2026-10-07
+**Context:** F14-FR-07 says `make record-video` produces a video in `artifacts/video/`; the product owner adds a size of 1440×900, the same as P8's screen-share size.
+**Question:** Confirm the size?
+**Proposal (product owner's instruction, 2026-10-07):** The Playwright video is recorded at 1440×900 (`recordVideo.size` equal to the viewport, so nothing is scaled). Other details are OQ-164.
+**Decision:** Accepted as instructed (2026-10-07).
+
+## OQ-158 · F14 · 2026-10-07
+**Context:** The product owner says the script is written for named people ("Shane" and "Dave"). CLAUDE.md's hard rule is no real person, company or site names "in code, data, comments, fixtures or commits", and the script is a checked-in file that the leak scanner covers. I do not know whether these are team members or client staff.
+**Question:** May the script name them?
+**Proposal:** Use the roles "Presenter" and "SME" throughout the checked-in file, which matches the personas' generic names in 01 §3. If you want first names, keep a private copy outside the repo with a find-and-replace, or tell me they are safe to commit and I will use them in the headings only.
+**Decision:** Accepted as proposed (2026-10-07).
+
+## OQ-159 · F14 · 2026-10-07
+**Context:** F14's plan sets `baseURL=http://localhost:8080` (the nginx production build, the `frontend-web` service under compose profile `prod`). `make up` starts only the Vite dev server on 5173, and every existing spec and `playwright.config.ts` default to 5173 (`FRONTEND_URL`). The dev server is slower to first paint and shows hot-reload overlays on error, which matters for AC-02 (< 6 min) and for the video.
+**Question:** Which frontend do the run-of-show, the video and the presenter use?
+**Proposal:** Add `frontend-web` to the default `make up` (drop the `prod` profile; it is a small static image) and make 8080 the default `FRONTEND_URL` for `make e2e`, `make record-video`, the doctor's health check and the README. The dev server stays available on 5173 for development. Memory impact is a few tens of MB.
+**Decision:** Accepted as proposed (2026-10-07).
+
+## OQ-160 · F14 · 2026-10-07
+**Context:** Two doctor checks need a method. (b) Replay keys depend on the model's earlier tool results (OQ-139), so a host script cannot compute them from the repo alone, and they are valid only in the demo-start state. (c) Docker reports `MemTotal` in bytes, and a "12 GB" slider setting reports less than 12 GiB.
+**Question:** How are (b) and (c) measured?
+**Proposal:** (b) A small read-only addition to F12's service: `GET /agents/air_gap/replay-check` runs the air-gap agent for every current candidate with the replay gateway and an in-memory trace (the same path as `make record-agents`, no database write, no proposal) and returns, per batch, `found` or the missing key. Doctor prints "4 of 4 air gaps replay" or names the missing batch. If the candidates are not the four demo-start rows it reports "not in the demo-start state" with the fix `make demo-reset`, which is a failure, since the audience would see the same. (c) Doctor compares `docker info` `MemTotal` with 11.5 GiB (a 12 GB setting less VM overhead) and says so in the message.
+**Decision:** Accepted as proposed (2026-10-07).
+
+## OQ-161 · F14 · 2026-10-07
+**Context:** "Ports free" can only be true before the stack is up. After `make up` the same ports are held by the stack, so a naive check fails on a healthy machine. Doctor is also useful at both times: the night before (stack down) and 30 minutes before (stack up).
+**Question:** How does one `make doctor` serve both?
+**Proposal:** For each port, doctor passes when it is free, or when `docker compose ps` shows a container of this compose project publishing it; it fails (with the process name from `lsof`) when something else holds it. Health checks (g) and the `/recordings` and replay checks are skipped with a note "stack is down" when no container is running, and `make doctor` still exits non-zero if the stack is down and `--expect-up` is set (the presenter checklist uses `make doctor` after `make up`, so the Makefile passes `--expect-up` when any r2r container exists).
+**Decision:** Accepted as proposed (2026-10-07).
+
+## OQ-162 · F14 · 2026-10-07
+**Context:** F14-FR-01 names `tests/e2e/run_of_show.spec.ts`, but Playwright's `testDir` is `./specs` with 22 specs that mutate the demo state (`07-live-update` approves B1042, `22-demo-controls` resets three times). The run-of-show needs the canonical start state (B1042 in QC Testing, B2077 unadjusted, no proposals), and F14-AC-02 sets 6 minutes for it. `make e2e` already does one reset first.
+**Question:** Where does it live, in what order does it run, and what does the 6 minutes cover?
+**Proposal:** The file goes to `tests/e2e/specs/00-run-of-show.spec.ts` so it runs first, straight after `make e2e`'s reset, and the FR-01 name becomes this path (the spec text is updated). The six-minute limit covers that one spec, excluding the reset (≤ 3 min by F13-AC-01). The other 22 specs keep running after it; those that need a start state reset it themselves as today. A Playwright project `run-of-show` lets `make record-video` run only this spec.
+**Decision:** Accepted as proposed (2026-10-07).
+
+## OQ-163 · F14 · 2026-10-07
+**Context:** The 12-minute leadership cut is not defined by any spec. Acts 4 (resilience), 7 and 8 are Tier 2 and cannot be shown.
+**Question:** Which beats stay in the 12 minutes?
+**Proposal:** Act 1 in one minute (the legacy workbook, the problem), act 2 in three (Overview, exceptions first, persona switch), act 3 in three (one Demo Controls step, Sync Status, the batch moves; one ⓘ Explain), act 6 in four (run the agent, open the ticket and its evidence, approve as QA, trace), act 5 only as a one-line mention (it is the working-call detail), one minute to close. The 40-minute version adds act 5, the pipeline in Dagster, the audit page and Q&A pauses. The SME should confirm this against what the leadership audience cares about.
+**Decision:** Accepted as proposed (2026-10-07).
+
+## OQ-164 · F14 · 2026-10-07
+**Context:** A raw Playwright recording runs at test speed: clicks land instantly and the 90-second wait after `lims-approve-B1042` is real time. As a backup asset for a failed live demo it needs to be watchable; Playwright writes `.webm`, which not every meeting tool plays. AC-04 asks that artefacts are leak-scanned, but a video cannot be text-scanned.
+**Question:** How is the video made watchable, and in what format?
+**Proposal:** `make record-video` resets the demo, then runs the run-of-show with a `PACE=presenter` flag that adds a 1.5 s pause after each beat (a no-op in `make e2e`), headless at 1440×900, and writes `artifacts/video/run-of-show.webm`. If `ffmpeg` is installed it also writes `run-of-show.mp4` (H.264); the command prints the file path and length. No voice-over and no captions in Tier 1. The leak scan covers the script and the spec that produce the video; the on-screen data is synthetic by construction.
+**Decision:** Accepted as proposed (2026-10-07).
+
+## OQ-152 to OQ-164 · decisions · 2026-10-07
+**Decision:** OQ-152 to OQ-157 confirmed, including the rule that steps with `unknown` preconditions stay enabled. OQ-158 to OQ-164 accepted as proposed, with these points to honour. **OQ-158:** "Presenter" and "SME" in all checked-in files. **OQ-159:** the built frontend on 8080 starts with `make up` and is used by e2e, video and doctor; the Vite dev server stays for development; the README says "present from http://localhost:8080". **OQ-162:** `00-run-of-show.spec.ts` runs first after the reset; the 6-minute budget excludes the reset. **OQ-163:** the 12-minute cut is marked "draft: SME to confirm" in the script. **OQ-164:** 1.5 s presenter-pace pauses, `.webm` plus `.mp4` when ffmpeg is installed, no voice-over.
+
+## OQ-165 · F14 review · 2026-10-07
+**Context:** The first backup video (OQ-164: a 1.5 s pause per beat) ran about 55 s, too fast to follow.
+**Decision (product owner's review, 2026-10-07):** `make record-video` produces a watchable 6 to 8 minute run. `PACE=presenter|ci` (default `ci`; any other value is an error). In presenter pace: 4 to 6 s on each key screen (Overview, the Insights band, Demo Controls progress, B1042 moved, the ⓘ popovers, the Adjust window with its preview, the audit entry, the proposal, the trace); the mouse glides visibly to each element before a slow click; a caption bar shows the act name and one line of what is happening; no voice-over. CI pace stays fast (no pauses, no overlay) and keeps the 6-minute budget (F14-AC-02). The pointer and the captions are drawn by the page (the recording does not show the real pointer), installed by an init script that survives page loads. Docs: `docs/demo-script.md` gains "Tailor it to the room", a close that proposes one site and one or two use cases, and three Q&A rows (accuracy, cost per ticket about 4 cents at the `.env` prices (measured from the recordings: about 10,100 tokens in and 780 out per ticket), GxP).
+
+## OQ-166 to OQ-173 · F14 demo hardening · 2026-10-08
+**Context:** A review of the run-of-show found eight ways the demo could go wrong in front of an audience: a batch approved in act 3 becomes a fifth air gap after two days; one missing recording fails the whole agent run; the Demo Controls list is not in script order and offers steps that can wreck act 6; the act 5 fallback is not proven idempotent; a reset loses nothing the presenter set up, but the default columns are too wide to read on a screen share and the Tier 2 placeholders distract; the proposal does not say whether the model was replayed or live; and nothing forces a re-recording when the data or the tools change.
+**Decision (product owner, 2026-10-08), each one an FR and an AC in the F14 spec:**
+- **OQ-166 (FR-11, AC-11).** `lims-approve-B1042` also records the LIMS results in the ERP (`results-recorded`) as the normal interface does, stamped 2 demo-hours after the approval (the range is 1 to 3). The clock is not advanced, so replay keys do not move; the recorded time is simply ahead of the demo clock by 2 hours until the clock passes it. A stack test: reset, `lims-approve-B1042`, `advance-day` twice, and the air-gap candidates are still exactly the four recorded batches.
+- **OQ-167 (FR-12, AC-12).** In replay mode, "Run air-gap agent" handles each candidate on its own. A candidate with no recording gets the row message "No recording for B1042: record it or run live", and the other candidates still produce proposals. A miss never fails the whole run (the API answers 200 with the per-row errors; the Insights window shows them on their rows).
+- **OQ-168 (FR-13, AC-13).** Demo Controls groups the steps by act in script order: Act 3, Act 5, Act 6, After act 6, Extras. `ud-post-B5003` and `interface-sync-B5003` are under "After act 6". Their precondition also requires that B5003 has no proposal pending approval (approved, rejected or none are fine), so they cannot wreck act 6. Groups come from the scenario file (`group:` on each step).
+- **OQ-169 (FR-14, AC-14).** If B2077 already has an override, `pull-forward-B2077` is disabled with the reason "B2077 is already adjusted", writes nothing when run through the API either, and the act continues. Tests cover the listing, the refusal and that no `override_value` or audit row is added.
+- **OQ-170 (FR-15, AC-15).** Profile `demo.default_columns` (column ids) is the default column set of the Overview table in `DEMO_MODE`: Material, Batch, Stage, System Needs-By, Adjusted Date, SLA Deadline, Days In Stage, Status, Expected Completion, Inbound and Deviation. Profile `demo.presets` (name and query) are re-created by `seed_after_reset()` for every persona, so they survive a reset. A column set the user chose in the browser still wins for that browser session.
+- **OQ-171 (FR-16, AC-16).** Profile `demo.hide_placeholders: true` hides the Tier 2 placeholder menu items (Upload Data, Process / Campaign Mapping, POC — Integrations, Configuration) in `DEMO_MODE`. The routes still exist.
+- **OQ-172 (FR-17, AC-17).** The proposal page and the Agents card show a provider chip: "Replay · recorded from claude-sonnet-5-5" or "Live · claude-sonnet-5-5" (the model id comes from the recordings or from the settings).
+- **OQ-173 (FR-18, AC-18).** CLAUDE.md gets a hard rule: any change to datagen, the published contract or the agent tools is followed by `make demo-reset && make record-agents && make doctor EXPECT_UP=1` in the same PR. CI enforces it with a stack test: after a reset, the replay check reports 4 of 4 demo-start air gaps replaying (it fails when a recording is missing).
+

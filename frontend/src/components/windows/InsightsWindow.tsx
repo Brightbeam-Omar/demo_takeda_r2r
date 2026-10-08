@@ -39,12 +39,12 @@ interface Props {
 }
 
 /** Runs the air-gap agent for every air-gap batch without an open proposal (F12-FR-13, OQ-141). */
-function RunButton() {
+function RunButton({ run }: { run: ReturnType<typeof useRunAgent> }) {
   const me = useMe()
-  const run = useRunAgent()
   const allowed = canRunAgent(me.data?.role)
   const failure = run.isError ? runErrorText(run.error) : null
   const created = run.data?.created.length ?? 0
+  const missed = run.data?.errors.length ?? 0 // a candidate that could not run: its row says why (F14-FR-12)
   return (
     <div className="mb-3 flex flex-wrap items-center justify-between gap-3" data-testid="insights-run">
       <div className="text-sm" aria-live="polite">
@@ -57,7 +57,10 @@ function RunButton() {
           <p className="text-slate-600" data-testid="run-result">
             {created > 0
               ? `${created} ${created === 1 ? 'proposal' : 'proposals'} created.`
-              : 'Nothing new to propose: every batch already has an open proposal.'}
+              : missed === 0
+                ? 'Nothing new to propose: every batch already has an open proposal.'
+                : 'No proposals created.'}
+            {missed > 0 ? ` ${missed} could not run: see ${missed === 1 ? 'its row' : 'their rows'}.` : ''}
           </p>
         ) : null}
       </div>
@@ -75,6 +78,7 @@ function RunButton() {
 }
 
 export function InsightsWindow({ open, onClose, params }: Props) {
+  const run = useRunAgent()
   const terms = useTerms()
   const reference = useReference()
   const insights = useInsights(params, open)
@@ -104,6 +108,10 @@ export function InsightsWindow({ open, onClose, params }: Props) {
           <Link to={`/agents/proposals/${r.proposal.id}`} data-testid="proposal-link" aria-label={`Open proposal ${r.proposal.id} for ${r.batch_no}`}>
             <ProposalPill status={r.proposal.status as ProposalStatus} />
           </Link>
+        ) : run.data?.errors.find((error) => error.row_key === r.row_key) ? (
+          <span className="text-red-800" data-testid="row-error">
+            {run.data.errors.find((error) => error.row_key === r.row_key)?.message}
+          </span>
         ) : (
           <span className="text-slate-400">—</span>
         ),
@@ -124,7 +132,7 @@ export function InsightsWindow({ open, onClose, params }: Props) {
         <EmptyState>{`No ${terms.insights_banner} in this period.`}</EmptyState>
       ) : (
         <>
-          <RunButton />
+          <RunButton run={run} />
           <DataTable
             rows={insights.data.rows}
             columns={columns}

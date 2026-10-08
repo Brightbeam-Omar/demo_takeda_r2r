@@ -15,7 +15,11 @@ import yaml
 
 ACTION_KINDS = ("event", "clock_advance", "run_pipeline", "wait_sync", "run_agent")
 SERVICES = ("erp", "lims", "qms", "app")
-PRECONDITION_KINDS = ("stage", "air_gap", "open_deviations", "adjusted_need_by", "proposals")
+PRECONDITION_KINDS = (
+    "stage", "air_gap", "open_deviations", "adjusted_need_by", "proposals", "no_pending_proposal",
+)  # fmt: skip
+# The groups of the Demo Controls list, in script order (OQ-168); a step names one with `group:`.
+GROUPS = ("Act 3", "Act 5", "Act 6", "After act 6", "Extras")
 DEFAULT_USER = (
     "admin"  # OQ-150: there is no `system` app user, so actions run as admin unless a step says otherwise
 )
@@ -60,6 +64,7 @@ class Step:
     preconditions: tuple[Precondition, ...]
     actions: tuple[Action, ...]
     vars: dict[str, dict[str, Any]] = field(default_factory=dict)
+    group: str = "Extras"
 
 
 def _precondition(step_id: str, raw: dict[str, Any]) -> Precondition:
@@ -99,6 +104,9 @@ def parse_steps(document: dict[str, Any]) -> list[Step]:
         for key in ("title", "talk_track", "actions"):
             if not raw.get(key):
                 raise StepError(f"{step_id}: missing {key}")
+        group = raw.get("group", "Extras")
+        if group not in GROUPS:
+            raise StepError(f"{step_id}: unknown group {group!r} (one of {', '.join(GROUPS)})")
         steps.append(
             Step(
                 id=step_id,
@@ -107,6 +115,7 @@ def parse_steps(document: dict[str, Any]) -> list[Step]:
                 preconditions=tuple(_precondition(step_id, p) for p in raw.get("preconditions", [])),
                 actions=tuple(_action(step_id, a) for a in raw["actions"]),
                 vars=dict(raw.get("vars", {})),
+                group=group,
             )
         )
     return steps

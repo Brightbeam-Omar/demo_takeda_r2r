@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { useApprove, useProposal, useReject, useRunAgent, runErrorText, type ProposalDetailData } from '../../api/agents'
+import { useApprove, useProposal, useReject, useRunAgent, useTrace, runErrorText, type ProposalDetailData } from '../../api/agents'
 import { useMe, useReference } from '../../api/queries'
 import { EvidenceTable, ValidatorChecklist } from '../../components/agents/Evidence'
 import { ExecutedPreview } from '../../components/agents/ExecutedPreview'
 import { PriorityChip, ProposalPill } from '../../components/agents/ProposalPill'
+import { ProviderChip } from '../../components/agents/ProviderChip'
 import { Modal } from '../../components/common/Modal'
 import { ErrorState, Skeleton } from '../../components/common/States'
-import { formatClock, humanize } from '../../lib/format'
+import { formatClock, humanize, withSiteTimes } from '../../lib/format'
 import { roleLabel } from '../../components/shell/PersonaSwitcher'
 import { READ_ONLY_HINT, canDecideProposal, canRunAgent } from '../../lib/roles'
 
@@ -139,6 +140,7 @@ export function ProposalPage() {
   const reference = useReference()
   const timezone = reference.data?.site_timezone ?? 'UTC'
   const data = proposal.data
+  const trace = useTrace(data?.trace_id ?? '') // the provider chip reads the run's provider and model from its trace
   return (
     <main className="flex-1 space-y-5 overflow-auto p-6 pb-20" data-testid="proposal-page">
       <Link to="/agents" className="text-sm text-accent hover:underline">
@@ -154,6 +156,7 @@ export function ProposalPage() {
             </h2>
             <ProposalPill status={data.status} />
             <PriorityChip priority={data.priority} />
+            <ProviderChip provider={trace.data?.provider ?? null} modelId={trace.data?.model_id ?? null} />
             {data.trace_id ? (
               <Link to={`/agents/traces/${data.trace_id}`} className="ml-auto text-sm text-accent hover:underline" data-testid="view-trace">
                 View trace {data.trace_id} ↗
@@ -175,7 +178,7 @@ export function ProposalPage() {
           {data.payload && !data.payload.error ? (
             <section aria-label="Draft" className="rounded-card border border-hairline bg-white p-5" data-testid="draft">
               <h3 className="text-base font-semibold text-ink">{data.payload.title}</h3>
-              <p className="mt-2 max-w-4xl text-sm">{data.payload.summary}</p>
+              <p className="mt-2 max-w-4xl text-sm">{withSiteTimes(data.payload.summary, timezone)}</p>
               <dl className="mt-4 grid grid-cols-4 gap-4 text-[13px]">
                 <div>
                   <dt className="text-[11px] font-semibold tracking-wide text-ink-2 uppercase">Hours in the gap</dt>
@@ -204,7 +207,7 @@ export function ProposalPage() {
           {data.evidence.length > 0 ? (
             <section aria-label="Evidence" className="rounded-card border border-hairline bg-white p-5">
               <h3 className="mb-2 text-xs font-semibold tracking-wide text-ink-2 uppercase">Evidence</h3>
-              <EvidenceTable evidence={data.evidence} validator={data.validator} />
+              <EvidenceTable evidence={data.evidence} validator={data.validator} timezone={timezone} />
             </section>
           ) : null}
 

@@ -1136,6 +1136,16 @@ export interface components {
             /** Supplier Name */
             supplier_name: string | null;
         };
+        /**
+         * DemoViewOut
+         * @description How the demo looks (F14-FR-15, FR-16). Empty and off unless ``DEMO_MODE`` is on.
+         */
+        DemoViewOut: {
+            /** Default Columns */
+            default_columns: string[];
+            /** Hide Placeholders */
+            hide_placeholders: boolean;
+        };
         /** DeviationOut */
         DeviationOut: {
             /** Causal Factor */
@@ -1722,6 +1732,7 @@ export interface components {
             classes: {
                 [key: string]: string;
             }[];
+            demo: components["schemas"]["DemoViewOut"];
             /** Flags */
             flags: string[];
             /** Metric Rag */

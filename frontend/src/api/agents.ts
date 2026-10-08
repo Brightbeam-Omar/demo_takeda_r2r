@@ -198,7 +198,7 @@ export function useProposal(id: number) {
 }
 
 export function useTrace(traceId: string) {
-  return useQuery({ queryKey: useKey('trace', traceId), queryFn: () => agentsGet<TraceData>(`/traces/${encodeURIComponent(traceId)}`) })
+  return useQuery({ queryKey: useKey('trace', traceId), queryFn: () => agentsGet<TraceData>(`/traces/${encodeURIComponent(traceId)}`), enabled: traceId !== '' })
 }
 
 /** A run, an approval or a rejection changes proposals and what the Insights window and the drawer show. */

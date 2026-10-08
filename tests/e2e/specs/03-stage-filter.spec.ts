@@ -10,7 +10,11 @@ test('F10-AC-03: clicking QCL Testing filters the table, puts stage= in the URL 
   await expect(page.getByTestId('flow-qc_testing')).toHaveAttribute('aria-pressed', 'true')
   const count = await page.getByTestId('flow-qc_testing').locator('div').nth(2).innerText()
   await expect(page.getByTestId('page-summary')).toContainText(`${count} lots`)
-  for (const cell of await page.getByTestId('batch-row').locator('td:nth-child(9)').allInnerTexts()) {
+  // The Stage column, found by its header (the demo view trims the columns, F14-FR-15).
+  const heads = (await page.locator('thead th').allInnerTexts()).map((text) => text.trim().toLowerCase())
+  const stageCell = heads.findIndex((text) => text.startsWith('stage')) + 1
+  expect(stageCell).toBeGreaterThan(0)
+  for (const cell of await page.getByTestId('batch-row').locator(`td:nth-child(${stageCell})`).allInnerTexts()) {
     expect(cell).toContain('QCL Testing')
   }
 

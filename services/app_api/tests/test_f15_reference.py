@@ -46,3 +46,18 @@ def test_f15_oq081_the_release_badge_is_served_at_runtime(
     assert client.get("/api/reference").json()["release_badge"] == "ALPHA – LOCAL"
     monkeypatch.setenv("RELEASE_BADGE", "ALPHA – DEMO")
     assert client.get("/api/reference").json()["release_badge"] == "ALPHA – DEMO"
+
+
+def test_f14_fr15_fr16_the_demo_view_comes_from_the_profile_only_in_demo_mode(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """OQ-170, OQ-171: slim default columns and hidden placeholders apply in DEMO_MODE and nowhere else."""
+    monkeypatch.setenv("DEMO_MODE", "true")
+    demo = client.get("/api/reference").json()["demo"]
+    assert demo["default_columns"] == [
+        "material", "batch", "stage", "system_need_by", "adjusted", "sla_deadline", "days", "status",
+        "expected", "inbound", "deviation",
+    ]  # fmt: skip
+    assert demo["hide_placeholders"] is True
+    monkeypatch.setattr("app_api.routers.reference.demo_mode", lambda: False)
+    assert client.get("/api/reference").json()["demo"] == {"default_columns": [], "hide_placeholders": False}

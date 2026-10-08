@@ -41,16 +41,18 @@ const search = (page: Page) => page.getByRole('textbox', { name: 'Search all col
 // textContent, not innerText: the headers are upper-cased by CSS.
 const headers = (page: Page) => page.getByRole('columnheader').evaluateAll((cells) => cells.map((cell) => cell.querySelector('button')!.childNodes[0]!.textContent!.trim()))
 
+// The demo view (profile demo.default_columns, F14-FR-15): what reads on a screen share. The table's own default is
+// 16 columns, which the Columns panel's checkboxes still reach.
 const DEFAULT_COLUMNS = [
-  'Material', 'Campaign', 'Class', 'Batch', 'Lot #', 'Inbound', 'Deviation', 'Location', 'Stage',
-  'System Needs-By', 'Adjusted Date', 'SLA Deadline', 'Next Inspection', 'Days In Stage', 'Status', 'Expected Completion',
+  'Material', 'Batch', 'Inbound', 'Deviation', 'Stage', 'System Needs-By', 'Adjusted Date', 'SLA Deadline',
+  'Days In Stage', 'Status', 'Expected Completion',
 ]
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => sessionStorage.removeItem('r2r.columns.overview.pat'))
 })
 
-test('F18-AC-01: the default view has the 16 columns in order; Goods Receipt Date joins via Columns and Reset restores 16', async ({ page }) => {
+test('F18-AC-01 / F14-FR-15: the demo view has its 11 columns in order; Goods Receipt Date joins via Columns and Reset restores 11', async ({ page }) => {
   await page.goto('/overview')
   await expect(page.getByTestId('batch-row').first()).toBeVisible()
   expect(await headers(page)).toEqual(DEFAULT_COLUMNS)
@@ -59,7 +61,7 @@ test('F18-AC-01: the default view has the 16 columns in order; Goods Receipt Dat
   const panel = page.getByRole('group', { name: 'Columns' })
   await expect(panel.getByRole('checkbox')).toHaveCount(20)
   await panel.getByRole('checkbox', { name: 'Goods Receipt Date' }).check()
-  expect(await headers(page)).toHaveLength(17)
+  expect(await headers(page)).toHaveLength(12)
   expect(await headers(page)).toContain('Goods Receipt Date')
   await panel.getByRole('button', { name: 'Reset' }).click()
   expect(await headers(page)).toEqual(DEFAULT_COLUMNS)
@@ -84,7 +86,9 @@ test('F18-AC-01: at 1440x900 no header or cell of the default view is truncated 
     return out
   })
   expect(clipped).toEqual([])
-  // The Location column shows the whole word, not "Onsi…".
+  // Add the Location column: it shows the whole word, not "Onsi…".
+  await page.getByRole('button', { name: /Columns/ }).first().click()
+  await page.getByRole('group', { name: 'Columns' }).getByRole('checkbox', { name: 'Location' }).check()
   await expect(page.getByTestId('batch-row').first().getByText(/Onsite|3PL/)).toBeVisible()
 })
 

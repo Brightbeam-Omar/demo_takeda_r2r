@@ -10,6 +10,8 @@ interface Props extends Omit<OverviewColumnDeps, 'terms'> {
   search: { value: string; onChange: (value: string) => void }
   /** Keeps the column choice per user (F18-FR-02). */
   columnsKey: string
+  /** The demo view's slim column set, from the profile (F14-FR-15); empty outside the demo. */
+  defaultColumns?: string[]
   toolbarExtra?: ReactNode
   onRowKey?: (key: string, row: Row) => void
   /** Fills a header filter box from outside, e.g. the batch number when the drawer closes (F19-FR-01). */
@@ -25,7 +27,7 @@ export const isException = (row: Row) => row.plan.late || row.flags.ud_rejected 
 const HINT = 'Keyboard: Tab to focus the table · ↑ ↓ move between rows · Enter opens the batch drawer · B bookmarks the row'
 
 /** The Overview's "Pipeline — Exceptions First" table (F18). */
-export function OverviewTable({ rows, changedKeys, search, columnsKey, toolbarExtra, onRowKey, filterRequest, ...deps }: Props) {
+export function OverviewTable({ rows, changedKeys, search, columnsKey, defaultColumns, toolbarExtra, onRowKey, filterRequest, ...deps }: Props) {
   const terms = useTerms()
   const { stageIndex, canEdit, bookmarks, onToggleBookmark, onOpenRow, onOpenWindow, actions } = deps
   const columns = useMemo(
@@ -39,6 +41,9 @@ export function OverviewTable({ rows, changedKeys, search, columnsKey, toolbarEx
   }
   return (
     <DataTable
+      // A new default (the reference arrives after the first render) starts the table afresh; a stored choice still wins.
+      key={(defaultColumns ?? []).join(',')}
+      defaultVisible={defaultColumns}
       rows={rows}
       columns={columns}
       rowKey={(row) => row.row_key}

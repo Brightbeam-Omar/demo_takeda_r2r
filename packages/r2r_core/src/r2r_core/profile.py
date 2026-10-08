@@ -56,9 +56,20 @@ class Site(_Model):
         return ZoneInfo(self.timezone)
 
 
+class DemoPreset(_Model):
+    """A saved Overview filter every persona starts with in the demo (F14-FR-15): a name and a query."""
+
+    name: str
+    query: str
+
+
 class Demo(_Model):
     start_datetime: datetime
     seed: int
+    # F14 (OQ-170, OQ-171): how the demo looks. Only `DEMO_MODE` applies them.
+    default_columns: list[str] = []  # Overview column ids shown by default; empty = the table's own default
+    presets: list[DemoPreset] = []  # re-created for every persona after a reset
+    hide_placeholders: bool = False  # hide the Tier 2 placeholder menu items
 
     @field_validator("start_datetime")
     @classmethod

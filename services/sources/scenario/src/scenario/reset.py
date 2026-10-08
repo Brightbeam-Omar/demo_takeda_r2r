@@ -60,8 +60,24 @@ def clear_app_tables(engine: Engine) -> None:
 
 
 def seed_after_reset(engine: Engine, profile: SiteProfile) -> None:
-    """What a reset puts back: the clock row, updated in place (no migration seeds a cleared table)."""
+    """What a reset puts back: the clock row, updated in place, and the demo presets of every persona.
+
+    No migration seeds a cleared table, so the profile's ``demo.presets`` are written again here (F14-FR-15,
+    OQ-170), stamped with the demo clock's opening time.
+    """
     reset_clock(engine, profile)
+    if not profile.demo.presets:
+        return
+    with engine.begin() as connection:
+        for preset in profile.demo.presets:
+            connection.execute(
+                text(
+                    "INSERT INTO filter_preset (user_key, name, query, created_at) "
+                    "SELECT user_key, :name, :query, :at FROM app_user "
+                    "ON CONFLICT (user_key, name) DO UPDATE SET query = EXCLUDED.query"
+                ),
+                {"name": preset.name, "query": preset.query, "at": profile.demo.start_datetime},
+            )
 
 
 @contextmanager

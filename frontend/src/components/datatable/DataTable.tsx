@@ -9,7 +9,7 @@ import {
   type PaginationState,
   type SortingState,
 } from '@tanstack/react-table'
-import { Fragment, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
+import { Fragment, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { saveBlob } from '../../lib/download'
 import { highlight } from '../../lib/highlight'
 import { Pagination } from './Pagination'
@@ -43,6 +43,8 @@ interface Props<T> {
   defaultPageSize?: number
   /** Persist the column choice in `sessionStorage` under this key (F18-FR-02). */
   columnsKey?: string
+  /** Column ids shown until the user chooses others (the demo view's slim set, F14-FR-15). */
+  defaultVisible?: string[]
   /** Controlled search text (the Overview keeps it in the URL). */
   search?: { value: string; onChange: (value: string) => void }
   /** Buttons placed after Export in both toolbars. */
@@ -71,8 +73,15 @@ interface Props<T> {
 
 const text = (value: unknown) => String(value ?? '')
 
-function loadVisible<T>(columns: Column<T>[], key: string | undefined): Set<string> {
-  const fallback = new Set(columns.filter((column) => !column.defaultHidden).map((column) => column.id))
+/** The columns shown when the user has chosen none: the caller's list (the demo view, F14-FR-15) or the table's own. */
+function defaultColumns<T>(columns: Column<T>[], preferred: string[] | undefined): Set<string> {
+  const known = new Set(columns.map((column) => column.id))
+  const wanted = (preferred ?? []).filter((id) => known.has(id))
+  return wanted.length > 0 ? new Set(wanted) : new Set(columns.filter((column) => !column.defaultHidden).map((column) => column.id))
+}
+
+function loadVisible<T>(columns: Column<T>[], key: string | undefined, preferred: string[] | undefined): Set<string> {
+  const fallback = defaultColumns(columns, preferred)
   if (!key) return fallback
   try {
     const stored = JSON.parse(sessionStorage.getItem(STORAGE_PREFIX + key) ?? 'null') as unknown
@@ -103,6 +112,7 @@ export function DataTable<T>({
   pageSizes = PAGE_SIZES,
   defaultPageSize = 50,
   columnsKey,
+  defaultVisible,
   search,
   toolbarExtra,
   stickyFirst = true,
@@ -126,7 +136,7 @@ export function DataTable<T>({
   const q = search ? search.value : localSearch
   const setQ = search ? search.onChange : setLocalSearch
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: defaultPageSize })
-  const [visible, setVisible] = useState<Set<string>>(() => loadVisible(columns, columnsKey))
+  const [visible, setVisible] = useState<Set<string>>(() => loadVisible(columns, columnsKey, defaultVisible))
   const [active, setActive] = useState<number | null>(null)
   // A new request replaces that column's filter (adjusting state while rendering, not in an effect).
   const [seenRequest, setSeenRequest] = useState(filterRequest?.token ?? null)
@@ -136,9 +146,10 @@ export function DataTable<T>({
   }
   const scroller = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    if (columnsKey) sessionStorage.setItem(STORAGE_PREFIX + columnsKey, JSON.stringify([...visible]))
-  }, [visible, columnsKey])
+  // Only a choice the user makes is stored, so a default that arrives later (the demo view) is not frozen in.
+  const remember = (next: Set<string>) => {
+    if (columnsKey) sessionStorage.setItem(STORAGE_PREFIX + columnsKey, JSON.stringify([...next]))
+  }
 
   const byId = useMemo(() => new Map(columns.map((column) => [column.id, column])), [columns])
   const visibleColumns = useMemo(() => columns.filter((column) => visible.has(column.id)), [columns, visible])
@@ -212,9 +223,14 @@ export function DataTable<T>({
       const next = new Set(current)
       if (next.has(id)) next.delete(id)
       else next.add(id)
-      return next.size === 0 ? current : next
+      if (next.size === 0) return current
+      remember(next)
+      return next
     })
-  const resetColumns = () => setVisible(new Set(columns.filter((column) => !column.defaultHidden).map((column) => column.id)))
+  const resetColumns = () => {
+    if (columnsKey) sessionStorage.removeItem(STORAGE_PREFIX + columnsKey)
+    setVisible(defaultColumns(columns, defaultVisible))
+  }
 
   const toolbar = (position: 'top' | 'bottom') => (
     <Toolbar

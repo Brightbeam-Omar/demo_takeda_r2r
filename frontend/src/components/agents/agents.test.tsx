@@ -8,6 +8,7 @@ import { TracePage } from '../../pages/agents/TracePage'
 import { renderWithProviders } from '../../test-utils'
 import { InsightsWindow } from '../windows/InsightsWindow'
 import { ProposalLine } from './ProposalLine'
+import { ProviderChip } from './ProviderChip'
 import { ProposalPill, STATUS_LABEL } from './ProposalPill'
 import { summarise } from './TraceTimeline'
 
@@ -121,7 +122,7 @@ test('F12-FR-12 a: the agent card shows model, prompt version, tools and last ru
   const agent = await screen.findByTestId('agent-card')
   expect(within(agent).getByText('Air-gap agent')).toBeInTheDocument()
   expect(screen.getByTestId('agent-model')).toHaveTextContent('claude-sonnet-5-5')
-  expect(screen.getByTestId('agent-model')).toHaveTextContent('replay')
+  expect(screen.getByTestId('agent-model')).toHaveTextContent('Replay · recorded from claude-sonnet-5-5') // F14-FR-17
   expect(screen.getByTestId('agent-prompt')).toHaveTextContent('v1')
   expect(screen.getByTestId('agent-last-run')).toHaveTextContent('Last run Mon 12 Oct 2026 08:00')
   expect(within(agent).getByText('get_erp_lot')).toBeInTheDocument()
@@ -387,4 +388,57 @@ test('F12-FR-13: for a planner the Run button is disabled with the read-only too
   const button = await screen.findByRole('button', { name: 'Run air-gap agent' })
   await waitFor(() => expect(button).toHaveAttribute('title', 'Read-only role'))
   expect(button).toBeDisabled()
+})
+
+test('F14-FR-10: times in the evidence table and the summary show in site time, not as ISO', async () => {
+  const iso = { ...detail, payload: { ...detail.payload, summary: 'LIMS approved at 2026-10-08T13:00:00Z and the gap is open.' }, evidence: [{ system: 'LIMS', ref: 'S1', field: 'approved_at', value: '2026-10-08T13:00:00Z' }, ...detail.evidence.slice(1)] }
+  stub({ '/api/me': me('qa_release', 'alex'), '/api/reference': { ...reference, site_timezone: 'Europe/Dublin' }, '/agents-api/proposals/1': iso })
+  atPage('/agents/proposals/1', <ProposalPage />)
+  const rowsOfEvidence = await screen.findAllByTestId('evidence-row')
+  expect(rowsOfEvidence[0]).toHaveTextContent('8 Oct 2026 14:00')
+  expect(screen.getByText(/LIMS approved at 8 Oct 2026 14:00 and the gap is open\./)).toBeInTheDocument()
+  expect(document.body.textContent).not.toMatch(/\dT\d\d:/)
+  // display only: the fetched proposal keeps its stored ISO values
+  expect(iso.evidence[0]!.value).toBe('2026-10-08T13:00:00Z')
+  expect(iso.payload.summary).toContain('2026-10-08T13:00:00Z')
+})
+
+test('F14-FR-12: a candidate with no recording gets its own row message and the run still creates the others', async () => {
+  stub({
+    '/api/overview/insights': insights,
+    '/api/reference': reference,
+    '/api/me': me('qa_release', 'alex'),
+    '/agents-api/agents/air_gap/run': {
+      created: [{ row_key: 'k9', outcome: 'created', proposal_id: 8, status: 'pending_approval', trace_id: 'TR-0002', message: '', replay_miss: null }],
+      skipped: [],
+      errors: [{ row_key: 'k2', outcome: 'error', proposal_id: null, status: null, trace_id: 'TR-0001', message: 'No recording for B5003: record it or run live', replay_miss: { key: 'k', hint: 'h' } }],
+    },
+  })
+  const rowsOf = () => screen.findAllByTestId('window-row')
+  renderWithProviders(
+    <MemoryRouter>
+      <InsightsWindow open onClose={vi.fn()} params={new URLSearchParams()} />
+    </MemoryRouter>,
+  )
+  await rowsOf()
+  const button = await screen.findByRole('button', { name: 'Run air-gap agent' })
+  await waitFor(() => expect(button).toBeEnabled())
+  await userEvent.click(button)
+  expect(await screen.findByTestId('run-result')).toHaveTextContent('1 proposal created. 1 could not run: see its row.')
+  const rows = await rowsOf()
+  expect(within(rows[1]!).getByTestId('row-error')).toHaveTextContent('No recording for B5003: record it or run live')
+  expect(screen.queryByTestId('run-error')).not.toBeInTheDocument()
+})
+
+test('F14-FR-17: the proposal page and the agent card show where the answers came from', async () => {
+  const trace = { trace_id: 'TR-0001', proposal_id: 1, row_key: 'k', provider: 'replay', model_id: 'claude-sonnet-5-5', replayed: true, steps: [], totals: { tokens_in: 0, tokens_out: 0, latency_ms: 0, cost_usd: 0, model_calls: 0 } }
+  stub({ '/api/me': me('qa_release', 'alex'), '/api/reference': reference, '/agents-api/proposals/1': detail, '/agents-api/traces/TR-0001': trace })
+  atPage('/agents/proposals/1', <ProposalPage />)
+  expect(await screen.findByTestId('provider-chip')).toHaveTextContent('Replay · recorded from claude-sonnet-5-5')
+})
+
+test('F14-FR-17: a live provider reads "Live · model"', () => {
+  renderWithProviders(<ProviderChip provider="anthropic" modelId="claude-sonnet-5-5" />)
+  expect(screen.getByTestId('provider-chip')).toHaveTextContent('Live · claude-sonnet-5-5')
+  expect(screen.getByTestId('provider-chip')).toHaveAttribute('data-provider', 'live')
 })
