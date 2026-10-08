@@ -35,7 +35,8 @@ def check_precondition(gateway: Gateway, precondition: Precondition) -> str | No
         actual: Any = len(gateway.call("agents", "GET", "/proposals", user="admin")["rows"])
     elif kind == "no_pending_proposal":  # OQ-168: no proposal for this batch is waiting for a decision
         rows = gateway.call("agents", "GET", "/proposals", user="admin")["rows"]
-        actual = not any(f"|{batch}|" in row["row_key"] and row["status"] == "pending_approval" for row in rows)
+        pending = (r for r in rows if f"|{batch}|" in r["row_key"] and r["status"] == "pending_approval")
+        actual = next(pending, None) is None
     else:
         row = find_row(gateway, batch)  # no row: the lot is released, so none of the row checks hold
         if kind == "stage":
@@ -63,7 +64,7 @@ def resolve_var(
 ) -> Any:
     """One ``vars`` entry of a step: ``{resolve: row|sample|deviation, batch: B1042}`` or the clock."""
     kind, batch = spec.get("resolve"), spec.get("batch", "")
-    if kind == "clock":  # `{resolve: clock, plus_hours: 2}`: the demo now plus some hours, as ISO with its offset
+    if kind == "clock":  # `{resolve: clock, plus_hours: 2}`: the demo now plus some hours, as ISO
         if now is None:
             raise StepError(f"{name}: no clock to read")
         return (now() + timedelta(hours=float(spec.get("plus_hours", 0)))).isoformat()

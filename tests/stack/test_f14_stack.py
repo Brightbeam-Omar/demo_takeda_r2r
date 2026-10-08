@@ -97,7 +97,11 @@ def test_f14_ac15_after_a_reset_every_persona_has_the_demo_presets() -> None:
         names = {p["name"] for p in presets}
         assert {"Late batches", "Air gaps", "On hold or expedite"} <= names, (persona, names)
     reference = _get(f"{APP_API}/api/reference")["demo"]
-    assert reference["hide_placeholders"] is True and reference["default_columns"][:3] == ["material", "batch", "stage"]
+    assert reference["hide_placeholders"] is True and reference["default_columns"][:3] == [
+        "material",
+        "batch",
+        "stage",
+    ]
 
 
 def test_f14_ac18_after_a_reset_the_replay_keys_of_the_four_demo_start_air_gaps_exist() -> None:

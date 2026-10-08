@@ -91,7 +91,9 @@ def test_f13_ac01_a_dirty_database_comes_back_empty_with_users_and_clock_in_plac
     for table in ("proposal", "action_log", "agent_trace", "audit_event", "bookmark", "feedback",
                   "status_log", "sync_event", "watermark", "override_value"):  # fmt: skip
         assert count(engine, table) == 0, table
-    assert count(engine, "filter_preset") == 5 * len(load_profile("site_a").demo.presets)  # the demo presets, F14
+    assert count(engine, "filter_preset") == 5 * len(
+        load_profile("site_a").demo.presets
+    )  # the demo presets, F14
     assert count(engine, "app_user") == users == 5
     with engine.connect() as c:
         clock = c.execute(text("SELECT now_utc, frozen FROM demo_clock")).one()
@@ -141,7 +143,9 @@ def test_f13_fr07_the_audit_event_is_written_with_its_details(engine: Engine) ->
     )
 
 
-def test_f14_fr15_every_persona_has_the_demo_presets_after_a_reset_and_twice_is_harmless(engine: Engine) -> None:
+def test_f14_fr15_every_persona_has_the_demo_presets_after_a_reset_and_twice_is_harmless(
+    engine: Engine,
+) -> None:
     """OQ-170: the profile's presets are written again by seed_after_reset(), once per persona."""
     profile = load_profile("site_a")
     clear_app_tables(engine)
@@ -149,7 +153,9 @@ def test_f14_fr15_every_persona_has_the_demo_presets_after_a_reset_and_twice_is_
     seed_after_reset(engine, profile)
     with engine.connect() as c:
         personas = c.execute(text("SELECT count(*) FROM app_user")).scalar_one()
-        rows = c.execute(text("SELECT user_key, name, query FROM filter_preset ORDER BY user_key, name")).all()
+        rows = c.execute(
+            text("SELECT user_key, name, query FROM filter_preset ORDER BY user_key, name")
+        ).all()
     wanted = sorted((p.name, p.query) for p in profile.demo.presets)
     assert personas >= 5 and len(wanted) >= 1
     assert len(rows) == personas * len(wanted)

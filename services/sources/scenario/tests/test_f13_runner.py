@@ -282,5 +282,9 @@ def test_f14_fr12_a_run_with_one_missing_recording_still_succeeds_and_names_it(h
     run = harness.run("airgap-agent")
     assert run.status == "succeeded"
     assert any("3 proposal(s) created" in m and "No recording for B1042" in m for m in messages(run))
-    harness.world.agent_answer = {"created": [], "skipped": [], "errors": [{"message": "No recording for B1042: x"}]}
+    harness.world.agent_answer = {
+        "created": [],
+        "skipped": [],
+        "errors": [{"message": "No recording for B1042: x"}],
+    }
     assert harness.run("airgap-agent").status == "failed"

@@ -57,7 +57,7 @@ class Site(_Model):
 
 
 class DemoPreset(_Model):
-    """A saved Overview filter every persona starts with in the demo (F14-FR-15): a name and a query string."""
+    """A saved Overview filter every persona starts with in the demo (F14-FR-15): a name and a query."""
 
     name: str
     query: str
